@@ -20,6 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade memote
+	python -m pip install "depinfo<2"
     - name: Run memote on deployment branch
       run: |
         model=$(awk -F '=' '{if (! ($0 ~ /^;/) && $0 ~ /model/) print $2}' memote.ini | tr -d ' ')
