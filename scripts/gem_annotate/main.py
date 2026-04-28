@@ -11,6 +11,7 @@ from .config import MNX_DIR, OUTPUT_MODEL_PATH, STARTING_MODEL_PATH
 from .exchange import set_exchange_bounds
 from .gaps import DUPLICATE_PAIRS, find_gaps, merge_duplicate_metabolites, report_gaps
 from .genes import annotate_genes
+from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance
 from .reactions import annotate_reactions
@@ -76,6 +77,10 @@ def main():
     # Priority 4b — network required, skip if offline
     logger.info("=== Priority 4b: gene annotation via UniProt ===")
     annotate_genes(model)
+
+    # Priority 4c — ncbigene → UniProt ID-mapping for genes still missing uniprot
+    logger.info("=== Priority 4c: UniProt ID-mapping (ncbigene → UniProtKB) ===")
+    _enrich_via_idmapping(model)
 
     # Priority 5: gap analysis
     logger.info("=== Priority 5: gap analysis (FVA) ===")
