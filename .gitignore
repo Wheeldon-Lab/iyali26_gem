@@ -3,3 +3,4 @@ scripts/__pycache__
 local/
 model_baseline.xml
 model_before.xml
+.env
