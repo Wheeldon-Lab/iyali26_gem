@@ -6,10 +6,13 @@ UniProt accessions via the UniProt ID-mapping REST API, then merges the result
 back into model gene annotations without overwriting existing values.
 """
 
+import json
 import logging
 import time
 
 import requests
+
+from .config import CACHE_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -163,11 +166,13 @@ def _enrich_via_idmapping(model) -> None:
     Steps
     -----
     1. Collect genes with ncbigene and no uniprot.
-    2. Submit all NCBI Gene IDs in one batch request.
+    2. Check cache (data/cache/idmapping_results.json); submit only uncached IDs.
     3. Poll until the job finishes.
     4. Fetch paginated results, group by NCBI Gene ID, pick best UniProt entry.
     5. Merge annotation back into model genes (no-overwrite policy).
     """
+    from collections import defaultdict
+
     # ── 1. Collect targets ────────────────────────────────────────────────
     targets: dict[str, str] = {}  # {ncbi_gene_id → model_gene_id}
     for gene in model.genes:
@@ -188,63 +193,94 @@ def _enrich_via_idmapping(model) -> None:
         logger.info("  ID-mapping: no genes need ncbigene→uniprot enrichment")
         return
 
-    ncbi_ids = list(targets.keys())
+    # ── 2. Load cache; only query IDs not already cached ─────────────────
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = CACHE_DIR / "idmapping_results.json"
+
+    # cache: {ncbi_gene_id: ann_dict | null}  (null = queried, no result)
+    cache: dict[str, dict | None] = {}
+    if cache_file.exists():
+        with cache_file.open() as f:
+            cache = json.load(f)
+
+    to_query = [nid for nid in targets if nid not in cache]
+    cached_hits = {nid: ann for nid, ann in cache.items() if ann is not None and nid in targets}
     logger.info(
-        f"=== UniProt ID-mapping: submitting {len(ncbi_ids)} NCBI Gene IDs "
-        f"(GeneID → UniProtKB) ==="
+        f"  ID-mapping: {len(cached_hits)} hits from cache, "
+        f"{len(to_query)}/{len(targets)} IDs need querying"
     )
 
-    # ── 2. Submit ─────────────────────────────────────────────────────────
-    job_id = _submit_idmapping(ncbi_ids)
-    if not job_id:
-        logger.warning("  ID-mapping: skipped (submission failed)")
-        return
-    logger.info(f"  ID-mapping: job submitted, jobId={job_id}")
+    newly_cached: dict[str, dict | None] = {}
 
-    # ── 3. Poll ───────────────────────────────────────────────────────────
-    if not _poll_idmapping(job_id):
-        logger.warning("  ID-mapping: skipped (job did not finish)")
-        return
-    logger.info("  ID-mapping: job finished, fetching results …")
+    if to_query:
+        logger.info(
+            f"=== UniProt ID-mapping: submitting {len(to_query)} NCBI Gene IDs "
+            f"(GeneID → UniProtKB) ==="
+        )
 
-    # ── 4. Fetch + parse ──────────────────────────────────────────────────
-    raw_results = _fetch_idmapping_results(job_id)
-    logger.info(f"  ID-mapping: {len(raw_results)} result rows received")
+        # ── Submit ────────────────────────────────────────────────────────
+        job_id = _submit_idmapping(to_query)
+        if not job_id:
+            logger.warning("  ID-mapping: skipped (submission failed)")
+        else:
+            logger.info(f"  ID-mapping: job submitted, jobId={job_id}")
 
-    # Group multiple UniProt entries per NCBI Gene ID, then pick best
-    from collections import defaultdict
-    grouped: dict[str, list[dict]] = defaultdict(list)
-    for row in raw_results:
-        ncbi_id = str(row.get("from", ""))
-        if ncbi_id:
-            grouped[ncbi_id].append(row)
+            # ── Poll ──────────────────────────────────────────────────────
+            if not _poll_idmapping(job_id):
+                logger.warning("  ID-mapping: skipped (job did not finish)")
+            else:
+                logger.info("  ID-mapping: job finished, fetching results …")
 
+                # ── Fetch + parse ─────────────────────────────────────────
+                raw_results = _fetch_idmapping_results(job_id)
+                logger.info(f"  ID-mapping: {len(raw_results)} result rows received")
+
+                grouped: dict[str, list[dict]] = defaultdict(list)
+                for row in raw_results:
+                    ncbi_id = str(row.get("from", ""))
+                    if ncbi_id:
+                        grouped[ncbi_id].append(row)
+
+                for ncbi_id in to_query:
+                    rows = grouped.get(ncbi_id, [])
+                    best = _pick_best_entry(rows)
+                    if best is None:
+                        newly_cached[ncbi_id] = None
+                        continue
+                    _, ann = _parse_idmapping_entry(best)
+                    newly_cached[ncbi_id] = ann if ann else None
+
+        # Mark any IDs we tried but got no response for
+        for ncbi_id in to_query:
+            if ncbi_id not in newly_cached:
+                newly_cached[ncbi_id] = None
+
+        # Persist updated cache
+        cache.update(newly_cached)
+        with cache_file.open("w") as f:
+            json.dump(cache, f)
+        logger.info(f"  ID-mapping: cache updated ({len(cache)} total entries)")
+
+    # ── 5. Apply all results to model ─────────────────────────────────────
     gene_lookup = {g.id: g for g in model.genes}
-    merged_count    = 0
-    enriched_keys: dict[str, int] = {}  # key → count of genes that gained it
+    merged_count = 0
+    enriched_keys: dict[str, int] = {}
 
-    for ncbi_id, rows in grouped.items():
+    all_results = {**cached_hits, **{k: v for k, v in newly_cached.items() if v is not None}}
+    for ncbi_id, ann in all_results.items():
+        if not ann:
+            continue
         model_gene_id = targets.get(ncbi_id)
         if not model_gene_id:
             continue
         gene = gene_lookup.get(model_gene_id)
         if gene is None:
             continue
-
-        best = _pick_best_entry(rows)
-        if best is None:
-            continue
-
-        _, ann = _parse_idmapping_entry(best)
-        if not ann:
-            continue
-
         _merge_str_annotation(gene, ann)
         merged_count += 1
         for k in ann:
             enriched_keys[k] = enriched_keys.get(k, 0) + 1
 
-    # ── 5. Report ─────────────────────────────────────────────────────────
     keys_summary = ", ".join(f"{k}×{v}" for k, v in sorted(enriched_keys.items()))
     logger.info(
         f"  ID-mapping: {merged_count}/{len(targets)} genes enriched. "

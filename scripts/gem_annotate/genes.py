@@ -2,6 +2,7 @@
 genes.py — gene annotation via UniProt REST API and NCBI E-utilities.
 """
 
+import json
 import logging
 import re
 
@@ -15,6 +16,7 @@ from .config import (
     _PROTEOME_IDS,
     _TIER_B_LIMIT,
     _UNIPROT_SEARCH_URL,
+    CACHE_DIR,
 )
 
 logger = logging.getLogger(__name__)
@@ -113,7 +115,19 @@ def _fetch_proteome(proteome_id: str) -> list[dict]:
     """
     Download all entries for a UniProt proteome via paginated /search.
     Returns full JSON entries (including uniProtKBCrossReferences).
+    Results are cached to data/cache/uniprot_<proteome_id>.json so subsequent
+    runs skip the network entirely.
     """
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = CACHE_DIR / f"uniprot_{proteome_id}.json"
+
+    if cache_file.exists():
+        logger.info(f"  Loading proteome {proteome_id} from cache ({cache_file.name}) …")
+        with cache_file.open() as f:
+            results = json.load(f)
+        logger.info(f"    {len(results)} entries loaded from cache")
+        return results
+
     logger.info(f"  Fetching proteome {proteome_id} from UniProt …")
     results: list[dict] = []
     url = _UNIPROT_SEARCH_URL
@@ -142,6 +156,11 @@ def _fetch_proteome(proteome_id: str) -> list[dict]:
                 if m:
                     url = m.group(1)
     logger.info(f"    {len(results)} entries retrieved")
+
+    with cache_file.open("w") as f:
+        json.dump(results, f)
+    logger.info(f"    Cached to {cache_file}")
+
     return results
 
 
@@ -187,16 +206,37 @@ def _tier_b(unmapped: list[str]) -> dict[str, dict]:
     trying all four normalised locus-tag forms.  Stops after _TIER_B_LIMIT
     API calls to avoid rate-limit issues.
 
+    Results are cached to data/cache/tier_b_results.json keyed by gene ID.
+    On subsequent runs, already-queried genes (hit or miss) are skipped entirely.
+
     Returns {model_gene_id: annotation_dict}
     """
-    mapping: dict[str, dict] = {}
-    calls = 0
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = CACHE_DIR / "tier_b_results.json"
 
-    for gid in unmapped:
+    # Load existing cache: {gene_id: ann_dict | null}
+    # null means we queried before and found nothing (avoid re-querying misses)
+    cache: dict[str, dict | None] = {}
+    if cache_file.exists():
+        with cache_file.open() as f:
+            cache = json.load(f)
+
+    to_query = [gid for gid in unmapped if gid not in cache]
+    cached_hits = {gid: ann for gid, ann in cache.items() if ann is not None}
+    logger.info(
+        f"  Tier B: {len(cached_hits)} hits from cache, "
+        f"{len(to_query)}/{len(unmapped)} genes need querying"
+    )
+
+    mapping: dict[str, dict] = dict(cached_hits)
+    calls = 0
+    newly_cached: dict[str, dict | None] = {}
+
+    for gid in to_query:
         if calls >= _TIER_B_LIMIT:
             logger.warning(
                 f"Tier B: reached {_TIER_B_LIMIT}-query limit; "
-                f"{len(unmapped) - len(mapping)} genes still unmapped"
+                f"{len(to_query) - len(newly_cached)} genes still unmapped"
             )
             break
 
@@ -221,8 +261,16 @@ def _tier_b(unmapped: list[str]) -> dict[str, dict]:
                 logger.debug(f"Tier B query failed for {cand}: {e}")
                 calls += 1
 
+        newly_cached[gid] = hit_ann  # store None for misses to skip next time
         if hit_ann:
             mapping[gid] = hit_ann
+
+    # Persist updated cache
+    if newly_cached:
+        cache.update(newly_cached)
+        with cache_file.open("w") as f:
+            json.dump(cache, f)
+        logger.info(f"  Tier B: cache updated ({len(cache)} total entries)")
 
     logger.info(f"  Tier B: {len(mapping)}/{len(unmapped)} mapped ({calls} API calls)")
     return mapping
@@ -243,13 +291,8 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
     3. Parse    — extract per-gene: Locus_tag, GeneID, RefSeq protein, UniProt.
     4. Match    — normalise locus tags and look up in candidate_to_model.
 
-    XML fields harvested
-    --------------------
-    - Entrezgene_locus / Gene-ref_locus-tag  → locus tag for matching
-    - Entrezgene_track-info / Gene-track_geneid → ncbigene
-    - Entrezgene_locus[]/Gene-commentary_products[]/Gene-commentary_accession
-      where type=protein → refseq
-    - Entrezgene_comments[]/Gene-commentary_refs[]/Dbtag where db=UniProtKB → uniprot
+    Results are cached to data/cache/ncbi_gene_mapping.json keyed by model gene ID.
+    On subsequent runs the network is skipped entirely.
 
     Returns {model_gene_id: annotation_dict}
     """
@@ -258,6 +301,20 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
     if not unmapped:
         return {}
 
+    # ── Cache: {model_gene_id: ann_dict} — covers the full organism bulk ──
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = CACHE_DIR / "ncbi_gene_mapping.json"
+
+    if cache_file.exists():
+        with cache_file.open() as f:
+            full_cache: dict[str, dict] = json.load(f)
+        mapping = {gid: full_cache[gid] for gid in unmapped if gid in full_cache}
+        logger.info(
+            f"  Tier A′: {len(mapping)}/{len(unmapped)} loaded from cache "
+            f"({cache_file.name})"
+        )
+        return mapping
+
     # ── Build candidate lookup ────────────────────────────────────────────
     candidate_to_model: dict[str, str] = {}
     for gid in unmapped:
@@ -265,8 +322,6 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
             candidate_to_model[cand.lower()] = gid
 
     # ── Step 1: esearch — get all NCBI Gene IDs for Y. lipolytica ─────────
-    # Search for all YALI locus-tagged genes under taxid 4952.
-    # "txid4952[Organism]" covers W29 and all Y. lipolytica strains.
     gene_ids_ncbi: list[str] = []
     try:
         resp = requests.get(
@@ -380,6 +435,11 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
         )
 
     logger.info(f"  Tier A′: {len(mapping)}/{len(unmapped)} mapped")
+
+    with cache_file.open("w") as f:
+        json.dump(mapping, f)
+    logger.info(f"  Tier A′: cached to {cache_file.name}")
+
     return mapping
 
 
@@ -391,7 +451,21 @@ def _build_kegg_uniprot_index() -> dict[str, str]:
     KEGG's Y. lipolytica genome was re-annotated (DSM 3286 / GCF_014490615.1),
     so KEGG locus tags no longer match model YALI0/YALI1 IDs.  The only reliable
     bridge is via UniProt accession, which is shared across databases.
+
+    Result is cached to data/cache/kegg_uniprot_index.json.
     """
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = CACHE_DIR / "kegg_uniprot_index.json"
+
+    if cache_file.exists():
+        with cache_file.open() as f:
+            acc_to_kegg = json.load(f)
+        logger.info(
+            f"  KEGG conv: {len(acc_to_kegg)} entries loaded from cache "
+            f"({cache_file.name})"
+        )
+        return acc_to_kegg
+
     acc_to_kegg: dict[str, str] = {}
     try:
         resp = requests.get(_KEGG_CONV_URL, timeout=60)
@@ -403,6 +477,9 @@ def _build_kegg_uniprot_index() -> dict[str, str]:
                 uniprot_acc  = parts[1].split(":")[-1].strip()  # strip "up:" prefix
                 acc_to_kegg[uniprot_acc] = kegg_gene_id
         logger.info(f"  KEGG conv: {len(acc_to_kegg)} UniProt→KEGG entries loaded")
+        with cache_file.open("w") as f:
+            json.dump(acc_to_kegg, f)
+        logger.info(f"  KEGG conv: cached to {cache_file.name}")
     except Exception as e:
         logger.warning(f"  KEGG conv fetch failed: {e}")
     return acc_to_kegg

@@ -8,6 +8,7 @@ REPO_ROOT            = Path(__file__).resolve().parent.parent.parent
 STARTING_MODEL_PATH  = REPO_ROOT / "data" / "iyli21.xml"
 OUTPUT_MODEL_PATH    = REPO_ROOT / "model.xml"
 MNX_DIR              = REPO_ROOT / "data" / "metanetx"
+CACHE_DIR            = REPO_ROOT / "data" / "cache"
 
 # ── UniProt / NCBI / KEGG URL constants ──────────────────────────────────────
 _UNIPROT_SEARCH_URL = "https://rest.uniprot.org/uniprotkb/search"
