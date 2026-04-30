@@ -243,23 +243,31 @@ def _tier_b(unmapped: list[str]) -> dict[str, dict]:
         candidates = _normalise_locus_tag(gid)
         hit_ann: dict | None = None
 
-        for cand in sorted(candidates):   # deterministic order
-            query = f'gene_exact:"{cand}" AND taxonomy_id:4952'
-            try:
-                resp = requests.get(
-                    _UNIPROT_SEARCH_URL,
-                    params={"query": query, "format": "json", "size": 1},
-                    timeout=30,
-                )
-                calls += 1
-                resp.raise_for_status()
-                results = resp.json().get("results", [])
-                if results:
-                    _, hit_ann = _parse_uniprot_entry(results[0])
-                    break
-            except Exception as e:
-                logger.debug(f"Tier B query failed for {cand}: {e}")
-                calls += 1
+        # Try gene_exact first (all candidates), then fall back to gene: (loose)
+        query_templates = [
+            lambda c: f'gene_exact:"{c}" AND taxonomy_id:4952',
+            lambda c: f'gene:"{c}" AND taxonomy_id:4952',
+        ]
+        for make_query in query_templates:
+            if hit_ann:
+                break
+            for cand in sorted(candidates):   # deterministic order
+                query = make_query(cand)
+                try:
+                    resp = requests.get(
+                        _UNIPROT_SEARCH_URL,
+                        params={"query": query, "format": "json", "size": 1},
+                        timeout=30,
+                    )
+                    calls += 1
+                    resp.raise_for_status()
+                    results = resp.json().get("results", [])
+                    if results:
+                        _, hit_ann = _parse_uniprot_entry(results[0])
+                        break
+                except Exception as e:
+                    logger.debug(f"Tier B query failed for {cand}: {e}")
+                    calls += 1
 
         newly_cached[gid] = hit_ann  # store None for misses to skip next time
         if hit_ann:

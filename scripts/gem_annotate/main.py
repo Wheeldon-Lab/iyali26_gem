@@ -7,9 +7,9 @@ import logging
 from cobra.io import read_sbml_model, write_sbml_model
 
 from .biomass import fix_biomass_reaction
-from .config import MNX_DIR, OUTPUT_MODEL_PATH, STARTING_MODEL_PATH
-from .exchange import set_exchange_bounds
-from .gaps import DUPLICATE_PAIRS, find_gaps, merge_duplicate_metabolites, report_gaps
+from .config import CACHE_DIR, MNX_DIR, OUTPUT_MODEL_PATH, REPO_ROOT, STARTING_MODEL_PATH
+from .exchange import configure_medium, set_exchange_bounds
+from .gaps import DUPLICATE_PAIRS, add_gap_fill_reactions, find_gaps, merge_duplicate_metabolites, report_gaps
 from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_reac_prop, load_reac_xref
@@ -70,6 +70,9 @@ def main():
     logger.info("=== Priority 2c: exchange bounds (minimal medium) ===")
     set_exchange_bounds(model)   # uses MINIMAL_MEDIUM_BIGG (Tier 1) + MINIMAL_MEDIUM_NAMES (Tier 2)
 
+    logger.info("=== Priority 2c+: mineral salts + vitamins medium extension ===")
+    configure_medium(model)      # adds Mg, K, Na, biotin, thiamine, pyridoxine
+
     # Priority 3 (always run — independent of MetaNetX)
     logger.info("=== Priority 3: biomass reaction R1372 ===")
     fix_biomass_reaction(model)
@@ -82,10 +85,56 @@ def main():
     logger.info("=== Priority 4c: UniProt ID-mapping (ncbigene → UniProtKB) ===")
     _enrich_via_idmapping(model)
 
-    # Priority 5: gap analysis
-    logger.info("=== Priority 5: gap analysis (FVA) ===")
+    # Priority 5: gap analysis — FVA before gap-fill
+    logger.info("=== Priority 5: gap analysis (FVA, post-medium) ===")
     gaps = find_gaps(model)
     report_gaps(gaps)
+    blocked_before_medium = len(gaps["blocked_reactions"])
+    logger.info(f"  Blocked reactions after medium extension: {blocked_before_medium}")
+
+    # Priority 6: gap-fill — insert P0 reactions from gap_fill_prioritized.csv
+    gap_fill_csv = REPO_ROOT / "data" / "gap_fill_prioritized.csv"
+    if gap_fill_csv.exists():
+        logger.info("=== Priority 6: gap-fill reaction insertion (P0) ===")
+        add_gap_fill_reactions(
+            model,
+            csv_path=gap_fill_csv,
+            mnx_dir=MNX_DIR if mnx_ok else None,
+            cache_dir=CACHE_DIR,
+        )
+        logger.info("=== Priority 6b: post-gap-fill FVA ===")
+        gaps_after = find_gaps(model)
+        before = len(gaps["blocked_reactions"])
+        after  = len(gaps_after["blocked_reactions"])
+        logger.info(
+            f"  Blocked reactions: {before} → {after}  "
+            f"(Δ {before - after:+d} unblocked)"
+        )
+        report_gaps(gaps_after)
+    else:
+        logger.warning(f"gap_fill_prioritized.csv not found at {gap_fill_csv} — skipping")
+
+    # Fix compartment names so COBRApy can identify the external compartment
+    _COMPARTMENT_NAMES = {
+        "C_cy": "cytoplasm",
+        "C_ex": "extracellular",
+        "C_mi": "mitochondria",
+        "C_nu": "nucleus",
+        "C_er": "endoplasmic reticulum",
+        "C_go": "Golgi apparatus",
+        "C_va": "vacuole",
+        "C_lp": "lipid particle",
+        "C_pe": "peroxisome",
+        "C_em": "endosomal membrane",
+        "C_en": "endosome",
+        "C_gm": "Golgi membrane",
+        "C_mm": "mitochondrial membrane",
+        "C_vm": "vacuolar membrane",
+        "c_va": "vacuole (alt)",
+    }
+    existing_comps = set(met.compartment for met in model.metabolites)
+    model.compartments = {c: _COMPARTMENT_NAMES.get(c, c) for c in existing_comps}
+    logger.info(f"Compartments set: {model.compartments}")
 
     logger.info(f"Saving updated model to: {OUTPUT_MODEL_PATH.name}")
     write_sbml_model(model, str(OUTPUT_MODEL_PATH))

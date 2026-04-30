@@ -95,3 +95,65 @@ def set_exchange_bounds(model, medium_bigg: dict[str, float] | None = None,
         f"{opened_name} via name fallback, "
         f"{closed} uptake closed, {unchanged} unchanged"
     )
+
+
+# Reaction IDs for mineral salts + vitamins components not covered by the
+# BiGG/name-based tier-1/2 matching in set_exchange_bounds.
+# Y. lipolytica is a biotin auxotroph — biotin must be supplied exogenously.
+_MINERAL_SALTS_VITAMINS: dict[str, float] = {
+    "R2061": -1000.0,   # Magnesium
+    "R1298": -1000.0,   # Potassium
+    "R1323": -1000.0,   # Sodium
+    "R1029": -1000.0,   # biotin (auxotroph — must supply)
+    "R1340": -1000.0,   # thiamine
+    "R1305": -1000.0,   # pyridoxine
+}
+
+
+def configure_medium(model,
+                     extra_exchanges: dict[str, float] | None = None) -> None:
+    """
+    Extend the current medium to a mineral salts + vitamins formulation.
+
+    Opens the six exchange reactions listed in _MINERAL_SALTS_VITAMINS
+    (Mg, K, Na, biotin, thiamine, pyridoxine) that are not matched by the
+    BiGG/name tiers in set_exchange_bounds.  Carbon source and other
+    nutrients set by set_exchange_bounds are left unchanged.
+
+    After updating bounds, syncs model.medium so COBRApy's medium dict
+    reflects the actual open uptakes.
+
+    Parameters
+    ----------
+    model         : cobra.Model (modified in-place)
+    extra_exchanges : optional additional {rxn_id: lb} overrides
+    """
+    targets = dict(_MINERAL_SALTS_VITAMINS)
+    if extra_exchanges:
+        targets.update(extra_exchanges)
+
+    opened = []
+    missing = []
+    for rxn_id, lb in targets.items():
+        try:
+            rxn = model.reactions.get_by_id(rxn_id)
+        except KeyError:
+            missing.append(rxn_id)
+            continue
+        if rxn.lower_bound != lb:
+            rxn.lower_bound = lb
+            opened.append(rxn_id)
+
+    if missing:
+        logger.warning(f"configure_medium: reaction IDs not found: {missing}")
+
+    model.medium = {
+        ex.id: abs(ex.lower_bound)
+        for ex in model.exchanges
+        if ex.lower_bound < 0
+    }
+
+    logger.info(
+        f"configure_medium: opened {len(opened)} mineral/vitamin exchanges "
+        f"({', '.join(opened)}); medium now has {len(model.medium)} components"
+    )

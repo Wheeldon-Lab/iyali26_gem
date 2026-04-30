@@ -1,4 +1,5 @@
 data/metanetx/
+data/
 data/cache
 scripts/__pycache__ 
 local/
