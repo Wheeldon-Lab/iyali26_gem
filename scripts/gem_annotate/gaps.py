@@ -282,14 +282,11 @@ def merge_duplicate_metabolites(
         # ── Replace drop_met with keep_met in all reactions ───────────────
         for rxn in list(drop_met.reactions):
             drop_coeff = rxn.metabolites[drop_met]
-            # If keep_met already appears in this reaction, sum the coefficients
-            existing_coeff = rxn.metabolites.get(keep_met, 0.0)
-            new_coeff = existing_coeff + drop_coeff
-            # Remove drop_met from reaction
             rxn.subtract_metabolites({drop_met: drop_coeff})
-            if new_coeff != 0.0:
-                rxn.add_metabolites({keep_met: new_coeff - existing_coeff
-                                     if existing_coeff else new_coeff})
+            # add_metabolites uses combine=True by default, so adding drop_coeff
+            # correctly accumulates with any existing keep_met coefficient.
+            if drop_coeff != 0.0:
+                rxn.add_metabolites({keep_met: drop_coeff})
 
         # ── Copy annotations (don't overwrite existing keys in keep) ──────
         for key, val in (drop_met.annotation or {}).items():
@@ -522,6 +519,16 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
         "imbalanced": [],
     }
 
+    # ── Pre-build model reaction ID and BiGG annotation sets (updated incrementally) ─
+    existing_ids: set[str] = {r.id for r in model.reactions}
+    bigg_annotated: set[str] = set()
+    for r in model.reactions:
+        raw = (r.annotation or {}).get("bigg.reaction", [])
+        if isinstance(raw, list):
+            bigg_annotated.update(raw)
+        elif raw:
+            bigg_annotated.add(raw)
+
     # ── Process each unique (bigg_reaction, MNXR) pair ───────────────────────
     seen_bigg: set[str] = set()   # deduplicate when same BiGG appears with multiple MNXR
 
@@ -541,16 +548,11 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
         seen_bigg.add(bigg_id)
 
         # Skip reactions already in the model (check both raw ID and R_-prefixed)
-        existing_ids = {r.id for r in model.reactions}
         bigg_ids_to_check = [bigg_id]
         if not bigg_id.startswith("R_"):
             bigg_ids_to_check.append("R_" + bigg_id)
-        # Also check existing bigg.reaction annotations
-        bigg_in_model = any(
-            any(bid in (r.annotation.get("bigg.reaction") or []) for r in model.reactions)
-            for bid in bigg_ids_to_check
-        )
-        id_in_model = any(bid in existing_ids for bid in bigg_ids_to_check)
+        id_in_model   = any(bid in existing_ids    for bid in bigg_ids_to_check)
+        bigg_in_model = any(bid in bigg_annotated  for bid in bigg_ids_to_check)
         if id_in_model or bigg_in_model:
             logger.debug(f"  Skipping {bigg_id} ({mnxr}): already in model")
             stats["skipped_duplicate"].append(bigg_id)
@@ -644,6 +646,8 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
         rxn.annotation = ann
 
         model.add_reactions([rxn])
+        existing_ids.add(bigg_id)
+        bigg_annotated.add(bigg_id)
         stats["added"].append(bigg_id)
         logger.info(f"  Added {bigg_id} ({mnxr})  GPR='{gpr}'  mets={len(stoich)}")
 

@@ -1,95 +1,74 @@
 """
-idmapping.py — UniProt ID-mapping enrichment step.
+idmapping.py — UniProt search-based enrichment step.
 
 Converts NCBI Gene IDs (already present in gene.annotation["ncbigene"]) to
-UniProt accessions via the UniProt ID-mapping REST API, then merges the result
-back into model gene annotations without overwriting existing values.
+UniProt accessions via the UniProt search API using xref:geneid- queries,
+then merges the result back into model gene annotations without overwriting
+existing values.
+
+Uses synchronous GET requests (no job/poll), batched at 30 Gene IDs per
+request to stay well under URL-length limits.
 """
 
 import json
 import logging
+import re
 import time
 
 import requests
 
 from .config import CACHE_DIR
+from .http_utils import _request_with_retry
 
 logger = logging.getLogger(__name__)
 
-_IDMAPPING_RUN_URL    = "https://rest.uniprot.org/idmapping/run"
-_IDMAPPING_STATUS_URL = "https://rest.uniprot.org/idmapping/status/{jobId}"
-_IDMAPPING_RESULTS_URL = "https://rest.uniprot.org/idmapping/uniprotkb/results/{jobId}"
-
-_POLL_INTERVAL   = 5   # seconds between status polls
-_POLL_TIMEOUT    = 300 # seconds before giving up
+_UNIPROT_SEARCH_URL = "https://rest.uniprot.org/uniprotkb/search"
+_SEARCH_BATCH_SIZE  = 30    # Gene IDs per request (~600 chars of query string)
+_RATE_LIMIT_SLEEP   = 0.2   # seconds between requests (UniProt rate limit)
 
 
-def _submit_idmapping(ncbi_ids: list[str]) -> str | None:
-    """POST to UniProt ID-mapping and return the jobId, or None on failure."""
-    try:
-        resp = requests.post(
-            _IDMAPPING_RUN_URL,
-            data={
-                "from": "GeneID",
-                "to":   "UniProtKB",
-                "ids":  ",".join(ncbi_ids),
-            },
-            timeout=60,
-        )
-        resp.raise_for_status()
-        job_id = resp.json().get("jobId")
-        if not job_id:
-            logger.warning("  ID-mapping: no jobId in response")
-        return job_id
-    except Exception as e:
-        logger.warning(f"  ID-mapping: submission failed: {e}")
-        return None
-
-
-def _poll_idmapping(job_id: str) -> bool:
-    """Poll status endpoint until the job is FINISHED. Returns True on success."""
-    url = _IDMAPPING_STATUS_URL.format(jobId=job_id)
-    elapsed = 0
-    while elapsed < _POLL_TIMEOUT:
-        try:
-            resp = requests.get(url, timeout=30)
-            resp.raise_for_status()
-            data = resp.json()
-            status = data.get("jobStatus", "")
-            if status == "FINISHED":
-                return True
-            if status == "FAILED":
-                logger.warning(f"  ID-mapping job {job_id} FAILED")
-                return False
-            # RUNNING or NEW — keep polling
-        except Exception as e:
-            logger.debug(f"  ID-mapping poll error: {e}")
-        time.sleep(_POLL_INTERVAL)
-        elapsed += _POLL_INTERVAL
-    logger.warning(f"  ID-mapping: job {job_id} timed out after {_POLL_TIMEOUT}s")
-    return False
-
-
-def _fetch_idmapping_results(job_id: str) -> list[dict]:
+def _search_uniprot_by_geneids(ncbi_ids: list[str]) -> dict[str, dict]:
     """
-    Fetch all paginated results from the uniprotkb results endpoint.
-    Returns a list of {from: ncbi_gene_id, to: {UniProt entry}} dicts.
+    Query UniProt search API for a batch of NCBI Gene IDs using xref:geneid- syntax.
+
+    Returns {ncbi_gene_id: annotation_dict} for every ID that resolves to a
+    UniProt entry.  When multiple entries map to one Gene ID, the reviewed
+    (Swiss-Prot) entry is preferred; unreviewed (TrEMBL) is the fallback.
+
+    annotation_dict keys: uniprot (str), and optionally ncbigene, kegg.genes,
+    refseq — all as single strings for consistency with _merge_str_annotation.
     """
-    results: list[dict] = []
-    url: str | None = _IDMAPPING_RESULTS_URL.format(jobId=job_id)
-    params: dict = {"format": "json", "size": 500}
-    import re
+    if not ncbi_ids:
+        return {}
+
+    query = " OR ".join(f"xref:geneid-{nid}" for nid in ncbi_ids)
+    params = {
+        "query":  f"({query})",
+        "fields": "accession,reviewed,xref_geneid,xref_kegg,xref_refseq",
+        "format": "tsv",
+        "size":   500,
+    }
+
+    rows: list[str] = []
+    url: str | None = _UNIPROT_SEARCH_URL
 
     while url:
         try:
-            resp = requests.get(url, params=params, timeout=120)
+            resp = _request_with_retry("GET", url, params=params, timeout=60)
             resp.raise_for_status()
         except Exception as e:
-            logger.warning(f"  ID-mapping: results fetch failed: {e}")
-            break
-        data = resp.json()
-        results.extend(data.get("results", []))
-        # Follow Link: rel="next" for subsequent pages
+            logger.warning(f"  ID-mapping: search request failed: {e}")
+            return {}
+
+        lines = resp.text.strip().splitlines()
+        if not rows:
+            # First page: keep header to identify columns
+            rows.extend(lines)
+        else:
+            # Subsequent pages: skip header line
+            rows.extend(lines[1:])
+
+        # Follow Link: rel="next" for pagination
         url = None
         params = {}
         for part in resp.headers.get("Link", "").split(","):
@@ -99,80 +78,106 @@ def _fetch_idmapping_results(job_id: str) -> list[dict]:
                 if m:
                     url = m.group(1)
 
-    return results
+    if not rows:
+        return {}
 
+    # Parse TSV: header is first row
+    header = [h.strip() for h in rows[0].split("\t")]
+    try:
+        col_acc      = header.index("Entry")
+        col_reviewed = header.index("Reviewed")
+        col_geneid   = header.index("Gene Names (ordered locus)")  # fallback name
+    except ValueError:
+        # Column names vary slightly; use positional fallback
+        col_acc, col_reviewed, col_geneid = 0, 1, 2
 
-def _parse_idmapping_entry(result: dict) -> tuple[str, dict]:
-    """
-    Parse one ID-mapping result row.
-
-    Returns (ncbi_gene_id, annotation_dict) where annotation_dict contains
-    uniprot, kegg.genes, refseq, ncbigene with single string values
-    (most-reliable pick per key, consistent with how write_sbml_model serialises).
-    """
-    ncbi_id = str(result.get("from", ""))
-    entry   = result.get("to", {})
-    ann: dict = {}
-
-    acc = entry.get("primaryAccession", "")
-    if acc:
-        ann["uniprot"] = acc  # str, not list — see note in module docstring
-
-    for xref in entry.get("uniProtKBCrossReferences", []):
-        db  = xref.get("database", "")
-        xid = xref.get("id", "")
-        if not xid:
-            continue
-        if db == "KEGG" and "kegg.genes" not in ann:
-            ann["kegg.genes"] = xid
-        elif db == "RefSeq" and "refseq" not in ann:
-            ann["refseq"] = xid
-        elif db == "GeneID" and "ncbigene" not in ann:
-            ann["ncbigene"] = xid
-
-    return ncbi_id, ann
-
-
-def _pick_best_entry(entries: list[dict]) -> dict | None:
-    """
-    From a list of UniProt entries mapped from one NCBI Gene ID, prefer a
-    reviewed (Swiss-Prot) entry; fall back to the first unreviewed (TrEMBL).
-    Returns the chosen entry dict, or None if the list is empty.
-    """
-    if not entries:
+    # Also find optional cross-ref columns by scanning header
+    def _col(name: str) -> int | None:
+        for i, h in enumerate(header):
+            if name.lower() in h.lower():
+                return i
         return None
-    reviewed = [e for e in entries if e.get("to", {}).get("entryType", "") == "UniProtKB reviewed (Swiss-Prot)"]
-    return reviewed[0] if reviewed else entries[0]
+
+    col_geneid_xref = _col("GeneID")   # "Gene Names (ordered locus)" vs "GeneID; ..."
+    col_kegg        = _col("KEGG")
+    col_refseq      = _col("RefSeq")
+
+    # {ncbi_id: {"reviewed": bool, "acc": str, "kegg": str, "refseq": str}}
+    best: dict[str, dict] = {}
+
+    for line in rows[1:]:
+        parts = [p.strip() for p in line.split("\t")]
+        if len(parts) <= col_acc:
+            continue
+        acc      = parts[col_acc]
+        reviewed = parts[col_reviewed].lower() == "reviewed" if col_reviewed < len(parts) else False
+
+        # Extract all GeneIDs from the xref_geneid column (semicolon-separated)
+        gene_ids_in_row: list[str] = []
+        if col_geneid_xref is not None and col_geneid_xref < len(parts):
+            raw = parts[col_geneid_xref]
+            # UniProt TSV format: "12345; 67890;" or just "12345"
+            gene_ids_in_row = [g.strip().rstrip(";") for g in raw.split(";") if g.strip().rstrip(";")]
+
+        def _first(raw: str) -> str:
+            idx = raw.find(";")
+            return raw[:idx].strip() if idx != -1 else raw.strip()
+
+        kegg_val   = _first(parts[col_kegg])   if col_kegg   and col_kegg   < len(parts) and parts[col_kegg]   else ""
+        refseq_val = _first(parts[col_refseq]) if col_refseq and col_refseq < len(parts) and parts[col_refseq] else ""
+
+        for nid in gene_ids_in_row:
+            if nid not in ncbi_ids:
+                continue  # result row for a Gene ID we didn't ask for (cross-ref)
+            existing = best.get(nid)
+            # Prefer reviewed entry; replace unreviewed with reviewed
+            if existing is None or (reviewed and not existing["reviewed"]):
+                best[nid] = {
+                    "reviewed": reviewed,
+                    "acc":      acc,
+                    "kegg":     kegg_val,
+                    "refseq":   refseq_val,
+                    "ncbigene": nid,
+                }
+
+    # Convert to annotation dicts; all values are list[str] per SBML/Memote spec
+    result: dict[str, dict] = {}
+    for nid, data in best.items():
+        ann: dict = {"uniprot": [data["acc"]], "ncbigene": [data["ncbigene"]]}
+        if data["kegg"]:
+            ann["kegg.genes"] = [data["kegg"]]
+        if data["refseq"]:
+            ann["refseq"] = [data["refseq"]]
+        result[nid] = ann
+
+    return result
 
 
 def _merge_str_annotation(gene, new_data: dict) -> None:
     """
-    Merge new_data (string values) into gene.annotation without overwriting.
-    If the key already exists, skip — existing data takes priority.
+    Merge new_data into gene.annotation without overwriting existing keys.
+    Scalar string values are wrapped in lists to satisfy SBML/Memote spec.
     """
     merged = dict(gene.annotation)
     for key, val in new_data.items():
         if key not in merged or merged[key] is None:
-            merged[key] = val
-        # key already present — do not overwrite
+            merged[key] = [val] if isinstance(val, str) else val
     gene.annotation = merged
 
 
 def _enrich_via_idmapping(model) -> None:
     """
     Enrich model genes that have ncbigene but no uniprot annotation by querying
-    the UniProt ID-mapping API (GeneID → UniProtKB).
+    the UniProt search API (xref:geneid-<id> → UniProtKB).
 
     Steps
     -----
     1. Collect genes with ncbigene and no uniprot.
-    2. Check cache (data/cache/idmapping_results.json); submit only uncached IDs.
-    3. Poll until the job finishes.
-    4. Fetch paginated results, group by NCBI Gene ID, pick best UniProt entry.
-    5. Merge annotation back into model genes (no-overwrite policy).
+    2. Check cache (data/cache/idmapping_results.json); query only uncached IDs.
+    3. Batch-query UniProt search API (30 IDs/request, synchronous GET).
+    4. Persist new hits to cache.
+    5. Merge all results (cache + newly fetched) into model gene annotations.
     """
-    from collections import defaultdict
-
     # ── 1. Collect targets ────────────────────────────────────────────────
     targets: dict[str, str] = {}  # {ncbi_gene_id → model_gene_id}
     for gene in model.genes:
@@ -197,7 +202,6 @@ def _enrich_via_idmapping(model) -> None:
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cache_file = CACHE_DIR / "idmapping_results.json"
 
-    # cache: {ncbi_gene_id: ann_dict | null}  (null = queried, no result)
     cache: dict[str, dict | None] = {}
     if cache_file.exists():
         with cache_file.open() as f:
@@ -210,63 +214,48 @@ def _enrich_via_idmapping(model) -> None:
         f"{len(to_query)}/{len(targets)} IDs need querying"
     )
 
-    newly_cached: dict[str, dict | None] = {}
+    # ── 3. Batch-query UniProt search API ─────────────────────────────────
+    newly_cached: dict[str, dict] = {}
 
     if to_query:
+        n_batches = (len(to_query) + _SEARCH_BATCH_SIZE - 1) // _SEARCH_BATCH_SIZE
         logger.info(
-            f"=== UniProt ID-mapping: submitting {len(to_query)} NCBI Gene IDs "
-            f"(GeneID → UniProtKB) ==="
+            f"=== UniProt search: querying {len(to_query)} NCBI Gene IDs "
+            f"in {n_batches} batch(es) of {_SEARCH_BATCH_SIZE} ==="
         )
 
-        # ── Submit ────────────────────────────────────────────────────────
-        job_id = _submit_idmapping(to_query)
-        if not job_id:
-            logger.warning("  ID-mapping: skipped (submission failed)")
-        else:
-            logger.info(f"  ID-mapping: job submitted, jobId={job_id}")
+        for batch_start in range(0, len(to_query), _SEARCH_BATCH_SIZE):
+            batch = to_query[batch_start: batch_start + _SEARCH_BATCH_SIZE]
+            batch_num = batch_start // _SEARCH_BATCH_SIZE + 1
 
-            # ── Poll ──────────────────────────────────────────────────────
-            if not _poll_idmapping(job_id):
-                logger.warning("  ID-mapping: skipped (job did not finish)")
-            else:
-                logger.info("  ID-mapping: job finished, fetching results …")
+            batch_result = _search_uniprot_by_geneids(batch)
+            newly_cached.update(batch_result)
+            logger.info(
+                f"  ID-mapping: batch {batch_num}/{n_batches} "
+                f"({len(batch)} queried, {len(batch_result)} hits)"
+            )
 
-                # ── Fetch + parse ─────────────────────────────────────────
-                raw_results = _fetch_idmapping_results(job_id)
-                logger.info(f"  ID-mapping: {len(raw_results)} result rows received")
+            if batch_num < n_batches:
+                time.sleep(_RATE_LIMIT_SLEEP)
 
-                grouped: dict[str, list[dict]] = defaultdict(list)
-                for row in raw_results:
-                    ncbi_id = str(row.get("from", ""))
-                    if ncbi_id:
-                        grouped[ncbi_id].append(row)
-
-                for ncbi_id in to_query:
-                    rows = grouped.get(ncbi_id, [])
-                    best = _pick_best_entry(rows)
-                    if best is None:
-                        newly_cached[ncbi_id] = None
-                        continue
-                    _, ann = _parse_idmapping_entry(best)
-                    newly_cached[ncbi_id] = ann if ann else None
-
-        # Mark any IDs we tried but got no response for
-        for ncbi_id in to_query:
-            if ncbi_id not in newly_cached:
-                newly_cached[ncbi_id] = None
-
-        # Persist updated cache
-        cache.update(newly_cached)
-        with cache_file.open("w") as f:
-            json.dump(cache, f)
-        logger.info(f"  ID-mapping: cache updated ({len(cache)} total entries)")
+        # ── 4. Persist new hits ───────────────────────────────────────────
+        if newly_cached:
+            cache.update(newly_cached)
+            with cache_file.open("w") as f:
+                json.dump(cache, f)
+            no_result_count = len(to_query) - len(newly_cached)
+            logger.info(
+                f"  ID-mapping: cache updated ({len(cache)} total entries). "
+                f"{len(newly_cached)} new hits, "
+                f"{no_result_count} IDs had no result (not cached — will retry next run)"
+            )
 
     # ── 5. Apply all results to model ─────────────────────────────────────
     gene_lookup = {g.id: g for g in model.genes}
     merged_count = 0
     enriched_keys: dict[str, int] = {}
 
-    all_results = {**cached_hits, **{k: v for k, v in newly_cached.items() if v is not None}}
+    all_results = {**cached_hits, **newly_cached}
     for ncbi_id, ann in all_results.items():
         if not ann:
             continue

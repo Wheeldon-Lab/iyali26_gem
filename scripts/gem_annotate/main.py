@@ -10,10 +10,12 @@ from .biomass import fix_biomass_reaction
 from .config import CACHE_DIR, MNX_DIR, OUTPUT_MODEL_PATH, REPO_ROOT, STARTING_MODEL_PATH
 from .exchange import configure_medium, set_exchange_bounds
 from .gaps import DUPLICATE_PAIRS, add_gap_fill_reactions, find_gaps, merge_duplicate_metabolites, report_gaps
+from .annotate_reactions_extended import annotate_remaining_reactions
+from .ec_annotation import enrich_genes_with_ec
 from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_reac_prop, load_reac_xref
-from .metabolites import annotate_metabolites, fix_proton_water_balance
+from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
 from .reactions import annotate_reactions
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -85,6 +87,40 @@ def main():
     logger.info("=== Priority 4c: UniProt ID-mapping (ncbigene → UniProtKB) ===")
     _enrich_via_idmapping(model)
 
+    # Priority 4d — enrich genes with EC numbers via UniProt stream API
+    logger.info("=== Priority 4d: gene EC number enrichment via UniProt ===")
+    enrich_genes_with_ec(model)
+
+    # Priority 4e — extended reaction annotation (exchange / transport / EC→MNXR)
+    # Runs after 4d so gene EC numbers are already populated.
+    if mnx_ok:
+        logger.info("=== Priority 4e: extended reaction annotation ===")
+        annotate_remaining_reactions(model, reac_xref, reac_prop)
+
+    # === EC backfill: copy gene EC numbers to reaction annotations ===
+    logger.info("=== EC backfill: gene ec-code → reaction annotation ===")
+    ec_backfill_count = 0
+    for rxn in model.reactions:
+        ann = rxn.annotation if isinstance(rxn.annotation, dict) else {}
+        if "ec-code" in ann:
+            continue
+        ec_set = set()
+        for gene in rxn.genes:
+            g_ann = gene.annotation if isinstance(gene.annotation, dict) else {}
+            ec_raw = g_ann.get("ec-code", [])
+            if isinstance(ec_raw, str):
+                ec_raw = [ec_raw]
+            for ec in ec_raw:
+                ec = ec.strip()
+                if ec:
+                    ec_set.add(ec)
+        if ec_set:
+            if not isinstance(rxn.annotation, dict):
+                rxn.annotation = {}
+            rxn.annotation["ec-code"] = sorted(ec_set)
+            ec_backfill_count += 1
+    logger.info(f"  EC backfill: ec-code added to {ec_backfill_count} reactions")
+
     # Priority 5: gap analysis — FVA before gap-fill
     logger.info("=== Priority 5: gap analysis (FVA, post-medium) ===")
     gaps = find_gaps(model)
@@ -114,6 +150,15 @@ def main():
     else:
         logger.warning(f"gap_fill_prioritized.csv not found at {gap_fill_csv} — skipping")
 
+    # Migrate c_va (lowercase typo) → C_va before compartment naming
+    cva_migrated = 0
+    for met in model.metabolites:
+        if met.compartment == "c_va":
+            met.compartment = "C_va"
+            cva_migrated += 1
+    if cva_migrated:
+        logger.info(f"Compartment fix: migrated {cva_migrated} metabolite(s) from c_va → C_va")
+
     # Fix compartment names so COBRApy can identify the external compartment
     _COMPARTMENT_NAMES = {
         "C_cy": "cytoplasm",
@@ -130,11 +175,30 @@ def main():
         "C_gm": "Golgi membrane",
         "C_mm": "mitochondrial membrane",
         "C_vm": "vacuolar membrane",
-        "c_va": "vacuole (alt)",
     }
     existing_comps = set(met.compartment for met in model.metabolites)
     model.compartments = {c: _COMPARTMENT_NAMES.get(c, c) for c in existing_comps}
     logger.info(f"Compartments set: {model.compartments}")
+
+    # Verify COBRApy can resolve the external compartment via the "extracellular" name.
+    # COBRApy checks compartment names for "extra" substring to identify the boundary.
+    _ex_name = model.compartments.get("C_ex", "")
+    if _ex_name != "extracellular":
+        logger.warning(
+            f"C_ex compartment name is {_ex_name!r}, expected 'extracellular' — "
+            "COBRApy may not auto-detect the external compartment"
+        )
+    else:
+        logger.info("  C_ex compartment verified as 'extracellular'")
+
+    ec_check = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
+    logger.info(f"  DEBUG: reactions with ec-code BEFORE normalize: {ec_check}")
+
+    logger.info("=== Final pass: normalise all annotation keys/values ===")
+    normalize_all_annotations(model)
+
+    ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
+    logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")
 
     logger.info(f"Saving updated model to: {OUTPUT_MODEL_PATH.name}")
     write_sbml_model(model, str(OUTPUT_MODEL_PATH))

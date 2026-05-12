@@ -97,14 +97,24 @@ def set_exchange_bounds(model, medium_bigg: dict[str, float] | None = None,
     )
 
 
-# Reaction IDs for mineral salts + vitamins components not covered by the
-# BiGG/name-based tier-1/2 matching in set_exchange_bounds.
+# BiGG metabolite base IDs for mineral salts + vitamins, with uptake bounds.
 # Y. lipolytica is a biotin auxotroph — biotin must be supplied exogenously.
-_MINERAL_SALTS_VITAMINS: dict[str, float] = {
+_MINERAL_SALTS_METS: dict[str, float] = {
+    "mg2":   -1000.0,   # Magnesium
+    "k":     -1000.0,   # Potassium (also in MINIMAL_MEDIUM_BIGG; harmless duplicate)
+    "na1":   -1000.0,   # Sodium
+    "btn":   -1000.0,   # biotin (auxotroph — must supply)
+    "thm":   -1000.0,   # thiamine
+    "pydx":  -1000.0,   # pyridoxine
+}
+
+# Reaction-ID fallback for metabolites that lack bigg.metabolite annotation.
+# Only used when the BiGG-based lookup above fails.
+_MINERAL_SALTS_FALLBACK_IDS: dict[str, float] = {
     "R2061": -1000.0,   # Magnesium
     "R1298": -1000.0,   # Potassium
     "R1323": -1000.0,   # Sodium
-    "R1029": -1000.0,   # biotin (auxotroph — must supply)
+    "R1029": -1000.0,   # biotin
     "R1340": -1000.0,   # thiamine
     "R1305": -1000.0,   # pyridoxine
 }
@@ -115,37 +125,68 @@ def configure_medium(model,
     """
     Extend the current medium to a mineral salts + vitamins formulation.
 
-    Opens the six exchange reactions listed in _MINERAL_SALTS_VITAMINS
-    (Mg, K, Na, biotin, thiamine, pyridoxine) that are not matched by the
-    BiGG/name tiers in set_exchange_bounds.  Carbon source and other
-    nutrients set by set_exchange_bounds are left unchanged.
+    Tries to match exchange reactions via their metabolite's bigg.metabolite
+    annotation against _MINERAL_SALTS_METS.  Falls back to reaction-ID lookup
+    (_MINERAL_SALTS_FALLBACK_IDS) for exchanges that lack BiGG annotation.
 
     After updating bounds, syncs model.medium so COBRApy's medium dict
     reflects the actual open uptakes.
 
     Parameters
     ----------
-    model         : cobra.Model (modified in-place)
-    extra_exchanges : optional additional {rxn_id: lb} overrides
+    model           : cobra.Model (modified in-place)
+    extra_exchanges : optional additional {rxn_id: lb} overrides (by reaction ID)
     """
-    targets = dict(_MINERAL_SALTS_VITAMINS)
-    if extra_exchanges:
-        targets.update(extra_exchanges)
+    # Build bigg_base → exchange_rxn map for metabolite-based matching
+    bigg_to_ex: dict[str, object] = {}
+    for ex in model.exchanges:
+        if len(ex.metabolites) != 1:
+            continue
+        met = next(iter(ex.metabolites))
+        raw = met.annotation.get("bigg.metabolite") if isinstance(met.annotation, dict) else None
+        if raw:
+            bigg_id = raw[0] if isinstance(raw, list) else str(raw)
+            bigg_base = re.sub(r"_[a-z]$", "", bigg_id)
+            if bigg_base not in bigg_to_ex:
+                bigg_to_ex[bigg_base] = ex
 
     opened = []
-    missing = []
-    for rxn_id, lb in targets.items():
+    matched_by_bigg: set[str] = set()   # reaction IDs matched via BiGG metabolite
+
+    # ── Primary: metabolite BiGG ID matching ─────────────────────────────
+    for bigg_base, lb in _MINERAL_SALTS_METS.items():
+        ex = bigg_to_ex.get(bigg_base)
+        if ex is None:
+            continue
+        if ex.lower_bound != lb:
+            ex.lower_bound = lb
+        matched_by_bigg.add(ex.id)
+        opened.append(ex.id)
+        logger.debug(f"  configure_medium: {ex.id} opened via BiGG metabolite '{bigg_base}'")
+
+    # ── Fallback: reaction ID for anything not matched above ──────────────
+    for rxn_id, lb in _MINERAL_SALTS_FALLBACK_IDS.items():
+        if rxn_id in matched_by_bigg:
+            continue   # already handled via metabolite lookup
         try:
             rxn = model.reactions.get_by_id(rxn_id)
         except KeyError:
-            missing.append(rxn_id)
             continue
         if rxn.lower_bound != lb:
             rxn.lower_bound = lb
-            opened.append(rxn_id)
+        opened.append(rxn_id)
+        logger.debug(f"  configure_medium: {rxn_id} opened via reaction-ID fallback")
 
-    if missing:
-        logger.warning(f"configure_medium: reaction IDs not found: {missing}")
+    # ── Extra overrides (by reaction ID) ─────────────────────────────────
+    if extra_exchanges:
+        for rxn_id, lb in extra_exchanges.items():
+            try:
+                rxn = model.reactions.get_by_id(rxn_id)
+                if rxn.lower_bound != lb:
+                    rxn.lower_bound = lb
+                opened.append(rxn_id)
+            except KeyError:
+                logger.warning(f"configure_medium: extra exchange '{rxn_id}' not found")
 
     model.medium = {
         ex.id: abs(ex.lower_bound)

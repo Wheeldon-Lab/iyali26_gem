@@ -15,12 +15,12 @@ def annotate_reactions(model, reac_xref: dict, reac_prop: dict | None = None) ->
     Three strategies, applied in order until one succeeds:
 
     A — bigg.reaction annotation → bigg_to_mnxr lookup  (fast, high-precision)
-    B — reaction name → MetaNetX description short-name  (string match)
     C — metabolite-set fingerprint in reac_prop.tsv      (structure-based)
         Requires reac_prop dict from load_reac_prop().
         Uses the frozenset of MNXM IDs annotated on the reaction's metabolites.
         Unique match → high-confidence annotation.
         Multiple matches → logged as ambiguous, skipped.
+    B — reaction name → MetaNetX description short-name  (string match, last resort)
 
     Modifies model in-place.
     """
@@ -41,7 +41,9 @@ def annotate_reactions(model, reac_xref: dict, reac_prop: dict | None = None) ->
             new_ann[db_prefix].append(db_id)
         new_ann["metanetx.reaction"] = [mnxr_id]
         merged = dict(rxn.annotation)
-        merged.update(new_ann)
+        for key, val in new_ann.items():
+            if key not in merged:
+                merged[key] = val
         rxn.annotation = merged
 
     for rxn in model.reactions:
@@ -55,12 +57,6 @@ def annotate_reactions(model, reac_xref: dict, reac_prop: dict | None = None) ->
             mnxr_id = bigg_to_mnxr.get(bid)
             if mnxr_id:
                 strategy = "A"
-
-        # Strategy B: reaction name → MetaNetX description short-name
-        if mnxr_id is None:
-            mnxr_id = desc_index.get(rxn.name.lower().strip())
-            if mnxr_id:
-                strategy = "B"
 
         # Strategy C: stoichiometric fingerprint via metabolite MNXM set
         if mnxr_id is None and fingerprint_index:
@@ -81,6 +77,14 @@ def annotate_reactions(model, reac_xref: dict, reac_prop: dict | None = None) ->
                         f"→ {candidates} — skipping"
                     )
                     ambiguous_C += 1
+
+        # Strategy B: reaction name → MetaNetX description short-name (last resort)
+        if mnxr_id is None:
+            name_lower = (rxn.name or "").lower().strip()
+            if name_lower:
+                mnxr_id = desc_index.get(name_lower)
+                if mnxr_id:
+                    strategy = "B"
 
         if mnxr_id is None:
             no_match += 1

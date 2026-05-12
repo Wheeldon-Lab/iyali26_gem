@@ -8,6 +8,7 @@ import re
 
 import requests
 
+from .http_utils import _request_with_retry
 from .config import (
     _KEGG_CONV_URL,
     _NCBI_EFETCH_BATCH,
@@ -138,7 +139,7 @@ def _fetch_proteome(proteome_id: str) -> list[dict]:
     }
     while url:
         try:
-            resp = requests.get(url, params=params, timeout=120)
+            resp = _request_with_retry("GET", url, params=params, timeout=120)
             resp.raise_for_status()
         except Exception as e:
             logger.warning(f"  Proteome fetch failed for {proteome_id}: {e}")
@@ -254,8 +255,8 @@ def _tier_b(unmapped: list[str]) -> dict[str, dict]:
             for cand in sorted(candidates):   # deterministic order
                 query = make_query(cand)
                 try:
-                    resp = requests.get(
-                        _UNIPROT_SEARCH_URL,
+                    resp = _request_with_retry(
+                        "GET", _UNIPROT_SEARCH_URL,
                         params={"query": query, "format": "json", "size": 1},
                         timeout=30,
                     )
@@ -332,8 +333,8 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
     # ── Step 1: esearch — get all NCBI Gene IDs for Y. lipolytica ─────────
     gene_ids_ncbi: list[str] = []
     try:
-        resp = requests.get(
-            _NCBI_ESEARCH_URL,
+        resp = _request_with_retry(
+            "GET", _NCBI_ESEARCH_URL,
             params={
                 "db":      "gene",
                 "term":    "txid4952[Organism] AND alive[property]",
@@ -360,8 +361,8 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
     for batch_start in range(0, len(gene_ids_ncbi), _NCBI_EFETCH_BATCH):
         batch = gene_ids_ncbi[batch_start: batch_start + _NCBI_EFETCH_BATCH]
         try:
-            resp = requests.get(
-                _NCBI_EFETCH_URL,
+            resp = _request_with_retry(
+                "GET", _NCBI_EFETCH_URL,
                 params={
                     "db":      "gene",
                     "id":      ",".join(batch),
@@ -476,7 +477,7 @@ def _build_kegg_uniprot_index() -> dict[str, str]:
 
     acc_to_kegg: dict[str, str] = {}
     try:
-        resp = requests.get(_KEGG_CONV_URL, timeout=60)
+        resp = _request_with_retry("GET", _KEGG_CONV_URL, timeout=60)
         resp.raise_for_status()
         for line in resp.text.strip().split("\n"):
             parts = line.split("\t")
