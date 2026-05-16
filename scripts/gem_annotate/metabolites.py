@@ -54,6 +54,33 @@ _ELEMENT_RE  = re.compile(r"[CHONSP]")
 _STRIP_RE    = re.compile(r"[^a-z0-9]")
 # Charge-notation suffix: p+1, p-2, n+1, charge+1, … — not a formula
 _CHARGE_RE   = re.compile(r"^[pnq][\+\-]\d+$|^charge[\+\-]\d+$", re.IGNORECASE)
+# Polymer repeat suffix like (C5H8)n — cannot be balanced
+_POLYMER_RE  = re.compile(r"^\([A-Z][A-Za-z0-9]*\)n$")
+# Trailing *N or bare * (charge/multiplier notation in formula field)
+_MULT_RE     = re.compile(r"\*\d*$")
+
+
+def _clean_formula(formula: str) -> str:
+    """
+    Sanitise a raw formula string before assigning to met.formula.
+
+    1. Trailing *N  (e.g. "C6H10O5*2") — strip the multiplier; it is not
+       part of the molecular formula.
+    2. Polymer notation (e.g. "(C5H8)n") — return '' so COBRApy skips
+       mass-balance checks on this metabolite.
+    3. Dot-separated formulas (e.g. "K.H") — remove the dot (→ "KH").
+    """
+    f = formula.strip()
+    if not f:
+        return f
+    # Strip *N multiplier suffix
+    f = _MULT_RE.sub("", f).strip()
+    # Polymer — cannot be assigned a fixed formula
+    if _POLYMER_RE.match(f):
+        return ""
+    # Dot separator (ionic or hydrate notation used loosely) → concatenate
+    f = f.replace(".", "")
+    return f
 
 
 def _parse_name_formula(raw_name: str) -> tuple[str, str]:
@@ -173,20 +200,42 @@ def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
     prop      = chem_prop_data["prop"]
     name_index = chem_prop_data["name_index"]
 
-    # Validate _SYNONYM_TABLE values exist in name_index
-    for syn_key, canonical in _SYNONYM_TABLE.items():
-        if canonical.lower() not in name_index:
-            logger.warning(
-                f"_SYNONYM_TABLE value not found in name_index: {canonical!r} "
-                f"(mapped from {syn_key!r})"
-            )
-
-    # Pre-build normalized name index for B2a / B2b
+    # Pre-build normalized name index for B2a / B2b (needed for synonym repair below)
     normalized_name_index: dict[str, str] = {}
     for k, v in name_index.items():
         nk = _STRIP_RE.sub("", k.lower())
         if nk not in normalized_name_index:
             normalized_name_index[nk] = v
+
+    # Validate _SYNONYM_TABLE values exist in name_index.
+    # MetaNetX 4.4+ may rename canonical names; attempt normalized repair before
+    # flagging.  Entries that are still missing get promoted to _DIRECT_MNXM_TABLE
+    # if the metabolite is already present there (so BD strategy covers them).
+    _synonym_table = dict(_SYNONYM_TABLE)   # mutable working copy
+    for syn_key, canonical in list(_synonym_table.items()):
+        if canonical.lower() in name_index:
+            continue
+        # Try normalized lookup
+        norm_canonical = _STRIP_RE.sub("", canonical.lower())
+        found_mnxm = normalized_name_index.get(norm_canonical)
+        if found_mnxm:
+            # Repair: replace canonical with the name_index key that matches
+            # (reverse-lookup via mnxm_id to get the actual stored name)
+            repaired_name = next(
+                (k for k, v in name_index.items() if v == found_mnxm),
+                canonical,
+            )
+            _synonym_table[syn_key] = repaired_name
+            logger.info(
+                f"_SYNONYM_TABLE repair: {canonical!r} → {repaired_name!r} "
+                f"(MNXM {found_mnxm}) for synonym {syn_key!r}"
+            )
+        else:
+            logger.warning(
+                f"_SYNONYM_TABLE value not found in name_index even after "
+                f"normalization: {canonical!r} (synonym {syn_key!r}) — "
+                f"check _DIRECT_MNXM_TABLE for coverage"
+            )
 
     # Pre-build formula index for Strategy C: formula → [mnxm_id, ...]
     formula_index: dict[str, list[str]] = defaultdict(list)
@@ -207,7 +256,9 @@ def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
     for met in model.metabolites:
         chem_name, formula_str = _parse_name_formula(met.name or "")
 
-        # 2a: set formula from name if not already set
+        # 2a: set formula from name if not already set; sanitise first
+        if formula_str:
+            formula_str = _clean_formula(formula_str)
         if formula_str and not met.formula:
             met.formula = formula_str
             formula_from_name += 1
@@ -246,7 +297,7 @@ def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
 
         # ── Strategy B1: synonym table ────────────────────────────────────
         if mnxm_id is None:
-            canonical = _SYNONYM_TABLE.get(chem_name.lower())
+            canonical = _synonym_table.get(chem_name.lower())
             if canonical:
                 mnxm_id = name_index.get(canonical.lower())
                 if mnxm_id:

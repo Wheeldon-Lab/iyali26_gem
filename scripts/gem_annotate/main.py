@@ -14,7 +14,7 @@ from .annotate_reactions_extended import annotate_remaining_reactions
 from .ec_annotation import enrich_genes_with_ec
 from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
-from .io import load_chem_prop, load_chem_xref, load_reac_prop, load_reac_xref
+from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
 from .reactions import annotate_reactions
 
@@ -42,6 +42,14 @@ def main():
         reac_prop = load_reac_prop(reac_prop_path) if reac_prop_path.exists() else None
         if reac_prop is None:
             logger.warning("reac_prop.tsv not found — Strategy C (fingerprint) disabled")
+
+        mnxm_depr = load_mnxm_depr(MNX_DIR / "chem_depr.tsv")
+        if not mnxm_depr:
+            logger.info(
+                "  chem_depr.tsv not found in data/metanetx/ — "
+                "download from https://www.metanetx.org/mnxdoc/mnxref.html "
+                "to improve fingerprint match rates for deprecated MNXM IDs"
+            )
 
         # Priority 1 + 2a
         logger.info("=== Priority 1+2a: metabolite annotation + formulas ===")
@@ -95,7 +103,7 @@ def main():
     # Runs after 4d so gene EC numbers are already populated.
     if mnx_ok:
         logger.info("=== Priority 4e: extended reaction annotation ===")
-        annotate_remaining_reactions(model, reac_xref, reac_prop)
+        annotate_remaining_reactions(model, reac_xref, reac_prop, mnxm_depr=mnxm_depr)
 
     # === EC backfill: copy gene EC numbers to reaction annotations ===
     logger.info("=== EC backfill: gene ec-code → reaction annotation ===")
@@ -190,6 +198,50 @@ def main():
         )
     else:
         logger.info("  C_ex compartment verified as 'extracellular'")
+
+    # === SBO annotation for pseudo-reactions ===
+    logger.info("=== SBO annotation: pseudo-reactions and boundary reactions ===")
+    _SBO_BIOMASS     = ["SBO:0000629"]
+    _SBO_MAINTENANCE = ["SBO:0000630"]
+    _SBO_ENCAPSULATE = ["SBO:0000395"]
+    _SBO_EXCHANGE    = ["SBO:0000627"]
+    _SBO_DEMAND      = ["SBO:0000628"]
+
+    sbo_counts = {"biomass": 0, "maintenance": 0, "pool": 0, "exchange": 0, "demand": 0}
+
+    _exchanges = set(model.exchanges)
+    _demands   = set(model.demands)
+
+    for rxn in model.reactions:
+        ann = rxn.annotation if isinstance(rxn.annotation, dict) else {}
+        if "sbo" in ann:
+            continue
+        if not isinstance(rxn.annotation, dict):
+            rxn.annotation = {}
+
+        rid = rxn.id
+        if rid.startswith(("xBIOMASS", "newBiom", "biomass_C")):
+            rxn.annotation["sbo"] = _SBO_BIOMASS
+            sbo_counts["biomass"] += 1
+        elif rid.startswith("xMAINTENANCE"):
+            rxn.annotation["sbo"] = _SBO_MAINTENANCE
+            sbo_counts["maintenance"] += 1
+        elif rid.startswith(("xLIPID", "xAMINOACID", "xPOOL_")):
+            rxn.annotation["sbo"] = _SBO_ENCAPSULATE
+            sbo_counts["pool"] += 1
+        elif rxn in _exchanges:
+            rxn.annotation["sbo"] = _SBO_EXCHANGE
+            sbo_counts["exchange"] += 1
+        elif rxn in _demands:
+            rxn.annotation["sbo"] = _SBO_DEMAND
+            sbo_counts["demand"] += 1
+
+    logger.info(
+        f"  SBO added: biomass={sbo_counts['biomass']}  "
+        f"maintenance={sbo_counts['maintenance']}  "
+        f"pool/encapsulating={sbo_counts['pool']}  "
+        f"exchange={sbo_counts['exchange']}  demand={sbo_counts['demand']}"
+    )
 
     ec_check = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code BEFORE normalize: {ec_check}")

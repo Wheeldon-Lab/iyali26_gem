@@ -124,6 +124,36 @@ def load_reac_xref(path: Path) -> dict[str, list[tuple[str, str]]]:
     }
 
 
+def load_mnxm_depr(path: Path) -> dict[str, str]:
+    """
+    Parse chem_depr.tsv and return a mapping of deprecated MNXM IDs to their
+    current canonical MNXM IDs.  Used to normalise metabolite annotations that
+    were created against an older MetaNetX release before running fingerprint
+    matching against the current reac_prop.tsv equations.
+
+    File format (tab-separated, # comment lines):
+        deprecated_id   current_id   version_deprecated
+
+    Returns {} if the file does not exist (caller must handle gracefully).
+    """
+    if not path.exists():
+        logger.debug(f"chem_depr.tsv not found at {path} — MNXM deprecation mapping disabled")
+        return {}
+    logger.info("Loading chem_depr.tsv …")
+    df = _read_tsv(path, ["deprecated_id", "current_id", "version"])
+    # keep only MNXM → MNXM mappings
+    df = df[
+        df["deprecated_id"].str.startswith("MNXM") &
+        df["current_id"].str.startswith("MNXM")
+    ]
+    mapping: dict[str, str] = {}
+    for row in df.itertuples(index=False):
+        if row.deprecated_id not in mapping:
+            mapping[row.deprecated_id] = row.current_id
+    logger.info(f"  {len(mapping):,} deprecated MNXM IDs mapped to current IDs")
+    return mapping
+
+
 def load_reac_prop(path: Path) -> dict:
     """
     Parse reac_prop.tsv and build a stoichiometric fingerprint index and EC→MNXR map.
@@ -157,7 +187,7 @@ def load_reac_prop(path: Path) -> dict:
             ec = ec.strip()
             if ec:
                 ec_to_mnxr[ec].append(mnx_id)
-        if str(is_transport).strip() == "1":
+        if str(is_transport).strip() in ("1", "T", "true", "True"):
             transport_mnxr.add(mnx_id)
 
     logger.info(

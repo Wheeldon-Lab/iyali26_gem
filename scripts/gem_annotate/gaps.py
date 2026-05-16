@@ -242,6 +242,42 @@ def audit_mis_reactions(model, mis_metabolite_ids: list[str]) -> None:
         logger.info("audit_mis_reactions: no reactions found for the given metabolite IDs")
 
 
+def _resolve_met_id(model, bare_id: str) -> "list":
+    """
+    Resolve a bare metabolite ID (e.g. "m200") to all matching COBRApy
+    Metabolite objects, covering three ID forms COBRApy may produce after an
+    SBML round-trip:
+
+      1. Exact match (bare_id as-is).
+      2. bare_id + "[compartment]"  — bracket-compartment suffix.
+      3. "M_" + bare_id  or  "M_" + bare_id + "[compartment]".
+
+    Returns a list of all matches (may span multiple compartments).
+    Returns an empty list if nothing matches.
+    """
+    hits: list = []
+
+    # 1. Exact
+    try:
+        hits.append(model.metabolites.get_by_id(bare_id))
+        return hits   # exact is unambiguous
+    except KeyError:
+        pass
+
+    # 2 & 3. Prefix / M_-prefix scans
+    bracket_prefixes = (bare_id + "[", "M_" + bare_id + "[")
+    exact_prefixes   = ("M_" + bare_id,)
+
+    for met in model.metabolites:
+        mid = met.id
+        if any(mid.startswith(p) for p in bracket_prefixes):
+            hits.append(met)
+        elif any(mid == p for p in exact_prefixes):
+            hits.append(met)
+
+    return hits
+
+
 def merge_duplicate_metabolites(
     model,
     pairs: list[tuple[str, str]],
@@ -257,46 +293,90 @@ def merge_duplicate_metabolites(
       2. Remove drop_id from the model.
       3. Copy annotations from drop to keep (don't overwrite existing keys).
 
-    pairs : list of (keep_id, drop_id) — keep_id survives, drop_id is removed.
+    pairs : list of (keep_id, drop_id) bare IDs — compartment suffixes are
+    resolved automatically.  Merges only when both metabolites are in the same
+    compartment (guards against cross-compartment collisions).
 
     After merging, run `cobra.util.check_mass_balance()` manually to verify
     the reactions involving these metabolites are now balanced.
     """
+    # Build a quick bare-ID → [full_id, ...] map for debug logging
+    bare_to_full: dict[str, list[str]] = {}
+    for met in model.metabolites:
+        mid = met.id
+        # Strip M_ prefix
+        core = mid[2:] if mid.startswith("M_") else mid
+        # Strip [compartment] suffix
+        bracket = core.find("[")
+        bare = core[:bracket] if bracket != -1 else core
+        bare_to_full.setdefault(bare, []).append(mid)
+
+    sample = list(bare_to_full.items())[:10]
+    logger.info(f"merge_duplicate_metabolites: bare-ID map sample (first 10): {sample}")
+
     merged_count  = 0
     skipped_count = 0
 
     for keep_id, drop_id in pairs:
-        try:
-            keep_met = model.metabolites.get_by_id(keep_id)
-        except KeyError:
-            logger.warning(f"merge_duplicate_metabolites: keep ID '{keep_id}' not found — skipping pair ({keep_id}, {drop_id})")
+        keep_hits = _resolve_met_id(model, keep_id)
+        drop_hits = _resolve_met_id(model, drop_id)
+
+        if not keep_hits:
+            logger.warning(
+                f"merge_duplicate_metabolites: keep ID '{keep_id}' not found "
+                f"(known variants: {bare_to_full.get(keep_id, [])}) — "
+                f"skipping pair ({keep_id}, {drop_id})"
+            )
             skipped_count += 1
             continue
-        try:
-            drop_met = model.metabolites.get_by_id(drop_id)
-        except KeyError:
-            logger.warning(f"merge_duplicate_metabolites: drop ID '{drop_id}' not found — skipping pair ({keep_id}, {drop_id})")
+        if not drop_hits:
+            logger.warning(
+                f"merge_duplicate_metabolites: drop ID '{drop_id}' not found "
+                f"(known variants: {bare_to_full.get(drop_id, [])}) — "
+                f"skipping pair ({keep_id}, {drop_id})"
+            )
             skipped_count += 1
             continue
 
-        # ── Replace drop_met with keep_met in all reactions ───────────────
-        for rxn in list(drop_met.reactions):
-            drop_coeff = rxn.metabolites[drop_met]
-            rxn.subtract_metabolites({drop_met: drop_coeff})
-            # add_metabolites uses combine=True by default, so adding drop_coeff
-            # correctly accumulates with any existing keep_met coefficient.
-            if drop_coeff != 0.0:
-                rxn.add_metabolites({keep_met: drop_coeff})
+        # Match keep/drop candidates that share the same compartment.
+        # Build {compartment: met} maps for fast intersection.
+        keep_by_comp = {m.compartment: m for m in keep_hits}
+        drop_by_comp = {m.compartment: m for m in drop_hits}
+        shared_comps = sorted(set(keep_by_comp) & set(drop_by_comp))
 
-        # ── Copy annotations (don't overwrite existing keys in keep) ──────
-        for key, val in (drop_met.annotation or {}).items():
-            if key not in keep_met.annotation:
-                keep_met.annotation[key] = val
+        if not shared_comps:
+            logger.warning(
+                f"merge_duplicate_metabolites: no shared compartment for "
+                f"keep {[m.id for m in keep_hits]} / drop {[m.id for m in drop_hits]} — "
+                f"skipping pair ({keep_id}, {drop_id})"
+            )
+            skipped_count += 1
+            continue
 
-        # ── Remove drop_met from model ────────────────────────────────────
-        model.remove_metabolites([drop_met])
-        logger.info(f"  Merged {drop_id} → {keep_id}")
-        merged_count += 1
+        for comp in shared_comps:
+            keep_met = keep_by_comp[comp]
+            drop_met = drop_by_comp[comp]
+
+            logger.info(
+                f"  Merging {drop_met.id} → {keep_met.id} "
+                f"(compartment {comp})"
+            )
+
+            # ── Replace drop_met with keep_met in all reactions ───────────
+            for rxn in list(drop_met.reactions):
+                drop_coeff = rxn.metabolites[drop_met]
+                rxn.subtract_metabolites({drop_met: drop_coeff})
+                if drop_coeff != 0.0:
+                    rxn.add_metabolites({keep_met: drop_coeff})
+
+            # ── Copy annotations (don't overwrite existing keys in keep) ──
+            for key, val in (drop_met.annotation or {}).items():
+                if key not in keep_met.annotation:
+                    keep_met.annotation[key] = val
+
+            # ── Remove drop_met from model ────────────────────────────────
+            model.remove_metabolites([drop_met])
+            merged_count += 1
 
     logger.info(
         f"merge_duplicate_metabolites: {merged_count} pairs merged, "
