@@ -6,3 +6,5 @@ local/
 model_baseline.xml
 model_before.xml
 .env
+explorer/
+results/

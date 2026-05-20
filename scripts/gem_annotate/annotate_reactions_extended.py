@@ -27,6 +27,16 @@ _TRANSPORT_SUFFIXES = ("tex", "tpp", "abc", "t2", "t3", "pp", "t")
 # MNXM1=H+, MNXM3=ATP, MNXM5=NAD+/NADH, MNXM9=ADP, WATER=H2O
 _UBIQUITOUS_MNXM = frozenset({"MNXM1", "WATER", "MNXM3", "MNXM9", "MNXM5"})
 
+# Runtime-only MNXM normalisation for fingerprint matching.
+# Maps non-standard IDs used in the model to the canonical IDs in reac_prop.tsv.
+# Applied only when building frozensets for lookup — model annotations are NOT modified.
+# Verified against reac_prop.tsv: target IDs confirmed present (MNXM727276: 6064 hits,
+# MNXM1101162: 18 hits); source IDs absent (0 hits each).
+_MNXM_NORMALIZE: dict[str, str] = {
+    "MNXM1094981": "MNXM727276",   # CoA: model non-standard → reac_prop canonical
+    "MNXM733947":  "MNXM1101162",  # 5-methylTHF: deprecated → current
+}
+
 
 def _apply_reaction_annotation(rxn, mnxr_id: str, by_mnxr: dict) -> None:
     """Merge MNXR cross-refs into rxn.annotation without overwriting existing keys."""
@@ -95,9 +105,13 @@ def annotate_remaining_reactions(
         return mnxm_id
 
     def _get_met_mnxm_norm(met) -> str:
-        """Return the metanetx.chemical annotation, normalised through the deprecation map."""
+        """Return metanetx.chemical annotation, normalised through deprecation map then
+        _MNXM_NORMALIZE, so fingerprint lookups use reac_prop canonical IDs."""
         raw = _get_met_mnxm(met)
-        return _normalise_mnxm(raw) if raw else ""
+        if not raw:
+            return ""
+        depr_resolved = _normalise_mnxm(raw)
+        return _MNXM_NORMALIZE.get(depr_resolved, depr_resolved)
 
     by_mnxr      = reac_xref["by_mnxr"]
     bigg_to_mnxr = reac_xref["bigg_to_mnxr"]
@@ -171,12 +185,31 @@ def annotate_remaining_reactions(
         for mnxr in mnxr_list:
             mnxr_to_ecs[mnxr].add(ec)
 
-    hit_A = hit_B = hit_B5 = hit_C = hit_D = ambig_C = ambig_D = no_match = 0
+    # ── Strategy B6 pre-computation ───────────────────────────────────────────
+    # Inverted index: token → list of desc_index keys containing that token.
+    # desc_index has 170k keys; naive substring scan over all of them for every
+    # reaction would be O(reactions × 170k).  Tokenising on whitespace and
+    # indexing by token reduces the candidate set to only keys that share at
+    # least one word with met_name, making the subsequent substring check cheap.
+    _B6_TRANSPORT_KEYWORDS = frozenset(
+        {"transport", "transporter", "permease", "diffusion", "symport", "antiport"}
+    )
+    word_to_desc_keys: dict[str, list[str]] = defaultdict(list)
+    for dk in desc_index:
+        for tok in dk.split():
+            word_to_desc_keys[tok].append(dk)
+
+    hit_A = hit_B = hit_B5 = hit_B6 = hit_C = hit_D = ambig_C = ambig_D = no_match = 0
     d_new_at_03 = 0   # Strategy D: candidates added by lowering threshold from 0.4 → 0.3
+    mnxm_norm_affected = 0   # reactions whose fingerprint contained ≥1 _MNXM_NORMALIZE hit
     unmatched_exchanges: list[tuple[str, str, str]] = []   # (rxn.id, rxn.name, met info)
 
     exchanges = set(model.exchanges)
     demands   = set(model.demands)
+
+    # Pre-compute the set of raw (pre-normalise) MNXM IDs that trigger _MNXM_NORMALIZE,
+    # so we can cheaply detect whether any metabolite in a reaction was remapped.
+    _norm_source_ids = frozenset(_MNXM_NORMALIZE)
 
     for rxn in model.reactions:
         if not _is_unannotated(rxn):
@@ -184,6 +217,11 @@ def annotate_remaining_reactions(
 
         mnxr_id = None
         strategy = None
+
+        # Track whether _MNXM_NORMALIZE remapped any metabolite in this reaction.
+        # Check against raw (pre-deprecation) IDs — _get_met_mnxm() before normalisation.
+        if any(_get_met_mnxm(m) in _norm_source_ids for m in rxn.metabolites):
+            mnxm_norm_affected += 1
 
         # ── Strategy A: exchange reactions ────────────────────────────────
         if rxn in exchanges or (len(rxn.metabolites) == 1):
@@ -335,6 +373,82 @@ def annotate_remaining_reactions(
                         if hit:
                             mnxr_id = hit
                             strategy = "B5"
+
+                # B6: met_name substring search in desc_index for transport reactions.
+                # Targets names containing "transport" or "transporter" that survived B1–B5.
+                # Uses a pre-built token inverted index to avoid scanning all 170k keys.
+                if mnxr_id is None and name_lower and (
+                    "transport" in name_lower or "transporter" in name_lower
+                ):
+                    # Extract met_name: text before "transporter" (longer, check first)
+                    # then before "transport".
+                    if "transporter" in name_lower:
+                        raw_met = name_lower.split("transporter")[0]
+                    else:
+                        raw_met = name_lower.split("transport")[0]
+                    met_name_b6 = raw_met.strip().rstrip("-,;/. ").strip()
+
+                    if met_name_b6:
+                        # Look up candidate desc_index keys via the first token of
+                        # met_name — this limits the full substring scan to a small
+                        # subset rather than all 170k keys.
+                        first_tok = met_name_b6.split()[0] if met_name_b6.split() else ""
+                        if first_tok:
+                            candidate_keys = word_to_desc_keys.get(first_tok, [])
+                        else:
+                            candidate_keys = []
+
+                        # Full substring match: key must contain met_name AND a
+                        # transport-related keyword.
+                        matched_mnxrs: list[str] = []
+                        for dk in candidate_keys:
+                            if met_name_b6 in dk and (
+                                _B6_TRANSPORT_KEYWORDS & set(dk.split())
+                            ):
+                                matched_mnxrs.append(desc_index[dk])
+                        # Deduplicate while preserving order
+                        matched_mnxrs = list(dict.fromkeys(matched_mnxrs))
+
+                        if len(matched_mnxrs) == 1:
+                            # Case 3: exactly one unique MNXR
+                            mnxr_id = matched_mnxrs[0]
+                            strategy = "B6"
+                        elif len(matched_mnxrs) > 1:
+                            # Case 4: multiple keys but all pointing to the same MNXR
+                            unique_mnxrs = set(matched_mnxrs)
+                            if len(unique_mnxrs) == 1:
+                                mnxr_id = matched_mnxrs[0]
+                                strategy = "B6"
+                            else:
+                                # Case 5: disambiguate by MNXM fingerprint Jaccard
+                                b6_mnxm_set = frozenset(
+                                    _get_met_mnxm_norm(m)
+                                    for m in rxn.metabolites
+                                    if _get_met_mnxm_norm(m)
+                                ) - frozenset({"MNXM1", "WATER"})
+                                if b6_mnxm_set and mnxr_to_fingerprint:
+                                    b6_scores: dict[str, float] = {}
+                                    for cand in unique_mnxrs:
+                                        fp = mnxr_to_fingerprint.get(cand)
+                                        if fp:
+                                            fp_filt = fp - frozenset({"MNXM1", "WATER"}) or fp
+                                            b6_scores[cand] = (
+                                                len(b6_mnxm_set & fp_filt)
+                                                / len(b6_mnxm_set | fp_filt)
+                                            )
+                                    if b6_scores:
+                                        sorted_b6 = sorted(b6_scores.values(), reverse=True)
+                                        best_b6   = sorted_b6[0]
+                                        second_b6 = sorted_b6[1] if len(sorted_b6) > 1 else 0.0
+                                        if best_b6 >= 0.3 and (best_b6 - second_b6) >= 0.1:
+                                            mnxr_id = max(b6_scores, key=lambda m: b6_scores[m])
+                                            strategy = "B6"
+                                if mnxr_id is None:
+                                    logger.debug(
+                                        f"B6 ambiguous {rxn.id!r} ({rxn.name!r}): "
+                                        f"met_name={met_name_b6!r}  "
+                                        f"candidates={sorted(unique_mnxrs)}"
+                                    )
 
         # ── Strategy C: GPR → EC → MetaNetX reaction ─────────────────────
         if mnxr_id is None and rxn.gene_reaction_rule and rxn.gene_reaction_rule.strip():
@@ -532,6 +646,8 @@ def annotate_remaining_reactions(
             hit_A += 1
         elif strategy == "B5":
             hit_B5 += 1
+        elif strategy == "B6":
+            hit_B6 += 1
         elif strategy == "B":
             hit_B += 1
         elif strategy == "D":
@@ -545,11 +661,15 @@ def annotate_remaining_reactions(
         for rxn_id, rxn_name, met_info in unmatched_exchanges:
             logger.info(f"    {rxn_id} ({rxn_name!r}): {met_info}")
 
-    total = hit_A + hit_B + hit_B5 + hit_C + hit_D
+    total = hit_A + hit_B + hit_B5 + hit_B6 + hit_C + hit_D
     unannotated_after = sum(1 for rxn in model.reactions if _is_unannotated(rxn))
+    logger.info(
+        f"  MNXM normalisation (_MNXM_NORMALIZE): affected {mnxm_norm_affected} reactions' fingerprints"
+    )
     logger.info(
         f"annotate_remaining_reactions: {total} newly annotated | "
         f"A(exchange)={hit_A}  B(transport)={hit_B}  B5(transport-fp)={hit_B5}  "
+        f"B6(transport-name-search)={hit_B6}  "
         f"C(EC→MNXR)={hit_C}  D(Jaccard+name+EC)={hit_D}  "
         f"ambiguous-C={ambig_C}  ambiguous-D={ambig_D}  unmatched={no_match}  "
         f"D_extra_candidates_at_0.3={d_new_at_03}"
