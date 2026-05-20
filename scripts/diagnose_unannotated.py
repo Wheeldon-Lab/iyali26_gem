@@ -16,10 +16,12 @@ Output columns:
 
 Usage:
   python scripts/diagnose_unannotated.py [--model model.xml] [--out data/unannotated_reactions.csv]
+  python scripts/diagnose_unannotated.py --mnx-dir data/metanetx --diag-out data/transport_diagnosis.txt
 """
 
 import argparse
 import csv
+import re
 import sys
 from pathlib import Path
 
@@ -51,6 +53,119 @@ def _classify(rxn, exchanges: set, demands: set) -> str:
     return "no_GPR"
 
 
+def diagnose_transport(
+    rows: list[dict],
+    mnx_dir: Path,
+    diag_out: Path,
+) -> None:
+    """
+    For the first 10 unannotated transport reactions whose name contains "transport",
+    probe desc_index with three matching strategies and write results to diag_out
+    (and stdout).
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
+        from gem_annotate.io import load_reac_xref
+    except ImportError as e:
+        print(f"WARNING: could not import gem_annotate.io ({e}) — skipping transport diagnosis")
+        return
+
+    reac_xref_path = mnx_dir / "reac_xref.tsv"
+    if not reac_xref_path.exists():
+        print(f"WARNING: {reac_xref_path} not found — skipping transport diagnosis")
+        return
+
+    reac_xref  = load_reac_xref(reac_xref_path)
+    desc_index = reac_xref["desc_index"]
+
+    # Pre-build normalised desc_index (strip all non-alphanumeric chars)
+    norm_desc_index: dict[str, str] = {}
+    for k, v in desc_index.items():
+        nk = re.sub(r"[^a-z0-9]", "", k)
+        if nk not in norm_desc_index:
+            norm_desc_index[nk] = v
+
+    # Select up to 10 transport rows whose name contains "transport"
+    targets = [
+        r for r in rows
+        if r["type"] == "transport" and "transport" in r["reaction_name"].lower()
+    ][:10]
+
+    if not targets:
+        print("\n[transport diagnosis] No matching reactions found.")
+        return
+
+    lines: list[str] = []
+
+    def emit(text: str = "") -> None:
+        lines.append(text)
+        print(text)
+
+    emit("=" * 70)
+    emit("TRANSPORT REACTION DIAGNOSIS")
+    emit(f"desc_index size: {len(desc_index):,}  |  targets: {len(targets)}")
+    emit("=" * 70)
+
+    for row in targets:
+        rxn_id   = row["reaction_id"]
+        rxn_name = row["reaction_name"]
+        emit()
+        emit(f"Reaction : {rxn_id}")
+        emit(f"Name     : {rxn_name}")
+
+        name_lower = rxn_name.lower().strip()
+
+        # ── Probe 1: exact name match ────────────────────────────────────────
+        exact = desc_index.get(name_lower)
+        emit(f"  [B1] exact match on name_lower={name_lower!r}")
+        emit(f"       → {exact or '(no match)'}")
+
+        # ── Probe 2: normalised name match ───────────────────────────────────
+        norm_name = re.sub(r"[^a-z0-9]", "", name_lower)
+        norm_hit  = norm_desc_index.get(norm_name)
+        emit(f"  [B2] normalised name={norm_name!r}")
+        emit(f"       → {norm_hit or '(no match)'}")
+
+        # ── Extract met_name (text before "transport") ───────────────────────
+        met_name = name_lower.split("transport")[0].strip().rstrip("-").strip()
+        emit(f"  met_name extracted: {met_name!r}")
+
+        # ── Probe 3: desc_index keys that contain met_name ───────────────────
+        if met_name:
+            containing = [
+                (k, v) for k, v in desc_index.items() if met_name in k
+            ][:5]
+            emit(f"  [B3a] desc_index keys containing {met_name!r} (top 5):")
+            if containing:
+                for k, v in containing:
+                    emit(f"         {k!r:50s} → {v}")
+            else:
+                emit("         (none)")
+
+            # ── Probe 4: met_name + transport/permease/diffusion ─────────────
+            transport_related = [
+                (k, v) for k, v in desc_index.items()
+                if met_name in k and any(
+                    kw in k for kw in ("transport", "permease", "diffusion")
+                )
+            ][:5]
+            emit(f"  [B3b] keys containing {met_name!r} + transport/permease/diffusion (top 5):")
+            if transport_related:
+                for k, v in transport_related:
+                    emit(f"         {k!r:50s} → {v}")
+            else:
+                emit("         (none)")
+        else:
+            emit("  [B3a/b] met_name is empty — skipping substring searches")
+
+        emit("-" * 70)
+
+    diag_out.parent.mkdir(parents=True, exist_ok=True)
+    with open(diag_out, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    print(f"\nTransport diagnosis written to: {diag_out}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export unannotated reactions to CSV")
     parser.add_argument(
@@ -62,6 +177,16 @@ def main() -> None:
         "--out",
         default="data/unannotated_reactions.csv",
         help="Output CSV path (default: data/unannotated_reactions.csv)",
+    )
+    parser.add_argument(
+        "--mnx-dir",
+        default="data/metanetx",
+        help="MetaNetX data directory containing reac_xref.tsv (default: data/metanetx)",
+    )
+    parser.add_argument(
+        "--diag-out",
+        default="data/transport_diagnosis.txt",
+        help="Transport diagnosis output path (default: data/transport_diagnosis.txt)",
     )
     args = parser.parse_args()
 
@@ -134,6 +259,9 @@ def main() -> None:
     for t, n in sorted(by_type.items()):
         print(f"  {t:12s}: {n}")
     print(f"\nWritten to: {out_path}")
+
+    # Transport diagnosis (requires MetaNetX reac_xref.tsv)
+    diagnose_transport(rows, Path(args.mnx_dir), Path(args.diag_out))
 
 
 if __name__ == "__main__":

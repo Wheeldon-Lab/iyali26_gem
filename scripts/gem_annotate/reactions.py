@@ -5,6 +5,8 @@ reactions.py — reaction annotation via MetaNetX reac_xref.
 import logging
 from collections import defaultdict
 
+from .annotate_reactions_extended import _MNXM_NORMALIZE
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,13 +60,15 @@ def annotate_reactions(model, reac_xref: dict, reac_prop: dict | None = None) ->
             if mnxr_id:
                 strategy = "A"
 
-        # Strategy C: stoichiometric fingerprint via metabolite MNXM set
+        # Strategy C: stoichiometric fingerprint via metabolite MNXM set.
+        # Apply _MNXM_NORMALIZE so non-standard model IDs map to reac_prop canonical IDs.
         if mnxr_id is None and fingerprint_index:
             mnxm_set = frozenset(
-                ann[0] if isinstance(ann, list) else ann
+                _MNXM_NORMALIZE.get(raw_id, raw_id)
                 for met in rxn.metabolites
                 for ann in [met.annotation.get("metanetx.chemical")]
                 if ann
+                for raw_id in [ann[0] if isinstance(ann, list) else ann]
             )
             if len(mnxm_set) >= 2:
                 candidates = fingerprint_index.get(mnxm_set, [])
