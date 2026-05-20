@@ -1,0 +1,312 @@
+INFO: Loading raw model: iyli21.xml
+Restricted license - for non-production use only - expires 2027-11-29
+INFO: Restricted license - for non-production use only - expires 2027-11-29
+INFO: Loading chem_xref.tsv …
+INFO:   3,445,804 source entries, 1,495,668 MNXM IDs
+INFO: Loading chem_prop.tsv …
+INFO:   1,495,668 compounds, 1,480,153 unique names
+INFO: Loading reac_xref.tsv …
+INFO:   83,737 MNXR IDs, 56,326 BiGG reactions, 170,212 names indexed, 6 EC numbers indexed
+INFO: Loading reac_prop.tsv …
+INFO:   77,777 unique metabolite-set fingerprints indexed, 4,574 single-metabolite fingerprints indexed, 8,662 EC numbers indexed, 11,322 transport reactions indexed
+INFO: Loading chem_depr.tsv …
+INFO:   56,830 deprecated MNXM IDs mapped to current IDs
+INFO: === Priority 1+2a: metabolite annotation + formulas ===
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'water' (synonym 'h2o') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'dioxygen' (synonym 'oxygen') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'dioxygen' (synonym 'o2') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'hydron' (synonym 'h+') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'hydron' (synonym 'proton') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'carbon dioxide' (synonym 'co2') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'coenzyme A' (synonym 'coa') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'adenylosuccinate' (synonym 'adenylo-succinate') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'S-adenosylmethioninamine' (synonym 's-adenosylmethioninamine') — check _DIRECT_MNXM_TABLE for coverage
+WARNING: _SYNONYM_TABLE value not found in name_index even after normalization: 'homocitrate' (synonym 'homocitrate') — check _DIRECT_MNXM_TABLE for coverage
+INFO: Metabolites annotated: 1621 | A=0  B(exact)=1065  BD(direct)=46  B0(excel)=88  B1(synonym)=7  B2a(norm)=66  B2b(prefix)=59  C(formula)=290  unmatched=247
+INFO: Formulas: 1309 from name, 0 from prop | Charges: 1326 from prop
+INFO: === Priority 2b: H+/H2O balance ===
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C6H10O5*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C11H15O16P2*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C11H14O19P3*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:132: UserWarning: invalid formula (has parenthesis) in 'C38H68N2O27P2(C5H8)n'
+  warn(f"invalid formula (has parenthesis) in '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:132: UserWarning: invalid formula (has parenthesis) in 'H2O(C8H13NO5)n'
+  warn(f"invalid formula (has parenthesis) in '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:132: UserWarning: invalid formula (has parenthesis) in 'C20H37O4P(C5H8)n'
+  warn(f"invalid formula (has parenthesis) in '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:132: UserWarning: invalid formula (has parenthesis) in 'C26H47O9P(C5H8)n'
+  warn(f"invalid formula (has parenthesis) in '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:132: UserWarning: invalid formula (has parenthesis) in 'C12H18N2O4S2R2(C2H2NOR)n'
+  warn(f"invalid formula (has parenthesis) in '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C19H30NO18P*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C11H17O13P*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C6H5O6*3'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'CHO2*'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C11H19O19P3*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C10H18O12P*'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C8H13O10P*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C8H14NO8P*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C19H38NO3*'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C19H38NO4*'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C12H20O11*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C10H14N4O4S2*4'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C6H8N2O2S2*4'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+INFO: Proton/water balance: 595 reactions fixed, 511 skipped (missing formula)
+INFO: === Priority 4a: reaction annotation ===
+INFO: Reactions annotated: 965 total  (A=0, B=841, C=124), ambiguous-C=17, unmatched=1320
+INFO: === Stoichiometric consistency: merging duplicate metabolites ===
+INFO: merge_duplicate_metabolites: bare-ID map sample (first 10): [('m1', ['m1[C_cy]']), ('m2', ['m2[C_mi]']), ('m3', ['m3[C_mi]']), ('m4', ['m4[C_cy]']), ('m5', ['m5[C_mi]']), ('m6', ['m6[C_mi]']), ('m7', ['m7[C_cy]']), ('m8', ['m8[C_cy]']), ('m9', ['m9[C_en]']), ('m10', ['m10[C_cy]'])]
+INFO:   Merging m1855[C_cy] → m200[C_cy] (compartment C_cy)
+INFO:   Merging m2043[C_cy] → m772[C_cy] (compartment C_cy)
+INFO:   Merging m1963[C_cy] → m878[C_cy] (compartment C_cy)
+INFO: merge_duplicate_metabolites: 3 pairs merged, 0 skipped
+INFO: === Priority 2c: exchange bounds (minimal medium) ===
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+INFO: Exchange bounds: 1 via BiGG annotation, 0 via name fallback, 1 uptake closed, 180 unchanged
+INFO: === Priority 2c+: mineral salts + vitamins medium extension ===
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+INFO: configure_medium: opened 7 mineral/vitamin exchanges (R1029, R1340, R2270, R2061, R1298, R1323, R1305); medium now has 15 components
+INFO: === Priority 3: biomass reaction R1372 ===
+INFO: R1372 current bounds: [0.0, 0.0]
+INFO: R1372: bounds opened to [0, 1000]
+INFO: R1372 composition: 37 reactants, 4 products
+INFO: R1372 reactant mass sum: 32766.4533 g/gDW (target ≈ 1.0)
+WARNING: R1372 mass deviates 32766.4533 g/gDW from 1.0; rescaling all stoichiometric coefficients by 0.000031
+INFO:   m32[C_cy]: -59.300000 → -0.001810
+INFO:   m50[C_cy]: -0.268000 → -0.000008
+INFO:   m74[C_cy]: -0.050000 → -0.000002
+INFO:   m86[C_cy]: -0.051000 → -0.000002
+INFO:   m89[C_cy]: -0.003590 → -0.000000
+INFO:   m93[C_cy]: -0.051000 → -0.000002
+INFO:   m95[C_cy]: -0.050000 → -0.000002
+INFO:   m114[C_cy]: -0.357000 → -0.000011
+INFO:   m130[C_cy]: -0.268000 → -0.000008
+INFO:   m141[C_cy]: -59.300000 → -0.001810
+INFO:   m149[C_cy]: -0.067000 → -0.000002
+INFO:   m267[C_cy]: -0.172000 → -0.000005
+INFO:   m272[C_cy]: -0.325000 → -0.000010
+INFO:   m294[C_cy]: -0.023400 → -0.000001
+INFO:   m310[C_cy]: -0.136000 → -0.000004
+INFO:   m319[C_cy]: -0.172000 → -0.000005
+INFO:   m441[C_cy]: -0.254000 → -0.000008
+INFO:   m443[C_cy]: -0.042900 → -0.000001
+INFO:   m459[C_cy]: -0.002430 → -0.000000
+INFO:   m465[C_cy]: -0.002430 → -0.000000
+INFO:   m505[C_cy]: -0.003590 → -0.000000
+INFO:   m549[C_cy]: -0.519000 → -0.000016
+INFO:   m615[C_cy]: -0.075000 → -0.000002
+INFO:   m743[C_cy]: -0.172000 → -0.000005
+INFO:   m765[C_cy]: -0.129000 → -0.000004
+INFO:   m770[C_cy]: -0.197000 → -0.000006
+INFO:   m772[C_cy]: -0.028000 → -0.000001
+INFO:   m775[C_cy]: -0.250000 → -0.000008
+INFO:   m793[C_cy]: -0.239000 → -0.000007
+INFO:   m859[C_cy]: -0.114000 → -0.000003
+INFO:   m926[C_cy]: -0.000900 → -0.000000
+INFO:   m964[C_cy]: -0.020000 → -0.000001
+INFO:   m992[C_cy]: -0.096500 → -0.000003
+INFO:   m1008[C_cy]: -0.257000 → -0.000008
+INFO:   m1123[C_cy]: -1.140000 → -0.000035
+INFO:   m1324[C_cy]: -0.821000 → -0.000025
+INFO:   m1400[C_cy]: -1.000000 → -0.000031
+INFO:   m10[C_cy]: 58.700000 → 0.001791
+INFO:   m35[C_cy]: 59.300000 → 0.001810
+INFO:   m143[C_cy]: 59.300000 → 0.001810
+INFO:   m1401[C_cy]: 1.000000 → 0.000031
+INFO: R1372: stoichiometry rescaled
+/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/.venv/lib/python3.13/site-packages/cobra/core/metabolite.py:129: UserWarning: invalid character '*' found in formula 'C6H10O5*2'
+  warn(f"invalid character '*' found in formula '{self.formula}'")
+WARNING: R1372 residual mass imbalance: {'charge': -2.1979797232077325e-06, 'H': -0.0014335317142961934, 'O': -0.0030118419907880813, 'C': -0.0017871104152518379, 'N': -0.0001742504733162828, 'S': -3.4455972056404234e-06, 'P': -7.051114069008685e-06}
+INFO: R1372: checking which precursors can carry flux …
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+WARNING: R1372: 1 precursors cannot carry flux (network gaps — need manual curation):
+WARNING:   BLOCKED: m1400[C_cy]  (lipid_)
+INFO: R1372: GAM term (atp + h2o → adp + pi + h) is present
+INFO: R1372: diagnosis complete — review warnings above for manual curation
+INFO: === Priority 4b: gene annotation via UniProt ===
+INFO: Annotating 1058 genes …
+INFO: === Gene annotation Tier A: UniProt proteome download ===
+INFO:   Loading proteome UP000182444 from cache (uniprot_UP000182444.json) …
+INFO:     7894 entries loaded from cache
+INFO:     Tier A running total after UP000182444: 0 mapped
+INFO:   Loading proteome UP000001300 from cache (uniprot_UP000001300.json) …
+INFO:     6454 entries loaded from cache
+INFO:     Tier A running total after UP000001300: 6 mapped
+INFO: Tier A: 6/1058 mapped
+INFO: === Gene annotation Tier A′: NCBI Gene bulk (1052 remaining) ===
+INFO:   Tier A′: 848/1052 loaded from cache (ncbi_gene_mapping.json)
+INFO: === Gene annotation Tier B: per-gene UniProt search (204 remaining) ===
+INFO:   Tier B: 193 hits from cache, 0/204 genes need querying
+INFO:   Tier B: 193/204 mapped (0 API calls)
+INFO: Genes annotated: 1047/1058 (A=6, A′=848, B=193), 11 unmapped
+INFO: === KEGG cross-ref enrichment: appending kegg.genes via UniProt bridge ===
+INFO:   KEGG conv: 11944 entries loaded from cache (kegg_uniprot_index.json)
+INFO:   KEGG enrichment: kegg.genes added to 177 genes
+INFO: === Priority 4c: UniProt ID-mapping (ncbigene → UniProtKB) ===
+INFO:   ID-mapping: 796 hits from cache, 52/848 IDs need querying
+INFO: === UniProt search: querying 52 NCBI Gene IDs in 2 batch(es) of 30 ===
+INFO:   ID-mapping: batch 1/2 (30 queried, 0 hits)
+INFO:   ID-mapping: batch 2/2 (22 queried, 0 hits)
+INFO:   ID-mapping: 796/848 genes enriched. Keys added — kegg.genes×790, ncbigene×796, refseq×734, uniprot×796
+INFO: === Priority 4d: gene EC number enrichment via UniProt ===
+INFO: enrich_genes_with_ec: 995 unique accessions, 499 need fetching (496 cached)
+INFO: enrich_genes_with_ec: ec-code written to 496 gene-accession pairs (496 genes total with EC)
+INFO: === Priority 4e: extended reaction annotation ===
+INFO:   Strategy C: 8,662 EC numbers available for EC→MNXR lookup
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+INFO:   Strategy A: 41 exchange reactions unmatched:
+INFO:     R941 ('(1-3)-beta-D-glucan exchange'): bigg=— mnxm=MNXM733735
+INFO:     R947 ('(R,R)-2,3-butanediol exchange'): bigg=— mnxm=—
+INFO:     R951 ('1-acylglycerophosphocholine exchange'): bigg=— mnxm=MNXM1107996
+INFO:     R960 ('2-isopropylmalate exchange'): bigg=— mnxm=MNXM730930
+INFO:     R992 ('7,8-diaminononanoate exchange'): bigg=— mnxm=MNXM1222445
+INFO:     R994 ('8-amino-7-oxononanoate exchange'): bigg=— mnxm=MNXM1412591
+INFO:     R1013 ('alpha,alpha-trehalose exchange'): bigg=— mnxm=MNXM1106024
+INFO:     R1016 ('ammonium exchange'): bigg=— mnxm=MNXM1227817
+INFO:     R1062 ('D-arabinose exchange'): bigg=— mnxm=MNXM48397
+INFO:     R1068 ('D-glucitol exchange'): bigg=— mnxm=MNXM1104589
+INFO:     R1134 ('gamma-aminobutyrate exchange'): bigg=— mnxm=MNXM1144700
+INFO:     R1189 ('iron(2+) exchange'): bigg=— mnxm=—
+INFO:     R1193 ('isoamylol exchange'): bigg=— mnxm=MNXM1107133
+INFO:     R1229 ('L-sorbose exchange'): bigg=— mnxm=MNXM729623
+INFO:     R1236 ('laurate exchange'): bigg=— mnxm=MNXM100679
+INFO:     R1288 ('palmitate exchange'): bigg=— mnxm=MNXM100228
+INFO:     R1289 ('palmitoleate exchange'): bigg=— mnxm=MNXM100069
+INFO:     R1298 ('potassium exchange'): bigg=— mnxm=—
+INFO:     R1329 ('stearate exchange'): bigg=— mnxm=MNXM100233
+INFO:     R1333 ('sulphate exchange'): bigg=— mnxm=—
+INFO:     R1334 ('sulphite exchange'): bigg=— mnxm=MNXM726340
+INFO:     R1339 ('thiamine(1+) diphosphate(1-) exchange'): bigg=— mnxm=—
+INFO:     R1341 ('thiamine(1+) monophosphate exchange'): bigg=— mnxm=MNXM1137754
+INFO:     R1388 ('14-demethyllanosterol exchange'): bigg=— mnxm=MNXM1555803
+INFO:     R1438 ('butyrate exchange'): bigg=— mnxm=—
+INFO:     R1440 ('oleate exchange'): bigg=— mnxm=MNXM100005
+INFO:     R1444 ('myristate exchange'): bigg=— mnxm=MNXM100009
+INFO:     R2005 ('3-oxalomalate(3-) exchange'): bigg=— mnxm=MNXM3850
+INFO:     R2018 ('Gly-Asp exchange'): bigg=— mnxm=—
+INFO:     R2026 ('Gly-Glu exchange'): bigg=— mnxm=—
+INFO:     R2031 ('Ala-Gly exchange'): bigg=— mnxm=—
+INFO:     R2036 ('Gly-Pro exchange'): bigg=— mnxm=—
+INFO:     R2061 ('Magnesium exchange'): bigg=— mnxm=MNXM60936
+INFO:     R2208 ('Indole_3_acetonitrile exchange'): bigg=— mnxm=—
+INFO:     R2211 ('alpha_Aminopropiononitrile exchange'): bigg=— mnxm=—
+INFO:     R2214 ('gamma_Amino_gamma_cyanobutanoate exchange'): bigg=— mnxm=—
+INFO:     R2272 ('hexadecane exchange'): bigg=— mnxm=MNXM724803
+INFO:     R2273 ('triolein exchange'): bigg=— mnxm=—
+INFO:     R2275 ('tributyrin exchange'): bigg=— mnxm=—
+INFO:     R2278 ('D-Limonene exchange'): bigg=— mnxm=—
+INFO:     R2280 ('3-dehydroshikimate exchange'): bigg=3dhsk mnxm=MNXM611
+INFO: annotate_remaining_reactions: 629 newly annotated | A(exchange)=45  B(transport)=11  B5(transport-fp)=253  B6(transport-name-search)=70  C(EC→MNXR)=146  D(Jaccard+name+EC)=104  ambiguous-C=155  ambiguous-D=197  unmatched=691  D_extra_candidates_at_0.3=58547
+INFO:   Reactions still unannotated after both passes: 691
+INFO: === EC backfill: gene ec-code → reaction annotation ===
+INFO:   EC backfill: ec-code added to 833 reactions
+INFO: === Priority 5: gap analysis (FVA, post-medium) ===
+INFO: Running FVA to identify blocked reactions …
+INFO:   Model: 2285 reactions, solver=glpk
+INFO:   Blocked reactions: 961 / 2285
+INFO:   Orphan metabolites (no reachable producer):  883
+INFO:   Dead-end metabolites (no reachable consumer): 883
+INFO: ─── Gap Analysis Report ───────────────────────────────
+INFO:   Blocked reactions : 961
+INFO:   Orphan metabolites (no producer)  : 883
+INFO:   Dead-end metabolites (no consumer): 883
+INFO:   First 20 blocked: ['R5', 'R11', 'R12', 'R14', 'R17', 'R18', 'R19', 'R21', 'R26', 'R30', 'R31', 'R33', 'R34', 'R37', 'R39', 'R40', 'R51', 'R52', 'R61', 'R64']
+INFO:   Orphans (first 10): ['m1001[C_cy]', 'm1002[C_nu]', 'm1003[C_nu]', 'm1006[C_cy]', 'm1007[C_va]', 'm1010[C_cy]', 'm1011[C_cy]', 'm1012[C_mi]', 'm1013[C_mi]', 'm1014[C_cy]']
+INFO:   Dead-ends (first 10): ['m1001[C_cy]', 'm1002[C_nu]', 'm1003[C_nu]', 'm1006[C_cy]', 'm1007[C_va]', 'm1010[C_cy]', 'm1011[C_cy]', 'm1012[C_mi]', 'm1013[C_mi]', 'm1014[C_cy]']
+INFO: ────────────────────────────────────────────────────────
+INFO:   Blocked reactions after medium extension: 961
+INFO: === Priority 6: gap-fill reaction insertion (P0) ===
+INFO: add_gap_fill_reactions: 128 P0 rows in gap_fill_prioritized.csv
+WARNING:   R_ATPasel (MNXR153059): 2 metabolites not found in model — skipping. Missing: ['MNXM01@C_cy', 'MNXM01@C_ex']
+WARNING:   R_ALR2 (MNXR95788): 1 metabolites not found in model — skipping. Missing: ['MNXM1744@C_cy']
+INFO:   Added R_ALCDH_nadp_hi (MNXR95726)  GPR='YALI1A15227g or YALI1E09329g or YALI1E21128g'  mets=5
+WARNING:   Mass imbalance in R_ALCDH_nadp_hi: H:+1
+WARNING:   R_4HTHRA (MNXR123321): 1 metabolites not found in model — skipping. Missing: ['MNXM29@C_cy']
+WARNING:   R_RE2034C (MNXR103594): 1 metabolites not found in model — skipping. Missing: ['MNXM17054@C_cy']
+WARNING:   R_ILETAm (MNXR198611): 1 metabolites not found in model — skipping. Missing: ['MNXM1363844@C_mi']
+WARNING:   R_MTHFCx (MNXR188454): 2 metabolites not found in model — skipping. Missing: ['MNXM1102376@C_pe', 'MNXM511@C_pe']
+WARNING:   R_AASAD1 (MNXR152720): 1 metabolites not found in model — skipping. Missing: ['MNXM1364547@C_cy']
+WARNING:   R_ARGNm (MNXR95945): 1 metabolites not found in model — skipping. Missing: ['MNXM741175@C_mi']
+INFO:   Added R_CYSS_m (MNXR97007)  GPR='YALI1E10364g'  mets=4
+WARNING:   Mass imbalance in R_CYSS_m: H:+1
+INFO:   Added R_CYST_II (MNXR191292)  GPR='YALI1E10364g'  mets=5
+WARNING:   Mass imbalance in R_CYST_II: H:+2
+WARNING:   R_CYSTS (MNXR97019): 1 metabolites not found in model — skipping. Missing: ['MNXM319@C_cy']
+INFO:   Added r0210 (MNXR96986)  GPR='YALI1E11255g'  mets=5
+WARNING:   R_ASPCTn (MNXR192558): 2 metabolites not found in model — skipping. Missing: ['MNXM138@C_nu', 'MNXM465@C_nu']
+INFO:   Added R_MDHy (MNXR101444)  GPR='YALI1E17214g'  mets=5
+WARNING:   Mass imbalance in R_MDHy: H:+1
+WARNING:   UG6PGTn (MNXR152260): 2 metabolites not found in model — skipping. Missing: ['MNXM1105855@C_nu', 'MNXM1364019@C_nu']
+INFO:   Added R_OAADCm (MNXR102097)  GPR='YALI1E22303g'  mets=4
+WARNING:   Mass imbalance in R_OAADCm: H:+1
+WARNING:   R_FPGPL (MNXR191073): 1 metabolites not found in model — skipping. Missing: ['MNXM1104787@C_cy']
+WARNING:   UAG4Ei (MNXR146642): 1 metabolites not found in model — skipping. Missing: ['MNXM1100890@C_cy']
+INFO:   Added SPHPL (MNXR188844)  GPR='YALI1E33285g'  mets=3
+WARNING:   Mass imbalance in SPHPL: H:-1
+WARNING:   r0384 (MNXR152936): 1 metabolites not found in model — skipping. Missing: ['MNXM1024@C_cy']
+INFO:   Added R_CAT2p (MNXR96457)  GPR='YALI1E40671g'  mets=4
+INFO:   Added R_G6PPer (MNXR198838)  GPR='YALI1E41893g'  mets=4
+INFO:   Added R_NTP7 (MNXR188499)  GPR='YALI1E41893g'  mets=5
+WARNING:   Mass imbalance in R_NTP7: H:+1
+WARNING:   R_G1PPpp (MNXR198783): 1 metabolites not found in model — skipping. Missing: ['MNXM1364212@C_cy']
+INFO:   Added R_GNP (MNXR123213)  GPR='YALI1E41893g'  mets=4
+WARNING:   Mass imbalance in R_GNP: H:+1
+INFO:   Added R_NDP1 (MNXR96129)  GPR='YALI1E41893g'  mets=5
+WARNING:   Mass imbalance in R_NDP1: H:-1
+INFO:   Added R_PGAM1_PhosHydro (MNXR102525)  GPR='YALI1E41893g'  mets=4
+INFO:   Added R_NDP7g (MNXR188497)  GPR='YALI1E41893g'  mets=5
+WARNING:   Mass imbalance in R_NDP7g: H:+1
+INFO:   Added R_NTP3pp (MNXR188537)  GPR='YALI1E41893g'  mets=5
+WARNING:   Mass imbalance in R_NTP3pp: H:-1
+WARNING:   R_3NUCLE1 (MNXR190452): 1 metabolites not found in model — skipping. Missing: ['MNXM1102173@C_cy']
+INFO:   Added r0242 (MNXR95764)  GPR='YALI1E41893g'  mets=4
+WARNING:   Mass imbalance in r0242: H:-2
+INFO: add_gap_fill_reactions: added=16, skipped_duplicate=80, skipped_missing_mets=16, imbalanced=12
+INFO: === Priority 6b: post-gap-fill FVA ===
+INFO: Running FVA to identify blocked reactions …
+INFO:   Model: 2301 reactions, solver=glpk
+INFO:   Blocked reactions: 955 / 2301
+INFO:   Orphan metabolites (no reachable producer):  875
+INFO:   Dead-end metabolites (no reachable consumer): 875
+INFO:   Blocked reactions: 961 → 955  (Δ +6 unblocked)
+INFO: ─── Gap Analysis Report ───────────────────────────────
+INFO:   Blocked reactions : 955
+INFO:   Orphan metabolites (no producer)  : 875
+INFO:   Dead-end metabolites (no consumer): 875
+INFO:   First 20 blocked: ['R5', 'R11', 'R12', 'R14', 'R17', 'R18', 'R19', 'R21', 'R26', 'R30', 'R31', 'R33', 'R34', 'R37', 'R39', 'R40', 'R51', 'R52', 'R61', 'R64']
+INFO:   Orphans (first 10): ['m1001[C_cy]', 'm1002[C_nu]', 'm1003[C_nu]', 'm1006[C_cy]', 'm1007[C_va]', 'm1010[C_cy]', 'm1011[C_cy]', 'm1012[C_mi]', 'm1013[C_mi]', 'm1014[C_cy]']
+INFO:   Dead-ends (first 10): ['m1001[C_cy]', 'm1002[C_nu]', 'm1003[C_nu]', 'm1006[C_cy]', 'm1007[C_va]', 'm1010[C_cy]', 'm1011[C_cy]', 'm1012[C_mi]', 'm1013[C_mi]', 'm1014[C_cy]']
+INFO: ────────────────────────────────────────────────────────
+INFO: Compartment fix: migrated 1 metabolite(s) from c_va → C_va
+INFO: Compartments set: {'C_cy': 'cytoplasm', 'C_mi': 'mitochondria', 'C_en': 'endosome', 'C_vm': 'vacuolar membrane', 'C_er': 'endoplasmic reticulum', 'C_pe': 'peroxisome', 'C_nu': 'nucleus', 'C_ex': 'extracellular', 'C_em': 'endosomal membrane', 'C_go': 'Golgi apparatus', 'C_mm': 'mitochondrial membrane', 'C_lp': 'lipid particle', 'C_gm': 'Golgi membrane', 'C_va': 'vacuole'}
+INFO:   C_ex compartment verified as 'extracellular'
+INFO: === SBO annotation: pseudo-reactions and boundary reactions ===
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+WARNING: Could not identify an external compartment by name and choosing one with the most boundary reactions. That might be complete nonsense or change suddenly. Consider renaming your compartments using `Model.compartments` to fix this.
+INFO:   SBO added: biomass=3  maintenance=1  pool/encapsulating=10  exchange=182  demand=1
+INFO:   DEBUG: reactions with ec-code BEFORE normalize: 849
+INFO: === Final pass: normalise all annotation keys/values ===
+INFO: normalize_all_annotations: fixed keys/values in 1570 metabolites, 1594 reactions, 0 genes
+INFO:   DEBUG: reactions with ec-code AFTER normalize: 849
+INFO: Saving updated model to: model.xml
+INFO: Model build complete.
