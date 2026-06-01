@@ -1,40 +1,55 @@
+import csv
 from cobra.io import read_sbml_model
-from collections import Counter
-m = read_sbml_model('model.xml')
+from cobra.flux_analysis import find_blocked_reactions
+
+m = read_sbml_model('/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/model.xml')
 m.solver = 'glpk'
-total = len(m.metabolites)
-has_ann = sum(1 for met in m.metabolites if isinstance(met.annotation, dict) and met.annotation)
-has_formula = sum(1 for met in m.metabolites if met.formula and met.formula.strip())
-has_charge = sum(1 for met in m.metabolites if met.charge is not None and met.charge != 0)
-has_name = sum(1 for met in m.metabolites if met.name and met.name.strip())
 
-# Per-database coverage
+blocked_rxn_ids = set(find_blocked_reactions(m, processes=1))
+
 dbs = ['bigg.metabolite', 'kegg.compound', 'metanetx.chemical', 'chebi', 'hmdb', 'inchikey', 'pubchem.compound', 'seed.compound']
-print(f'=== Metabolite overview ===')
-print(f'Total: {total}')
-print(f'Has any annotation: {has_ann} ({100*has_ann/total:.1f}%)')
-print(f'Has formula: {has_formula} ({100*has_formula/total:.1f}%)')
-print(f'Has charge: {has_charge} ({100*has_charge/total:.1f}%)')
-print(f'Has name: {has_name} ({100*has_name/total:.1f}%)')
 
-print(f'\n=== Per-database coverage ===')
-for db in dbs:
-    n = sum(1 for met in m.metabolites if isinstance(met.annotation, dict) and db in met.annotation)
-    print(f'  {db:25s}: {n}/{total} ({100*n/total:.1f}%)')
+out_path = '/Users/david/Desktop/Lab/Ian wheeldon/code/iyali26_gem/data/lacking_metabolites.csv'
+with open(out_path, 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow([
+        'id', 'name', 'formula', 'charge', 'compartment',
+        'has_annotation', 'missing_dbs',
+        'missing_formula', 'missing_charge', 'missing_name',
+        'n_reactions', 'n_blocked_reactions', 'all_reactions_blocked',
+        'reaction_ids',
+    ])
+    for met in m.metabolites:
+        ann = met.annotation if isinstance(met.annotation, dict) else {}
+        has_annotation = bool(ann)
+        missing_dbs = ';'.join(db for db in dbs if db not in ann)
+        missing_formula = not (met.formula and met.formula.strip())
+        missing_charge = met.charge is None
+        missing_name = not (met.name and met.name.strip())
 
-# Unannotated metabolites
-unann = [met for met in m.metabolites if not isinstance(met.annotation, dict) or not met.annotation]
-print(f'\n=== Unannotated metabolites: {len(unann)} ===')
-has_name_unann = sum(1 for met in unann if met.name and met.name.strip())
-has_formula_unann = sum(1 for met in unann if met.formula and met.formula.strip())
-print(f'  With name: {has_name_unann}')
-print(f'  With formula: {has_formula_unann}')
-print(f'  Samples:')
-for met in unann[:15]:
-    print(f'    {met.id:25s}  name={str(met.name)[:45]:45s}  formula={met.formula}  compartment={met.compartment}')
+        rxn_ids = [r.id for r in met.reactions]
+        n_blocked = sum(1 for rid in rxn_ids if rid in blocked_rxn_ids)
+        all_blocked = len(rxn_ids) > 0 and n_blocked == len(rxn_ids)
 
-# Compartment distribution of unannotated
-comp = Counter(met.compartment for met in unann)
-print(f'\n  By compartment:')
-for c, n in comp.most_common():
-    print(f'    {c}: {n}')
+        # only write rows that have at least one missing field or a blocked reaction
+        if not (missing_formula or missing_charge or missing_name or not has_annotation or n_blocked > 0):
+            continue
+
+        writer.writerow([
+            met.id,
+            met.name,
+            met.formula,
+            met.charge,
+            met.compartment,
+            has_annotation,
+            missing_dbs,
+            missing_formula,
+            missing_charge,
+            missing_name,
+            len(rxn_ids),
+            n_blocked,
+            all_blocked,
+            ';'.join(rxn_ids),
+        ])
+
+print(f'Wrote to {out_path}')

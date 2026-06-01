@@ -38,17 +38,95 @@ _MNXM_NORMALIZE: dict[str, str] = {
 }
 
 
-def _apply_reaction_annotation(rxn, mnxr_id: str, by_mnxr: dict) -> None:
-    """Merge MNXR cross-refs into rxn.annotation without overwriting existing keys."""
+def _apply_reaction_annotation(
+    rxn,
+    mnxr_id: str,
+    by_mnxr: dict,
+    extra_mnxr_ids: list[str] | None = None,
+) -> None:
+    """Merge MNXR cross-refs into rxn.annotation without overwriting existing keys.
+
+    If extra_mnxr_ids is given, their cross-references are merged in (union) alongside
+    the primary mnxr_id's refs, but metanetx.reaction is set only to mnxr_id.
+    """
     new_ann: dict[str, list] = defaultdict(list)
-    for db_prefix, db_id in by_mnxr.get(mnxr_id, []):
-        new_ann[db_prefix].append(db_id)
+    seen: dict[str, set] = defaultdict(set)
+    for source_id in [mnxr_id] + (extra_mnxr_ids or []):
+        for db_prefix, db_id in by_mnxr.get(source_id, []):
+            if db_id not in seen[db_prefix]:
+                seen[db_prefix].add(db_id)
+                new_ann[db_prefix].append(db_id)
     new_ann["metanetx.reaction"] = [mnxr_id]
     merged = dict(rxn.annotation)
     for key, val in new_ann.items():
         if key not in merged:
             merged[key] = val
     rxn.annotation = merged
+
+
+def _resolve_multi_candidates(
+    candidates: list[str],
+    rxn,
+    by_mnxr: dict,
+    mnxr_compartment_type: dict[str, str],
+    ec_to_mnxr: dict[str, list[str]],
+    mnxr_to_ecs: dict[str, set[str]],
+    context: str = "",
+) -> tuple[str | None, list[str] | None, str]:
+    """Resolve a list of fingerprint-matching MNXR candidates to a single winner.
+
+    Returns (winner_mnxr, equivalent_mnxrs, resolution_method) where:
+      - winner_mnxr        : selected MNXR or None if truly ambiguous
+      - equivalent_mnxrs   : all candidates whose cross-refs should be merged, or None
+      - resolution_method  : "compartment", "xref_count", "lex", or "ambiguous"
+
+    Selection priority:
+      1. Compartment structure match (single vs multi)
+      2. Most cross-references in by_mnxr (information richness)
+      3. Lexicographically smallest MNXR ID (deterministic tiebreak)
+
+    True ambiguous (returns None): candidates share no EC numbers at all and have
+    non-empty EC annotations (genuinely different reactions, not equivalent variants).
+    """
+    if not candidates:
+        return None, None, "ambiguous"
+
+    # ── EC-conflict check ─────────────────────────────────────────────────────
+    # Gather EC sets for all candidates that have any EC annotation.
+    cand_ecs: list[set[str]] = [mnxr_to_ecs.get(c, set()) for c in candidates]
+    annotated = [ecs for ecs in cand_ecs if ecs]
+    if len(annotated) >= 2:
+        shared_ecs = annotated[0].intersection(*annotated[1:])
+        if not shared_ecs:
+            # EC numbers are non-empty but completely disjoint → genuinely different reactions
+            logger.debug(
+                f"  {context} truly ambiguous (disjoint ECs): candidates={candidates}"
+            )
+            return None, None, "ambiguous"
+
+    # Candidates are equivalent variants — merge all their cross-references
+    equivalent = candidates
+
+    # ── Priority 1: compartment structure match ───────────────────────────────
+    comps = {m.compartment for m in rxn.metabolites}
+    rxn_is_single = len(comps) <= 1
+    expected_type = "single" if rxn_is_single else "multi"
+    comp_matches = [c for c in candidates if mnxr_compartment_type.get(c) == expected_type]
+    if len(comp_matches) == 1:
+        winner = comp_matches[0]
+        return winner, equivalent, "compartment"
+    if comp_matches:
+        candidates = comp_matches   # narrow field for subsequent tiebreaks
+
+    # ── Priority 2: most cross-references ────────────────────────────────────
+    xref_counts = {c: len(by_mnxr.get(c, [])) for c in candidates}
+    max_count = max(xref_counts.values())
+    richest = [c for c, n in xref_counts.items() if n == max_count]
+    if len(richest) == 1:
+        return richest[0], equivalent, "xref_count"
+
+    # ── Priority 3: lexicographic minimum ────────────────────────────────────
+    return min(richest), equivalent, "lex"
 
 
 def _get_met_bigg(met) -> str:
@@ -120,6 +198,7 @@ def annotate_remaining_reactions(
     fingerprint_index        = (reac_prop or {}).get("fingerprint_index", {})
     single_fingerprint_index = (reac_prop or {}).get("single_fingerprint_index", {})
     transport_mnxr           = (reac_prop or {}).get("transport_mnxr", set())
+    mnxr_compartment_type    = (reac_prop or {}).get("mnxr_compartment_type", {})
 
     # ── One-time reverse indexes ──────────────────────────────────────────────
 
@@ -203,6 +282,10 @@ def annotate_remaining_reactions(
     d_new_at_03 = 0   # Strategy D: candidates added by lowering threshold from 0.4 → 0.3
     mnxm_norm_affected = 0   # reactions whose fingerprint contained ≥1 _MNXM_NORMALIZE hit
     unmatched_exchanges: list[tuple[str, str, str]] = []   # (rxn.id, rxn.name, met info)
+    # Multi-candidate resolution stats (for fingerprint exact-match paths)
+    multi_resolved_compartment = 0
+    multi_resolved_xref = 0
+    multi_truly_ambiguous = 0
 
     exchanges = set(model.exchanges)
     demands   = set(model.demands)
@@ -217,6 +300,7 @@ def annotate_remaining_reactions(
 
         mnxr_id = None
         strategy = None
+        extra_mnxrs: list[str] | None = None   # equivalent MNXRs for cross-ref merging
 
         # Track whether _MNXM_NORMALIZE remapped any metabolite in this reaction.
         # Check against raw (pre-deprecation) IDs — _get_met_mnxm() before normalisation.
@@ -317,20 +401,22 @@ def annotate_remaining_reactions(
                         _get_met_mnxm_norm(m) for m in rxn.metabolites if _get_met_mnxm_norm(m)
                     )
 
-                    def _b5_resolve(candidates: list[str], source_label: str) -> str | None:
+                    def _b5_resolve(candidates: list[str], source_label: str) -> tuple[str | None, list[str] | None]:
                         """
                         Filter by transport flag, then name-token Jaccard (gap ≥ 0.1).
-                        Logs ambiguous cases; returns the unique winner or None.
+                        Falls back to _resolve_multi_candidates for exact fingerprint hits.
+                        Returns (winner, equivalent_list) or (None, None).
                         """
+                        nonlocal multi_resolved_compartment, multi_resolved_xref, multi_truly_ambiguous
                         if not candidates:
-                            return None
+                            return None, None
                         if len(candidates) == 1:
-                            return candidates[0]
+                            return candidates[0], candidates
                         # Stage 1: filter to transport reactions
                         if transport_mnxr:
                             t_hits = [m for m in candidates if m in transport_mnxr]
                             if len(t_hits) == 1:
-                                return t_hits[0]
+                                return t_hits[0], candidates
                             if t_hits:
                                 candidates = t_hits
                         # Stage 2: name-token Jaccard (requires best > 0 AND gap ≥ 0.1)
@@ -353,25 +439,40 @@ def annotate_remaining_reactions(
                                     best_sc   = sorted_sc[0]
                                     second_sc = sorted_sc[1] if len(sorted_sc) > 1 else 0.0
                                     if best_sc > 0 and (best_sc - second_sc) >= 0.1:
-                                        return max(scores, key=lambda m: scores[m])
-                        logger.debug(
-                            f"B5 ambiguous {source_label} {rxn.id!r} ({rxn.name!r}): "
-                            f"mnxm={mnxm_set}  candidates={candidates[:8]}"
+                                        winner = max(scores, key=lambda m: scores[m])
+                                        return winner, candidates
+                        # Stage 3: fall back to equivalence resolver
+                        winner, equiv, method = _resolve_multi_candidates(
+                            candidates, rxn, by_mnxr, mnxr_compartment_type,
+                            ec_to_mnxr, mnxr_to_ecs,
+                            context=f"B5-{source_label} {rxn.id!r}",
                         )
-                        return None
+                        if method == "compartment":
+                            multi_resolved_compartment += 1
+                        elif method in ("xref_count", "lex"):
+                            multi_resolved_xref += 1
+                        elif method == "ambiguous":
+                            multi_truly_ambiguous += 1
+                            logger.debug(
+                                f"B5 ambiguous {source_label} {rxn.id!r} ({rxn.name!r}): "
+                                f"mnxm={mnxm_set}  candidates={candidates[:8]}"
+                            )
+                        return winner, equiv
 
                     if len(mnxm_set) == 1:
                         solo_mnxm = next(iter(mnxm_set))
                         b5_cands = list(single_fingerprint_index.get(solo_mnxm, []))
-                        hit = _b5_resolve(b5_cands, "single")
+                        hit, equiv = _b5_resolve(b5_cands, "single")
                         if hit:
                             mnxr_id = hit
+                            extra_mnxrs = [m for m in (equiv or []) if m != hit]
                             strategy = "B5"
                     elif len(mnxm_set) >= 2:
                         b5_cands = list(fingerprint_index.get(mnxm_set, []))
-                        hit = _b5_resolve(b5_cands, "multi")
+                        hit, equiv = _b5_resolve(b5_cands, "multi")
                         if hit:
                             mnxr_id = hit
+                            extra_mnxrs = [m for m in (equiv or []) if m != hit]
                             strategy = "B5"
 
                 # B6: met_name substring search in desc_index for transport reactions.
@@ -490,6 +591,21 @@ def annotate_remaining_reactions(
                             mnxr_id = overlap[0]
                             strategy = "C"
                             resolved = True
+                        elif len(overlap) > 1:
+                            winner, equiv, method = _resolve_multi_candidates(
+                                overlap, rxn, by_mnxr, mnxr_compartment_type,
+                                ec_to_mnxr, mnxr_to_ecs,
+                                context=f"C-L1 {rxn.id!r}",
+                            )
+                            if method == "compartment":
+                                multi_resolved_compartment += 1
+                            elif method in ("xref_count", "lex"):
+                                multi_resolved_xref += 1
+                            if winner:
+                                mnxr_id = winner
+                                extra_mnxrs = [m for m in (equiv or []) if m != winner]
+                                strategy = "C"
+                                resolved = True
 
                     # Layer 2: Jaccard similarity (lowered thresholds: 0.3 / 0.1).
                     # Uses mnxr_to_fingerprint for O(N_candidates) lookup.
@@ -641,7 +757,7 @@ def annotate_remaining_reactions(
             no_match += 1
             continue
 
-        _apply_reaction_annotation(rxn, mnxr_id, by_mnxr)
+        _apply_reaction_annotation(rxn, mnxr_id, by_mnxr, extra_mnxrs)
         if strategy == "A":
             hit_A += 1
         elif strategy == "B5":
@@ -665,6 +781,10 @@ def annotate_remaining_reactions(
     unannotated_after = sum(1 for rxn in model.reactions if _is_unannotated(rxn))
     logger.info(
         f"  MNXM normalisation (_MNXM_NORMALIZE): affected {mnxm_norm_affected} reactions' fingerprints"
+    )
+    logger.info(
+        f"  Multi-candidate resolution: compartment={multi_resolved_compartment}  "
+        f"xref_count/lex={multi_resolved_xref}  truly_ambiguous={multi_truly_ambiguous}"
     )
     logger.info(
         f"annotate_remaining_reactions: {total} newly annotated | "

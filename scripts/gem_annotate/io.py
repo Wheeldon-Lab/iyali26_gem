@@ -12,6 +12,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 _MNXM_IN_EQ = re.compile(r"(MNXM\d+)@")   # extracts MNXM IDs from equation strings
+_MNXD_IN_EQ = re.compile(r"@(MNXD\d+)")   # extracts compartment IDs from equation strings
 
 
 def _read_tsv(path: Path, names: list[str]) -> pd.DataFrame:
@@ -176,6 +177,7 @@ def load_reac_prop(path: Path) -> dict:
     single_fingerprint_index: dict[str, list[str]] = defaultdict(list)   # MNXM → [mnxr]
     ec_to_mnxr: dict[str, list[str]] = defaultdict(list)
     transport_mnxr: set[str] = set()   # MNXR IDs flagged is_transport == "1"
+    mnxr_compartment_type: dict[str, str] = {}   # MNXR → "single" or "multi"
 
     for mnx_id, equation, _ref, classifs, _is_balanced, is_transport in df.itertuples(index=False):
         mnxm_ids = frozenset(_MNXM_IN_EQ.findall(equation))
@@ -189,16 +191,31 @@ def load_reac_prop(path: Path) -> dict:
                 ec_to_mnxr[ec].append(mnx_id)
         if str(is_transport).strip() in ("1", "T", "true", "True"):
             transport_mnxr.add(mnx_id)
+        # Classify compartment structure: "single" if only MNXD1, else "multi"
+        mnxd_ids = set(_MNXD_IN_EQ.findall(equation))
+        mnxr_compartment_type[mnx_id] = "single" if mnxd_ids <= {"MNXD1"} else "multi"
+
+    # Build reverse index: MNXR → set of EC numbers (from classifs column)
+    mnxr_to_ec: dict[str, list[str]] = {}
+    for ec, mnxr_list in ec_to_mnxr.items():
+        for mnxr in mnxr_list:
+            if mnxr not in mnxr_to_ec:
+                mnxr_to_ec[mnxr] = []
+            if ec not in mnxr_to_ec[mnxr]:
+                mnxr_to_ec[mnxr].append(ec)
 
     logger.info(
         f"  {len(fingerprint_index):,} unique metabolite-set fingerprints indexed, "
         f"{len(single_fingerprint_index):,} single-metabolite fingerprints indexed, "
         f"{len(ec_to_mnxr):,} EC numbers indexed, "
-        f"{len(transport_mnxr):,} transport reactions indexed"
+        f"{len(transport_mnxr):,} transport reactions indexed, "
+        f"{len(mnxr_to_ec):,} MNXR→EC entries"
     )
     return {
         "fingerprint_index": dict(fingerprint_index),
         "single_fingerprint_index": dict(single_fingerprint_index),
         "ec_to_mnxr": dict(ec_to_mnxr),
+        "mnxr_to_ec": mnxr_to_ec,
         "transport_mnxr": transport_mnxr,
+        "mnxr_compartment_type": mnxr_compartment_type,
     }
