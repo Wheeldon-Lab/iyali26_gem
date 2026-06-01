@@ -16,7 +16,7 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import apply_all_patches
+from .patches import apply_all_patches, fix_ec_code_format
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -281,6 +281,14 @@ def main():
 
     logger.info("=== Final pass: normalise all annotation keys/values ===")
     normalize_all_annotations(model)
+
+    # EC-code format compliance: pad three-segment EC codes (e.g. "3.1.3" →
+    # "3.1.3.-") for identifiers.org validity.  Must run after all EC codes
+    # are populated (gene enrichment, EC backfill, xref backfill) and after
+    # normalisation, so it is invoked here rather than in apply_all_patches.
+    logger.info("=== EC-code format compliance ===")
+    n_ec_padded = fix_ec_code_format(model)
+    logger.info(f"  EC format: padded {n_ec_padded} three-segment EC code(s) with '.-'")
 
     ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")

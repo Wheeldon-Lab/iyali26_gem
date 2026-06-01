@@ -34,6 +34,7 @@ Currently applied patches:
 from __future__ import annotations
 
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +188,54 @@ def fix_coa_charge(model) -> int:
     return fixed
 
 
+# ── Patch 4: EC-code format compliance ───────────────────────────────────
+
+# Some reactions carry EC codes missing the final level (exactly three
+# numeric segments, e.g. "3.1.3" or "1.2.1").  These violate the
+# identifiers.org EC regex and are flagged by Memote's
+# test_reaction_annotation_wrong_ids (ec-code conformity).  Padding them with
+# a trailing ".-" makes them valid partial EC codes (e.g. "3.1.3.-") without
+# inventing a more specific level we cannot verify.
+#
+# Only "exactly three pure-numeric segments" are touched.  EC strings with
+# letters (preliminary IDs like "2.7.1.M29", malformed "7.4.2.i") or
+# misfiled non-EC identifiers (e.g. TCDB number "2.A.29.8.3") are NOT padded
+# — those need case-by-case handling and are left untouched (logged).
+_EC_THREE_SEGMENT_RE = re.compile(r"^\d+\.\d+\.\d+$")
+
+
+def fix_ec_code_format(model) -> int:
+    """
+    Pad three-segment numeric EC codes with a trailing '.-' for
+    identifiers.org compliance (e.g. '3.1.3' -> '3.1.3.-').
+
+    Only exact three-segment pure-numeric EC codes are modified.  EC strings
+    containing letters or extra/fewer segments are left untouched.  Returns
+    the number of individual EC strings padded.
+    """
+    fixed = 0
+    for rxn in model.reactions:
+        ann = rxn.annotation if isinstance(rxn.annotation, dict) else {}
+        ecs = ann.get("ec-code")
+        if not ecs:
+            continue
+        if isinstance(ecs, str):
+            ecs = [ecs]
+        new = []
+        changed = False
+        for ec in ecs:
+            if _EC_THREE_SEGMENT_RE.match(ec):
+                new.append(ec + ".-")
+                fixed += 1
+                changed = True
+                logger.debug(f"  EC-format patch: {rxn.id} {ec} → {ec}.-")
+            else:
+                new.append(ec)
+        if changed:
+            rxn.annotation["ec-code"] = new
+    return fixed
+
+
 # ── Top-level driver ──────────────────────────────────────────────────────
 
 def apply_all_patches(model) -> dict:
@@ -195,6 +244,10 @@ def apply_all_patches(model) -> dict:
     Safe to call multiple times (idempotent — already-correct values are skipped).
     """
     logger.info("Applying iYli21 known-bug patches …")
+    # NOTE: fix_ec_code_format is intentionally NOT called here.  Reaction EC
+    # codes are populated later in the pipeline (gene EC enrichment, EC
+    # backfill, reaction xref backfill), so EC formatting must run after those
+    # steps — it is invoked separately near the end of main().
     counts = {
         "nadp_plus_fixed":   fix_nadp_plus_formula(model),
         "ceramide_fixed":    fix_ceramide_formulas(model),
