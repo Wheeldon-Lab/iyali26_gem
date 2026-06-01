@@ -248,14 +248,18 @@ def apply_all_patches(model) -> dict:
     # codes are populated later in the pipeline (gene EC enrichment, EC
     # backfill, reaction xref backfill), so EC formatting must run after those
     # steps — it is invoked separately near the end of main().
+    # NOTE: fix_coa_charge is intentionally NOT called.  Setting free CoA to
+    # charge -4 in isolation unbalances every reaction that produces/consumes
+    # it (the other side is not adjusted), which regressed Memote's
+    # reaction_charge_balance (+10 offenders).  The function is kept for
+    # reference but disabled until a charge fix is applied consistently across
+    # whole reactions rather than to the metabolite alone.
     counts = {
         "nadp_plus_fixed":   fix_nadp_plus_formula(model),
         "ceramide_fixed":    fix_ceramide_formulas(model),
-        "coa_charge_fixed":  fix_coa_charge(model),
     }
     logger.info(
         f"  patches applied: NADP+={counts['nadp_plus_fixed']} copies, "
-        f"ceramide={counts['ceramide_fixed']} copies, "
-        f"CoA-charge={counts['coa_charge_fixed']} copies"
+        f"ceramide={counts['ceramide_fixed']} copies"
     )
     return counts
