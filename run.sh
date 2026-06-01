@@ -3,6 +3,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# Use the project virtualenv so python and memote resolve to .venv
+if [ -f .venv/bin/activate ]; then
+  source .venv/bin/activate
+fi
+
 echo "=== Running gem_annotate ==="
 python -m scripts.gem_annotate
 
