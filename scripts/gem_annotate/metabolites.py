@@ -27,6 +27,24 @@ _DIRECT_MNXM_TABLE: dict[str, str] = {
     "2-oxoadipate": "MNXM263",
     "aminoacetone": "MNXM1106",
     "5-phospho-alpha-d-ribose 1-diphosphate": "MNXM1104453",
+    # ── Yeast sphingolipid ceramides (iYli21 internal numbering) ──────────
+    # iYli21's "ceramide-N" names are internal labels, NOT standard chemical
+    # names.  Strategy B would name-match them to UNRELATED MetaNetX entries
+    # that happen to use the label as a primary name — e.g. "ceramide-1" →
+    # MNXM1513336 ("Ceramide 1", C63H125NO6), a different/larger molecule.
+    # These MNXM IDs are the correct yeast ceramides, verified via LIPID MAPS
+    # LMSD (C24/C26 series, 2026-05) and consistent with the de-novo pathway
+    # (R202→R204→R206→R208 stepwise hydroxylation, C42H85NO3→NO4→NO5→NO6).
+    "ceramide-1-(c24)":  "MNXM64020",   # Cer(d18:0/24:0)         LMSP02020012
+    "ceramide-2-(c24)":  "MNXM64019",   # Cer(t18:0/24:0)         LMSP02030004
+    "ceramide-2'-(c24)": "MNXM63175",   # Cer(d18:0/24:0(2OH))    LMSP02020033
+    "ceramide-3-(c24)":  "MNXM63174",   # Cer(t18:0/24:0(2OH))    LMSP02030002
+    "ceramide-4-(c24)":  "MNXM31230",   # N-(2,3-diOH-C24)-phyto  CHEBI:60256
+    "ceramide-1-(c26)":  "MNXM63798",   # Cer(d18:0/26:0)         LMSP02020014
+    "ceramide-2-(c26)":  "MNXM63797",   # Cer(t18:0/26:0)         LMSP02030005
+    "ceramide-2'-(c26)": "MNXM63156",   # Cer(d18:0/26:0(2OH))    LMSP02020034
+    "ceramide-3-(c26)":  "MNXM63157",   # Cer(t18:0/26:0(2OH))    LMSP02030003
+    "ceramide-4-(c26)":  "MNXM63127",   # N-(2,3-diOH-C26)-phyto  CHEBI:60384
 }
 
 # Strategy B1: common synonym → MetaNetX canonical name (must exist in name_index)
@@ -179,6 +197,17 @@ def _apply_mnxm(met, mnxm_id: str, by_mnxid: dict, prop: dict) -> dict:
             except (ValueError, TypeError):
                 pass
     return new_ann
+
+
+def _carbon_count(formula: str) -> int | None:
+    """Return the carbon-atom count in a formula, or None if no C / unparseable."""
+    if not formula:
+        return None
+    # 'C' not followed by a lowercase letter, to avoid matching Cl, Ca, Co, Cu …
+    m = re.search(r"C(\d*)(?![a-z])", formula)
+    if not m:
+        return None
+    return int(m.group(1)) if m.group(1) else 1
 
 
 def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
@@ -357,6 +386,25 @@ def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
                         if best_score > 0:
                             mnxm_id = best_cand
                             strategy = "C"
+
+        # ── Name-collision guard ──────────────────────────────────────────
+        # Name-based strategies (B/B0/B1/B2a/B2b) can match an unrelated MNXM
+        # that merely shares a name (e.g. "ceramide-1" → a different C63
+        # molecule).  If the metabolite already has a formula, reject any
+        # name-match whose carbon count disagrees.  BD/A (ID-based) and C
+        # (formula-based) are trusted and exempt.
+        if (mnxm_id is not None
+                and strategy in {"B", "B0", "B1", "B2a", "B2b"}
+                and met.formula):
+            mnxm_c = _carbon_count(prop.get(mnxm_id, {}).get("formula", ""))
+            met_c  = _carbon_count(met.formula)
+            if mnxm_c is not None and met_c is not None and mnxm_c != met_c:
+                logger.warning(
+                    f"  Name-collision rejected: {met.id} ({chem_name!r}) "
+                    f"name-matched {mnxm_id} but C count differs "
+                    f"({met.formula} vs {prop[mnxm_id].get('formula')}) — skipping"
+                )
+                mnxm_id, strategy = None, None
 
         if mnxm_id is None:
             no_match += 1

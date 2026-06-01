@@ -16,7 +16,8 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .reactions import annotate_reactions
+from .patches import apply_all_patches
+from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -54,6 +55,11 @@ def main():
         # Priority 1 + 2a
         logger.info("=== Priority 1+2a: metabolite annotation + formulas ===")
         annotate_metabolites(model, chem_xref, chem_prop_data)
+
+        # Patches: fix known data bugs (NADP+ formula, ceramide formulas)
+        # Must run before H+/H2O balance so balanced reactions see correct formulas.
+        logger.info("=== Patches: known data-bug fixes ===")
+        apply_all_patches(model)
 
         # Priority 2b
         logger.info("=== Priority 2b: H+/H2O balance ===")
@@ -129,6 +135,17 @@ def main():
             ec_backfill_count += 1
     logger.info(f"  EC backfill: ec-code added to {ec_backfill_count} reactions")
 
+    # Safety net: fill missing cross-refs for all reactions that already have MNXR
+    if mnx_ok:
+        logger.info("=== Reaction xref backfill: fill missing bigg/kegg/rhea/ec-code from MNXR ===")
+        backfill_reaction_xrefs(model, reac_xref, reac_prop)
+
+    # Priority 2b (second pass): re-run H+/H2O balance now that more metabolites
+    # may have formulas (via reaction annotation pulling in new MNXM → chem_prop).
+    # Catches reactions skipped in the first pass for missing formula.
+    logger.info("=== Priority 2b (second pass): H+/H2O balance after annotation ===")
+    fix_proton_water_balance(model)
+
     # Priority 5: gap analysis — FVA before gap-fill
     logger.info("=== Priority 5: gap analysis (FVA, post-medium) ===")
     gaps = find_gaps(model)
@@ -199,48 +216,64 @@ def main():
     else:
         logger.info("  C_ex compartment verified as 'extracellular'")
 
-    # === SBO annotation for pseudo-reactions ===
-    logger.info("=== SBO annotation: pseudo-reactions and boundary reactions ===")
-    _SBO_BIOMASS     = ["SBO:0000629"]
-    _SBO_MAINTENANCE = ["SBO:0000630"]
-    _SBO_ENCAPSULATE = ["SBO:0000395"]
-    _SBO_EXCHANGE    = ["SBO:0000627"]
-    _SBO_DEMAND      = ["SBO:0000628"]
+    # === SBO annotation (full coverage) ===
+    import re as _re
+    logger.info("=== SBO annotation: all model objects ===")
 
-    sbo_counts = {"biomass": 0, "maintenance": 0, "pool": 0, "exchange": 0, "demand": 0}
+    _BIOMASS_RE     = _re.compile(r"BIOMASS|biomass|newBiom|R1372")
+    _MAINTENANCE_RE = _re.compile(r"MAINTENANCE|ATPM")
+
+    def _set_sbo(obj, term: str) -> bool:
+        ann = obj.annotation if isinstance(obj.annotation, dict) else {}
+        if "sbo" in ann:
+            return False
+        if not isinstance(obj.annotation, dict):
+            obj.annotation = {}
+        obj.annotation["sbo"] = term
+        return True
+
+    met_set = sum(_set_sbo(m, "SBO:0000247") for m in model.metabolites)
+    logger.info(f"  Metabolites : set={met_set}  already_had_sbo={len(model.metabolites) - met_set}")
+
+    gene_set = sum(_set_sbo(g, "SBO:0000243") for g in model.genes)
+    logger.info(f"  Genes       : set={gene_set}  already_had_sbo={len(model.genes) - gene_set}")
 
     _exchanges = set(model.exchanges)
     _demands   = set(model.demands)
+    _sinks     = set(model.sinks)
+    sbo_counts = {k: 0 for k in ("exchange", "demand", "sink", "biomass", "maintenance", "pool", "transport", "biochemical", "skip")}
 
     for rxn in model.reactions:
-        ann = rxn.annotation if isinstance(rxn.annotation, dict) else {}
-        if "sbo" in ann:
-            continue
-        if not isinstance(rxn.annotation, dict):
-            rxn.annotation = {}
-
         rid = rxn.id
-        if rid.startswith(("xBIOMASS", "newBiom", "biomass_C")):
-            rxn.annotation["sbo"] = _SBO_BIOMASS
-            sbo_counts["biomass"] += 1
-        elif rid.startswith("xMAINTENANCE"):
-            rxn.annotation["sbo"] = _SBO_MAINTENANCE
-            sbo_counts["maintenance"] += 1
-        elif rid.startswith(("xLIPID", "xAMINOACID", "xPOOL_")):
-            rxn.annotation["sbo"] = _SBO_ENCAPSULATE
-            sbo_counts["pool"] += 1
-        elif rxn in _exchanges:
-            rxn.annotation["sbo"] = _SBO_EXCHANGE
-            sbo_counts["exchange"] += 1
+        if rxn in _exchanges:
+            term, kind = "SBO:0000627", "exchange"
         elif rxn in _demands:
-            rxn.annotation["sbo"] = _SBO_DEMAND
-            sbo_counts["demand"] += 1
+            term, kind = "SBO:0000628", "demand"
+        elif rxn in _sinks:
+            term, kind = "SBO:0000632", "sink"
+        elif _BIOMASS_RE.search(rid) or rid.startswith(("xBIOMASS", "newBiom", "biomass_C")):
+            term, kind = "SBO:0000629", "biomass"
+        elif _MAINTENANCE_RE.search(rid) or rid.startswith("xMAINTENANCE"):
+            term, kind = "SBO:0000630", "maintenance"
+        elif rid.startswith(("xLIPID", "xAMINOACID", "xPOOL_")):
+            term, kind = "SBO:0000395", "pool"
+        elif len({m.compartment for m in rxn.metabolites}) >= 2:
+            term, kind = "SBO:0000185", "transport"
+        else:
+            term, kind = "SBO:0000176", "biochemical"
+
+        if _set_sbo(rxn, term):
+            sbo_counts[kind] += 1
+        else:
+            sbo_counts["skip"] += 1
 
     logger.info(
-        f"  SBO added: biomass={sbo_counts['biomass']}  "
-        f"maintenance={sbo_counts['maintenance']}  "
-        f"pool/encapsulating={sbo_counts['pool']}  "
-        f"exchange={sbo_counts['exchange']}  demand={sbo_counts['demand']}"
+        f"  Reactions   : "
+        f"exchange={sbo_counts['exchange']}  demand={sbo_counts['demand']}  "
+        f"sink={sbo_counts['sink']}  biomass={sbo_counts['biomass']}  "
+        f"maintenance={sbo_counts['maintenance']}  pool={sbo_counts['pool']}  "
+        f"transport={sbo_counts['transport']}  biochemical={sbo_counts['biochemical']}  "
+        f"already_had_sbo={sbo_counts['skip']}"
     )
 
     ec_check = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
