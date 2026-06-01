@@ -587,7 +587,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m15__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m15__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m15__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m15__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m15__91__C_vm__93__">
@@ -672,7 +672,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m17__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m17__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate_ActiveX VT_ERROR:" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-5" fbc:chemicalFormula="C11H14O19P3*2">
+      <species metaid="meta_M_m17__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m17__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-5" fbc:chemicalFormula="C11H14O19P3*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m17__91__C_vm__93__">
@@ -858,7 +858,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m20__91__C_en__93__" sboTerm="SBO:0000247" id="M_m20__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m20__91__C_en__93__" sboTerm="SBO:0000247" id="M_m20__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m20__91__C_en__93__">
@@ -943,7 +943,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m22__91__C_en__93__" sboTerm="SBO:0000247" id="M_m22__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate_ActiveX VT_ERROR:" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-5" fbc:chemicalFormula="C11H14O19P3*2">
+      <species metaid="meta_M_m22__91__C_en__93__" sboTerm="SBO:0000247" id="M_m22__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-5" fbc:chemicalFormula="C11H14O19P3*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m22__91__C_en__93__">
@@ -5238,7 +5238,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m115__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m115__91__C_pe__93__" name="(R)-3-hydroxytetradecanoyl-CoA_ActiveX VT_ERROR:" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m115__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m115__91__C_pe__93__" name="(R)-3-hydroxytetradecanoyl-CoA" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m116__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m116__91__C_pe__93__" name="NAD_C21H27N7O14P2" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C21H27N7O14P2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -11181,7 +11181,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m273__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m273__91__C_cy__93__" name="tRNA(Ala)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m273__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m273__91__C_cy__93__" name="tRNA(Ala)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m273__91__C_cy__93__">
@@ -12281,7 +12281,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m300__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m300__91__C_cy__93__" name="aminoacetone_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="1" fbc:chemicalFormula="C3H8NO">
+      <species metaid="meta_M_m300__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m300__91__C_cy__93__" name="aminoacetone" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="1" fbc:chemicalFormula="C3H8NO">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m300__91__C_cy__93__">
@@ -12800,7 +12800,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m314__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m314__91__C_cy__93__" name="tRNA(Arg)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m314__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m314__91__C_cy__93__" name="tRNA(Arg)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m314__91__C_cy__93__">
@@ -12958,7 +12958,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m320__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m320__91__C_cy__93__" name="tRNA(Asn)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m320__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m320__91__C_cy__93__" name="tRNA(Asn)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m320__91__C_cy__93__">
@@ -13521,7 +13521,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m335__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m335__91__C_cy__93__" name="tRNA(Asp)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m335__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m335__91__C_cy__93__" name="tRNA(Asp)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m335__91__C_cy__93__">
@@ -13568,7 +13568,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m339__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m339__91__C_cy__93__" name="P1-(5&apos;-adenosyl),P4-(5&apos;-guanosyl) tetraphosphate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m339__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m339__91__C_cy__93__" name="P1-(5&apos;-adenosyl),P4-(5&apos;-guanosyl) tetraphosphate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m339__91__C_cy__93__">
@@ -14924,7 +14924,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m378__91__C_em__93__" sboTerm="SBO:0000247" id="M_m378__91__C_em__93__" name="phosphatidate_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m378__91__C_em__93__" sboTerm="SBO:0000247" id="M_m378__91__C_em__93__" name="phosphatidate" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m378__91__C_em__93__">
@@ -15177,7 +15177,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m383__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m383__91__C_mm__93__" name="phosphatidate_ActiveX VT_ERROR:" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m383__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m383__91__C_mm__93__" name="phosphatidate" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m383__91__C_mm__93__">
@@ -17316,7 +17316,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m447__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m447__91__C_cy__93__" name="tRNA(Cys)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m447__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m447__91__C_cy__93__" name="tRNA(Cys)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m447__91__C_cy__93__">
@@ -18158,7 +18158,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m472__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m472__91__C_cy__93__" name="2-deoxy-D-ribose_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C5H10O4">
+      <species metaid="meta_M_m472__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m472__91__C_cy__93__" name="2-deoxy-D-ribose" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C5H10O4">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m472__91__C_cy__93__">
@@ -18338,7 +18338,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m481__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m481__91__C_cy__93__" name="7,8-dihydropteroate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C14H13N6O3">
+      <species metaid="meta_M_m481__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m481__91__C_cy__93__" name="7,8-dihydropteroate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C14H13N6O3">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m481__91__C_cy__93__">
@@ -18577,7 +18577,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m487__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m487__91__C_mi__93__" name="7,8-dihydropteroate_ActiveX VT_ERROR:" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C14H13N6O3">
+      <species metaid="meta_M_m487__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m487__91__C_mi__93__" name="7,8-dihydropteroate" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C14H13N6O3">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m487__91__C_mi__93__">
@@ -18903,7 +18903,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m496__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m496__91__C_cy__93__" name="myo-inositol 1,3,4,5,6-pentakisphosphate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m496__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m496__91__C_cy__93__" name="myo-inositol 1,3,4,5,6-pentakisphosphate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m497__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m497__91__C_cy__93__" name="2-(3-amino-3-carboxypropyl)-L-histidine_C10H16N4O4" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C10H16N4O4">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -21004,7 +21004,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m553__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m553__91__C_cy__93__" name="tRNA(Gln)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m553__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m553__91__C_cy__93__" name="tRNA(Gln)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m553__91__C_cy__93__">
@@ -21034,7 +21034,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m555__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m555__91__C_cy__93__" name="tRNA(Glu)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m555__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m555__91__C_cy__93__" name="tRNA(Glu)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m555__91__C_cy__93__">
@@ -21602,7 +21602,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m575__91__C_em__93__" sboTerm="SBO:0000247" id="M_m575__91__C_em__93__" name="1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m575__91__C_em__93__" sboTerm="SBO:0000247" id="M_m575__91__C_em__93__" name="1-acyl-sn-glycerol 3-phosphate" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m575__91__C_em__93__">
@@ -21642,7 +21642,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m577__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m577__91__C_lp__93__" name="1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m577__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m577__91__C_lp__93__" name="1-acyl-sn-glycerol 3-phosphate" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m577__91__C_lp__93__">
@@ -21986,7 +21986,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m590__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m590__91__C_cy__93__" name="tRNA(Gly)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m590__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m590__91__C_cy__93__" name="tRNA(Gly)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m590__91__C_cy__93__">
@@ -22368,7 +22368,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m604__91__C_er__93__" sboTerm="SBO:0000247" id="M_m604__91__C_er__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_er" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m604__91__C_er__93__" sboTerm="SBO:0000247" id="M_m604__91__C_er__93__" name="diglyceride" compartment="C_er" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m604__91__C_er__93__">
@@ -22844,7 +22844,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m618__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m618__91__C_cy__93__" name="tRNA(His)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m618__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m618__91__C_cy__93__" name="tRNA(His)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m618__91__C_cy__93__">
@@ -23919,7 +23919,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m656__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m656__91__C_nu__93__" name="myo-inositol 1,3,4,5,6-pentakisphosphate_ActiveX VT_ERROR:" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m656__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m656__91__C_nu__93__" name="myo-inositol 1,3,4,5,6-pentakisphosphate" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m657__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m657__91__C_nu__93__" name="ADP_C10H15N5O10P2" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C10H15N5O10P2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -24005,7 +24005,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m659__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m659__91__C_nu__93__" name="1D-myo-inositol 1,3,4,5-tetrakisphosphate_ActiveX VT_ERROR:" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-8" fbc:chemicalFormula="C6H8O18P4">
+      <species metaid="meta_M_m659__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m659__91__C_nu__93__" name="1D-myo-inositol 1,3,4,5-tetrakisphosphate" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-8" fbc:chemicalFormula="C6H8O18P4">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m659__91__C_nu__93__">
@@ -24049,7 +24049,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m660__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m660__91__C_nu__93__" name="1D-myo-inositol 1,4,5,6-tetrakisphosphate_ActiveX VT_ERROR:" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-8" fbc:chemicalFormula="C6H8O18P4">
+      <species metaid="meta_M_m660__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m660__91__C_nu__93__" name="1D-myo-inositol 1,4,5,6-tetrakisphosphate" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-8" fbc:chemicalFormula="C6H8O18P4">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m660__91__C_nu__93__">
@@ -26188,7 +26188,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m746__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m746__91__C_cy__93__" name="tRNA(Ile)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m746__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m746__91__C_cy__93__" name="tRNA(Ile)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m746__91__C_cy__93__">
@@ -27343,7 +27343,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m777__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m777__91__C_cy__93__" name="tRNA(Leu)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m777__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m777__91__C_cy__93__" name="tRNA(Leu)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m777__91__C_cy__93__">
@@ -27778,7 +27778,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m794__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m794__91__C_cy__93__" name="tRNA(Lys)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m794__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m794__91__C_cy__93__" name="tRNA(Lys)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m794__91__C_cy__93__">
@@ -27881,7 +27881,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m797__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m797__91__C_mi__93__" name="tRNA(Lys), mitchondrial_ActiveX VT_ERROR:" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m797__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m797__91__C_mi__93__" name="tRNA(Lys), mitchondrial" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m798__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m798__91__C_mi__93__" name="Lys-tRNA(Lys)_" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -28077,7 +28077,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m805__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m805__91__C_mi__93__" name="fMet-tRNA(fMet)_ActiveX VT_ERROR:" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m805__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m805__91__C_mi__93__" name="fMet-tRNA(fMet)" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m805__91__C_mi__93__">
@@ -28094,7 +28094,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m806__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m806__91__C_cy__93__" name="tRNA(Met)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m806__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m806__91__C_cy__93__" name="tRNA(Met)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m806__91__C_cy__93__">
@@ -29636,7 +29636,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m844__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m844__91__C_cy__93__" name="dIDP_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C10H11N4O10P2">
+      <species metaid="meta_M_m844__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m844__91__C_cy__93__" name="dIDP" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C10H11N4O10P2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m844__91__C_cy__93__">
@@ -30259,7 +30259,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m861__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m861__91__C_cy__93__" name="tRNA(Phe)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m861__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m861__91__C_cy__93__" name="tRNA(Phe)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m861__91__C_cy__93__">
@@ -31413,7 +31413,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m897__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m897__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
+      <species metaid="meta_M_m897__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m897__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m897__91__C_vm__93__">
@@ -31718,7 +31718,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m905__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m905__91__C_cy__93__" name="tRNA(Pro)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m905__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m905__91__C_cy__93__" name="tRNA(Pro)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m905__91__C_cy__93__">
@@ -33310,7 +33310,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m943__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m943__91__C_cy__93__" name="tRNA(Ser)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m943__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m943__91__C_cy__93__" name="tRNA(Ser)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m943__91__C_cy__93__">
@@ -33435,7 +33435,7 @@
         </annotation>
       </species>
       <species metaid="meta_M_m948__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m948__91__C_cy__93__" name="iron_Fe" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m949__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m949__91__C_cy__93__" name="siroheme_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-8" fbc:chemicalFormula="C42H36FeN4O16">
+      <species metaid="meta_M_m949__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m949__91__C_cy__93__" name="siroheme" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-8" fbc:chemicalFormula="C42H36FeN4O16">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m949__91__C_cy__93__">
@@ -33801,7 +33801,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m955__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m955__91__C_mi__93__" name="trans-aconitate_ActiveX VT_ERROR:" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C6H3O6">
+      <species metaid="meta_M_m955__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m955__91__C_mi__93__" name="trans-aconitate" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C6H3O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m955__91__C_mi__93__">
@@ -33841,7 +33841,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m956__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m956__91__C_cy__93__" name="trans-aconitate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C6H3O6">
+      <species metaid="meta_M_m956__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m956__91__C_cy__93__" name="trans-aconitate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C6H3O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m956__91__C_cy__93__">
@@ -34485,7 +34485,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m978__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m978__91__C_cy__93__" name="tRNA(Thr)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m978__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m978__91__C_cy__93__" name="tRNA(Thr)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m978__91__C_cy__93__">
@@ -34736,7 +34736,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m987__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m987__91__C_cy__93__" name="tRNA(Trp)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m987__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m987__91__C_cy__93__" name="tRNA(Trp)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m987__91__C_cy__93__">
@@ -35067,7 +35067,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m995__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m995__91__C_cy__93__" name="tRNA(Tyr)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m995__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m995__91__C_cy__93__" name="tRNA(Tyr)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m995__91__C_cy__93__">
@@ -35177,7 +35177,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m998__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m998__91__C_mi__93__" name="tRNA(Tyr), mitchondrial_ActiveX VT_ERROR:" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m998__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m998__91__C_mi__93__" name="tRNA(Tyr), mitchondrial" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m999__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m999__91__C_mi__93__" name="Tyr-tRNA(Tyr)_RC9H10NO2" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="RC9H10NO2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -35739,7 +35739,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1010__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1010__91__C_cy__93__" name="tRNA(Val)_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1010__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1010__91__C_cy__93__" name="tRNA(Val)" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1010__91__C_cy__93__">
@@ -35981,8 +35981,8 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1019__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1019__91__C_cy__93__" name="(R,R)-2,3-butanediol_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1020__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1020__91__C_ex__93__" name="(R,R)-2,3-butanediol_ActiveX VT_ERROR:" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1019__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1019__91__C_cy__93__" name="(R,R)-2,3-butanediol" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1020__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1020__91__C_ex__93__" name="(R,R)-2,3-butanediol" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1021__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1021__91__C_ex__93__" name="gamma-aminobutyrate_C4H9NO2" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C4H9NO2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -37187,7 +37187,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1050__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1050__91__C_ex__93__" name="folate_ActiveX VT_ERROR:" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-2" fbc:chemicalFormula="C19H17N7O6">
+      <species metaid="meta_M_m1050__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1050__91__C_ex__93__" name="folate" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-2" fbc:chemicalFormula="C19H17N7O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1050__91__C_ex__93__">
@@ -37232,7 +37232,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1051__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1051__91__C_cy__93__" name="folate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-2" fbc:chemicalFormula="C19H17N7O6">
+      <species metaid="meta_M_m1051__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1051__91__C_cy__93__" name="folate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-2" fbc:chemicalFormula="C19H17N7O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1051__91__C_cy__93__">
@@ -37593,8 +37593,8 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1061__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1061__91__C_cy__93__" name="isoamyl acetate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1062__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1062__91__C_ex__93__" name="isoamyl acetate_ActiveX VT_ERROR:" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1061__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1061__91__C_cy__93__" name="isoamyl acetate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1062__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1062__91__C_ex__93__" name="isoamyl acetate" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1063__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1063__91__C_ex__93__" name="L-alanine_C3H7NO2" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C3H7NO2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -41774,7 +41774,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1197__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1197__91__C_ex__93__" name="D-galacturonate_ActiveX VT_ERROR:" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1197__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1197__91__C_ex__93__" name="D-galacturonate" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1199__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1199__91__C_ex__93__" name="D-glucitol_C6H14O6" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H14O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -44202,7 +44202,7 @@
         </annotation>
       </species>
       <species metaid="meta_M_m1350__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m1350__91__C_mi__93__" name="pantetheine 4&apos;-phosphate_C11H23N2O7PS" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H23N2O7PS"/>
-      <species metaid="meta_M_m1351__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1351__91__C_ex__93__" name="pectin_ActiveX VT_ERROR:" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1351__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1351__91__C_ex__93__" name="pectin" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1351__91__C_ex__93__">
@@ -44834,7 +44834,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1393__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1393__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
+      <species metaid="meta_M_m1393__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1393__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1393__91__C_cy__93__">
@@ -44926,7 +44926,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1399__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1399__91__C_cy__93__" name="triglyceride_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H5O6*3">
+      <species metaid="meta_M_m1399__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1399__91__C_cy__93__" name="triglyceride" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H5O6*3">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1399__91__C_cy__93__">
@@ -46118,7 +46118,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1449__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1449__91__C_em__93__" name="trans-hexadec-2-enoyl-CoA_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1449__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1449__91__C_em__93__" name="trans-hexadec-2-enoyl-CoA" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1450__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1450__91__C_em__93__" name="trans-octadec-2-enoyl-CoA_C39H68N7O17P3S" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C39H68N7O17P3S">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -46306,7 +46306,59 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1459__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1459__91__C_ex__93__" name="butyrate_ActiveX VT_ERROR:" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1459__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1459__91__C_ex__93__" name="butyrate" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C4H7O2">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#meta_M_m1459__91__C_ex__93__">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.metabolite/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipath/32de3cf4-e3e6-4168-956e-32fa5ddb0ce1/compound/f0cba084-af45-4178-8cd2-eca131ec9c03"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipath/650babc9-9d68-4b73-9332-11972ca26f7b/compound/b237acac-f5a6-4f4f-b845-d822f151565f"/>
+                  <rdf:li rdf:resource="https://identifiers.org/hmdb/HMDB00039"/>
+                  <rdf:li rdf:resource="https://identifiers.org/kegg.compound/C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/lipidmaps/LMFA01010004"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metacyc.compound/BUTYRIC_ACID"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-429760"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-76179"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-8875042"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiork.compound/1911"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.compound/cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhmetabolite/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metanetx.chemical/MNXM458"/>
+                  <rdf:li rdf:resource="https://identifiers.org/inchi/InChI=1S/C4H8O2/c1-2-3-4(5)6/h2-3H2,1H3,(H,5,6)/p-1"/>
+                  <rdf:li rdf:resource="https://identifiers.org/inchikey/FERIUCNNQQJTOY-UHFFFAOYSA-M"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:113450"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:13924"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:17968"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:22946"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:22948"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:30772"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:3234"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:41208"/>
+                  <rdf:li rdf:resource="https://identifiers.org/slm/000001195"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggm/M_but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggm/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipathm/32de3cf4-e3e6-4168-956e-32fa5ddb0ce1/compound/f0cba084-af45-4178-8cd2-eca131ec9c03"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipathm/650babc9-9d68-4b73-9332-11972ca26f7b/compound/b237acac-f5a6-4f4f-b845-d822f151565f"/>
+                  <rdf:li rdf:resource="https://identifiers.org/keggc/C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/keggc/M_C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/lipidmapsm/LMFA01010004"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metacycm/BUTYRIC_ACID"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-429760"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-76179"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-8875042"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiorkm/1911"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedm/M_cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedm/cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhm/M_but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhm/but"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
       <species metaid="meta_M_m1461__91__C_ex__93__" sboTerm="SBO:0000247" id="M_m1461__91__C_ex__93__" name="hexanoate_" compartment="C_ex" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C6H11O2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -46383,7 +46435,59 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1465__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1465__91__C_cy__93__" name="butyrate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1465__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1465__91__C_cy__93__" name="butyrate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C4H7O2">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#meta_M_m1465__91__C_cy__93__">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.metabolite/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipath/32de3cf4-e3e6-4168-956e-32fa5ddb0ce1/compound/f0cba084-af45-4178-8cd2-eca131ec9c03"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipath/650babc9-9d68-4b73-9332-11972ca26f7b/compound/b237acac-f5a6-4f4f-b845-d822f151565f"/>
+                  <rdf:li rdf:resource="https://identifiers.org/hmdb/HMDB00039"/>
+                  <rdf:li rdf:resource="https://identifiers.org/kegg.compound/C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/lipidmaps/LMFA01010004"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metacyc.compound/BUTYRIC_ACID"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-429760"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-76179"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-8875042"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiork.compound/1911"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.compound/cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhmetabolite/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metanetx.chemical/MNXM458"/>
+                  <rdf:li rdf:resource="https://identifiers.org/inchi/InChI=1S/C4H8O2/c1-2-3-4(5)6/h2-3H2,1H3,(H,5,6)/p-1"/>
+                  <rdf:li rdf:resource="https://identifiers.org/inchikey/FERIUCNNQQJTOY-UHFFFAOYSA-M"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:113450"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:13924"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:17968"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:22946"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:22948"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:30772"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:3234"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:41208"/>
+                  <rdf:li rdf:resource="https://identifiers.org/slm/000001195"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggm/M_but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggm/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipathm/32de3cf4-e3e6-4168-956e-32fa5ddb0ce1/compound/f0cba084-af45-4178-8cd2-eca131ec9c03"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipathm/650babc9-9d68-4b73-9332-11972ca26f7b/compound/b237acac-f5a6-4f4f-b845-d822f151565f"/>
+                  <rdf:li rdf:resource="https://identifiers.org/keggc/C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/keggc/M_C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/lipidmapsm/LMFA01010004"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metacycm/BUTYRIC_ACID"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-429760"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-76179"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-8875042"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiorkm/1911"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedm/M_cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedm/cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhm/M_but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhm/but"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
       <species metaid="meta_M_m1466__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1466__91__C_cy__93__" name="hexanoate_" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C6H11O2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -47654,7 +47758,59 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1522__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1522__91__C_pe__93__" name="butyrate_ActiveX VT_ERROR:" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1522__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1522__91__C_pe__93__" name="butyrate" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C4H7O2">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#meta_M_m1522__91__C_pe__93__">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.metabolite/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipath/32de3cf4-e3e6-4168-956e-32fa5ddb0ce1/compound/f0cba084-af45-4178-8cd2-eca131ec9c03"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipath/650babc9-9d68-4b73-9332-11972ca26f7b/compound/b237acac-f5a6-4f4f-b845-d822f151565f"/>
+                  <rdf:li rdf:resource="https://identifiers.org/hmdb/HMDB00039"/>
+                  <rdf:li rdf:resource="https://identifiers.org/kegg.compound/C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/lipidmaps/LMFA01010004"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metacyc.compound/BUTYRIC_ACID"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-429760"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-76179"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactome/R-ALL-8875042"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiork.compound/1911"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.compound/cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhmetabolite/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metanetx.chemical/MNXM458"/>
+                  <rdf:li rdf:resource="https://identifiers.org/inchi/InChI=1S/C4H8O2/c1-2-3-4(5)6/h2-3H2,1H3,(H,5,6)/p-1"/>
+                  <rdf:li rdf:resource="https://identifiers.org/inchikey/FERIUCNNQQJTOY-UHFFFAOYSA-M"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:113450"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:13924"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:17968"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:22946"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:22948"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:30772"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:3234"/>
+                  <rdf:li rdf:resource="https://identifiers.org/chebi/CHEBI:41208"/>
+                  <rdf:li rdf:resource="https://identifiers.org/slm/000001195"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggm/M_but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggm/but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipathm/32de3cf4-e3e6-4168-956e-32fa5ddb0ce1/compound/f0cba084-af45-4178-8cd2-eca131ec9c03"/>
+                  <rdf:li rdf:resource="https://identifiers.org/envipathm/650babc9-9d68-4b73-9332-11972ca26f7b/compound/b237acac-f5a6-4f4f-b845-d822f151565f"/>
+                  <rdf:li rdf:resource="https://identifiers.org/keggc/C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/keggc/M_C00246"/>
+                  <rdf:li rdf:resource="https://identifiers.org/lipidmapsm/LMFA01010004"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metacycm/BUTYRIC_ACID"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-429760"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-76179"/>
+                  <rdf:li rdf:resource="https://identifiers.org/reactomem/R-ALL-8875042"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiorkm/1911"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedm/M_cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedm/cpd00211"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhm/M_but"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhm/but"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
       <species metaid="meta_M_m1523__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1523__91__C_pe__93__" name="hexanoate_" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C6H11O2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
@@ -47883,7 +48039,7 @@
         </annotation>
       </species>
       <species metaid="meta_M_m1544__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1544__91__C_pe__93__" name="(R)-3-hydroxypalmitoyl-CoA_" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1545__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1545__91__C_pe__93__" name="(R)-3-hydroxyoctadecanoyl-CoA_ActiveX VT_ERROR:" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1545__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1545__91__C_pe__93__" name="(R)-3-hydroxyoctadecanoyl-CoA" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1546__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1546__91__C_pe__93__" name="(R)-3-hydroxyhexacosanoyl-CoA_" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1547__91__C_pe__93__" sboTerm="SBO:0000247" id="M_m1547__91__C_pe__93__" name="(R)-3-hydroxybutanoyl-CoA_C25H42N7O18P3S" compartment="C_pe" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C25H42N7O18P3S">
         <annotation>
@@ -50727,7 +50883,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1634__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1634__91__C_em__93__" name="triglyceride_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H5O6*3">
+      <species metaid="meta_M_m1634__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1634__91__C_em__93__" name="triglyceride" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H5O6*3">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1634__91__C_em__93__">
@@ -50847,7 +51003,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1640__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m1640__91__C_lp__93__" name="triglyceride_ActiveX VT_ERROR:" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H5O6*3">
+      <species metaid="meta_M_m1640__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m1640__91__C_lp__93__" name="triglyceride" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H5O6*3">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1640__91__C_lp__93__">
@@ -50883,7 +51039,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1642__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m1642__91__C_lp__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1642__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m1642__91__C_lp__93__" name="diglyceride" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1642__91__C_lp__93__">
@@ -50899,7 +51055,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1643__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1643__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1643__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1643__91__C_vm__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1643__91__C_vm__93__">
@@ -50915,7 +51071,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1644__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1644__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
+      <species metaid="meta_M_m1644__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1644__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1644__91__C_en__93__">
@@ -50937,7 +51093,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1645__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1645__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1645__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1645__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1645__91__C_en__93__">
@@ -50953,7 +51109,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1646__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1646__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
+      <species metaid="meta_M_m1646__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1646__91__C_en__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1646__91__C_en__93__">
@@ -50976,7 +51132,7 @@
         </annotation>
       </species>
       <species metaid="meta_M_m1647__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1647__91__C_em__93__" name="sn-2-acyl-1-lysophosphatidylinositol_" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1648__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1648__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
+      <species metaid="meta_M_m1648__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1648__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1648__91__C_em__93__">
@@ -50998,7 +51154,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1649__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1649__91__C_em__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1649__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1649__91__C_em__93__" name="diglyceride" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1649__91__C_em__93__">
@@ -51014,7 +51170,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1650__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m1650__91__C_mm__93__" name="phosphatidylglycerol_ActiveX VT_ERROR:" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C8H13O10P*2">
+      <species metaid="meta_M_m1650__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m1650__91__C_mm__93__" name="phosphatidylglycerol" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C8H13O10P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1650__91__C_mm__93__">
@@ -51029,7 +51185,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1651__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m1651__91__C_mm__93__" name="cardiolipin_ActiveX VT_ERROR:" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C13H18O17P2*4">
+      <species metaid="meta_M_m1651__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m1651__91__C_mm__93__" name="cardiolipin" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C13H18O17P2*4">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1651__91__C_mm__93__">
@@ -51287,7 +51443,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1669__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1669__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
+      <species metaid="meta_M_m1669__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1669__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1669__91__C_cy__93__">
@@ -51309,7 +51465,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1670__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1670__91__C_cy__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1670__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1670__91__C_cy__93__" name="diglyceride" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1670__91__C_cy__93__">
@@ -51375,7 +51531,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1672__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1672__91__C_nu__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
+      <species metaid="meta_M_m1672__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1672__91__C_nu__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1672__91__C_nu__93__">
@@ -51397,7 +51553,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1673__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1673__91__C_nu__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1673__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1673__91__C_nu__93__" name="diglyceride" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1673__91__C_nu__93__">
@@ -51413,7 +51569,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1674__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m1674__91__C_mm__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1674__91__C_mm__93__" sboTerm="SBO:0000247" id="M_m1674__91__C_mm__93__" name="diglyceride" compartment="C_mm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1674__91__C_mm__93__">
@@ -51429,7 +51585,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1675__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1675__91__C_en__93__" name="phosphatidate_ActiveX VT_ERROR:" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1675__91__C_en__93__" sboTerm="SBO:0000247" id="M_m1675__91__C_en__93__" name="phosphatidate" compartment="C_en" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1675__91__C_en__93__">
@@ -51445,7 +51601,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1676__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1676__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1676__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1676__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1676__91__C_cy__93__">
@@ -51461,7 +51617,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1677__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1677__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1677__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1677__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1677__91__C_em__93__">
@@ -51477,7 +51633,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1678__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1678__91__C_gm__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1678__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1678__91__C_gm__93__" name="1-phosphatidyl-1D-myo-inositol 3-phosphate" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1678__91__C_gm__93__">
@@ -51493,7 +51649,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1679__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1679__91__C_gm__93__" name="1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
+      <species metaid="meta_M_m1679__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1679__91__C_gm__93__" name="1-phosphatidyl-1D-myo-inositol" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1679__91__C_gm__93__">
@@ -51515,7 +51671,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1680__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1680__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1680__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1680__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1680__91__C_cy__93__">
@@ -51531,7 +51687,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1681__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1681__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1681__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1681__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1681__91__C_em__93__">
@@ -51547,7 +51703,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1682__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1682__91__C_gm__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1682__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1682__91__C_gm__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1682__91__C_gm__93__">
@@ -51563,7 +51719,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1683__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1683__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-5" fbc:chemicalFormula="C11H14O19P3*2">
+      <species metaid="meta_M_m1683__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1683__91__C_cy__93__" name="1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-5" fbc:chemicalFormula="C11H14O19P3*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1683__91__C_cy__93__">
@@ -51579,7 +51735,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1684__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1684__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
+      <species metaid="meta_M_m1684__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1684__91__C_em__93__" name="1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H19O19P3*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1684__91__C_em__93__">
@@ -51622,7 +51778,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1686__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1686__91__C_vm__93__" name="phosphatidate_ActiveX VT_ERROR:" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1686__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1686__91__C_vm__93__" name="phosphatidate" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1686__91__C_vm__93__">
@@ -51659,7 +51815,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1688__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1688__91__C_gm__93__" name="phosphatidate_ActiveX VT_ERROR:" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1688__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1688__91__C_gm__93__" name="phosphatidate" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1688__91__C_gm__93__">
@@ -51675,7 +51831,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1689__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1689__91__C_cy__93__" name="1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1689__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1689__91__C_cy__93__" name="1-acyl-sn-glycerol 3-phosphate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1689__91__C_cy__93__">
@@ -51692,7 +51848,7 @@
         </annotation>
       </species>
       <species metaid="meta_M_m1690__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1690__91__C_cy__93__" name="1-monoglyceride_" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1691__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1691__91__C_vm__93__" name="1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1691__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1691__91__C_vm__93__" name="1-acyl-sn-glycerol 3-phosphate" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1691__91__C_vm__93__">
@@ -51709,7 +51865,7 @@
         </annotation>
       </species>
       <species metaid="meta_M_m1692__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1692__91__C_vm__93__" name="1-monoglyceride_" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1693__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1693__91__C_gm__93__" name="1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1693__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1693__91__C_gm__93__" name="1-acyl-sn-glycerol 3-phosphate" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1693__91__C_gm__93__">
@@ -51727,7 +51883,7 @@
       </species>
       <species metaid="meta_M_m1694__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1694__91__C_gm__93__" name="1-monoglyceride_" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1695__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m1695__91__C_lp__93__" name="1-monoglyceride_" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1696__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m1696__91__C_mi__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1696__91__C_mi__93__" sboTerm="SBO:0000247" id="M_m1696__91__C_mi__93__" name="diglyceride" compartment="C_mi" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1696__91__C_mi__93__">
@@ -51814,7 +51970,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1703__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1703__91__C_vm__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1703__91__C_vm__93__" sboTerm="SBO:0000247" id="M_m1703__91__C_vm__93__" name="diglyceride" compartment="C_vm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1703__91__C_vm__93__">
@@ -51830,7 +51986,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1704__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1704__91__C_gm__93__" name="diglyceride_ActiveX VT_ERROR:" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
+      <species metaid="meta_M_m1704__91__C_gm__93__" sboTerm="SBO:0000247" id="M_m1704__91__C_gm__93__" name="diglyceride" compartment="C_gm" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C6H8O6">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1704__91__C_gm__93__">
@@ -51846,7 +52002,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1705__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m1705__91__C_lp__93__" name="phosphatidate_ActiveX VT_ERROR:" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1705__91__C_lp__93__" sboTerm="SBO:0000247" id="M_m1705__91__C_lp__93__" name="phosphatidate" compartment="C_lp" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1705__91__C_lp__93__">
@@ -51862,7 +52018,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1706__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1706__91__C_nu__93__" name="1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
+      <species metaid="meta_M_m1706__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1706__91__C_nu__93__" name="1-phosphatidyl-1D-myo-inositol" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H17O13P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1706__91__C_nu__93__">
@@ -51894,7 +52050,7 @@
       <species metaid="meta_M_m1714__91__C_go__93__" sboTerm="SBO:0000247" id="M_m1714__91__C_go__93__" name="inositol-P-ceramide B-(C26)_" compartment="C_go" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1715__91__C_go__93__" sboTerm="SBO:0000247" id="M_m1715__91__C_go__93__" name="inositol-P-ceramide D-(C24)_" compartment="C_go" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
       <species metaid="meta_M_m1716__91__C_go__93__" sboTerm="SBO:0000247" id="M_m1716__91__C_go__93__" name="inositol-P-ceramide D-(C26)_" compartment="C_go" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1717__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1717__91__C_em__93__" name="phosphatidyl-N-methylethanolamine_ActiveX VT_ERROR:" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C8H14NO8P*2">
+      <species metaid="meta_M_m1717__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1717__91__C_em__93__" name="phosphatidyl-N-methylethanolamine" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C8H14NO8P*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1717__91__C_em__93__">
@@ -51910,7 +52066,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1718__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1718__91__C_nu__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
+      <species metaid="meta_M_m1718__91__C_nu__93__" sboTerm="SBO:0000247" id="M_m1718__91__C_nu__93__" name="1-phosphatidyl-1D-myo-inositol 4-phosphate" compartment="C_nu" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-3" fbc:chemicalFormula="C11H15O16P2*2">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1718__91__C_nu__93__">
@@ -51927,8 +52083,8 @@
         </annotation>
       </species>
       <species metaid="meta_M_m1719__91__C_em__93__" sboTerm="SBO:0000247" id="M_m1719__91__C_em__93__" name="phosphatidyl-N,N-dimethylethanolamine_C8H11NO10PR2" compartment="C_em" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C8H11NO10PR2"/>
-      <species metaid="meta_M_m1720__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1720__91__C_cy__93__" name="nicotinate D-ribonucleoside_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1721__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1721__91__C_cy__93__" name="pantetheine_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H22N2O4S">
+      <species metaid="meta_M_m1720__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1720__91__C_cy__93__" name="nicotinate D-ribonucleoside" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
+      <species metaid="meta_M_m1721__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1721__91__C_cy__93__" name="pantetheine" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0" fbc:chemicalFormula="C11H22N2O4S">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1721__91__C_cy__93__">
@@ -51945,7 +52101,7 @@
         </annotation>
       </species>
       <species metaid="meta_M_m1722__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1722__91__C_cy__93__" name="N-pantothenoylcysteine_" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0"/>
-      <species metaid="meta_M_m1723__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1723__91__C_cy__93__" name="UDP-D-glucuronate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
+      <species metaid="meta_M_m1723__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1723__91__C_cy__93__" name="UDP-D-glucuronate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="0">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1723__91__C_cy__93__">
@@ -51961,7 +52117,7 @@
           </rdf:RDF>
         </annotation>
       </species>
-      <species metaid="meta_M_m1724__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1724__91__C_cy__93__" name="D-gluconate_ActiveX VT_ERROR:" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C6H11O7">
+      <species metaid="meta_M_m1724__91__C_cy__93__" sboTerm="SBO:0000247" id="M_m1724__91__C_cy__93__" name="D-gluconate" compartment="C_cy" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" fbc:charge="-1" fbc:chemicalFormula="C6H11O7">
         <annotation>
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
             <rdf:Description rdf:about="#meta_M_m1724__91__C_cy__93__">
@@ -128924,6 +129080,49 @@
         </listOfProducts>
       </reaction>
       <reaction metaid="meta_R_R1438" sboTerm="SBO:0000627" id="R_R1438" name="butyrate exchange" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#meta_R_R1438">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45248"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45249"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45250"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45251"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45248"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45249"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45250"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45251"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn08184"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn11382"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96352"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedr/rxn08184"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedr/rxn11382"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_0155"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
         <listOfReactants>
           <speciesReference species="M_m1459__91__C_ex__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -128996,6 +129195,49 @@
         </listOfReactants>
       </reaction>
       <reaction metaid="meta_R_R1441" sboTerm="SBO:0000185" id="R_R1441" name="butyrate (n-C4:0) transport" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#meta_R_R1441">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45248"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45249"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45250"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45251"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45248"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45249"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45250"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45251"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn08184"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn11382"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96352"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedr/rxn08184"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedr/rxn11382"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_0155"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
         <listOfReactants>
           <speciesReference species="M_m1459__91__C_ex__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -130081,6 +130323,49 @@
         </fbc:geneProductAssociation>
       </reaction>
       <reaction metaid="meta_R_R1480" sboTerm="SBO:0000185" id="R_R1480" name="butyrate (n-C4:0) transport, cytoplasm-peroxisome" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#meta_R_R1480">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/bigg.reaction/R_EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45248"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45249"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45250"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/45251"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45248"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45249"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45250"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/45251"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn08184"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn11382"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96352"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_BUTt"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_but_e"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedr/rxn08184"/>
+                  <rdf:li rdf:resource="https://identifiers.org/seedr/rxn11382"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/HMR_0155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/R_BUTtex"/>
+                  <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_0155"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
         <listOfReactants>
           <speciesReference species="M_m1465__91__C_cy__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -143871,7 +144156,18 @@
             <rdf:Description rdf:about="#meta_R_R1897">
               <bqbiol:is>
                 <rdf:Bag>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/44324"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/44325"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/44326"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rh/44327"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/44324"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/44325"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/44326"/>
+                  <rdf:li rdf:resource="https://identifiers.org/rhea/44327"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiork.reaction/10288"/>
+                  <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR128178"/>
                   <rdf:li rdf:resource="https://identifiers.org/ec-code/3.1.1.3"/>
+                  <rdf:li rdf:resource="https://identifiers.org/sabiorkr/10288"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -143902,6 +144198,7 @@
           <speciesReference species="M_m182__91__C_pe__93__" stoichiometry="1" constant="true"/>
           <speciesReference species="M_m515__91__C_pe__93__" stoichiometry="1" constant="true"/>
           <speciesReference species="M_m1522__91__C_pe__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m118__91__C_pe__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m517__91__C_pe__93__" stoichiometry="1" constant="true"/>
@@ -153695,7 +153992,7 @@
       <reaction metaid="meta_R_R2125" sboTerm="SBO:0000185" id="R_R2125" name="Sphinganine transport" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
         <listOfReactants>
           <speciesReference species="M_m105__91__C_er__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m102__91__C_er__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m1978__91__C_cy__93__" stoichiometry="1" constant="true"/>
@@ -154622,7 +154919,7 @@
       <reaction metaid="meta_R_R2167" sboTerm="SBO:0000185" id="R_R2167" name="Decanoyl-CoA transport" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
         <listOfReactants>
           <speciesReference species="M_m2010__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="4" constant="true"/>
+          <speciesReference species="M_m382__91__C_mm__93__" stoichiometry="4" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m1737__91__C_mm__93__" stoichiometry="1" constant="true"/>
@@ -158523,7 +158820,7 @@
       <reaction metaid="meta_R_R2269" sboTerm="SBO:0000185" id="R_R2269" name="Acetate transport" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
         <listOfReactants>
           <speciesReference species="M_m2053__91__C_pe__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m118__91__C_pe__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m202__91__C_cy__93__" stoichiometry="1" constant="true"/>
@@ -176569,7 +176866,6 @@
       </groups:group>
       <groups:group metaid="meta_G_group2" sboTerm="SBO:0000633" groups:id="G_group2" groups:name="Alanine, aspartate and glutamate metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
-          <groups:member groups:name="1-pyrroline-5-carboxylate dehydrogenase" groups:idRef="R_R9"/>
           <groups:member groups:name="glutamate synthase (NADH2)" groups:idRef="R_R331"/>
           <groups:member groups:name="glutamine synthetase" groups:idRef="R_R334"/>
           <groups:member groups:name="asparagine synthase (glutamine-hydrolysing)" groups:idRef="R_R156"/>
@@ -176577,6 +176873,7 @@
           <groups:member groups:name="glutamate dehydrogenase (NAD)" groups:idRef="R_R329"/>
           <groups:member groups:name="L-Glutamate:ammonia ligase (ADP-forming)" groups:idRef="R_R2081"/>
           <groups:member groups:name="alanine glyoxylate aminotransferase" groups:idRef="R_R128"/>
+          <groups:member groups:name="1-pyrroline-5-carboxylate dehydrogenase" groups:idRef="R_R9"/>
           <groups:member groups:name="aspartate transaminase" groups:idRef="R_R163"/>
           <groups:member groups:name="L-alanine transaminase" groups:idRef="R_R502"/>
           <groups:member groups:name="3-oxalomalate glyoxylate-lyase (oxaloacetate-forming)" groups:idRef="R_R2007"/>
@@ -176619,10 +176916,10 @@
           <groups:member groups:name="[1,4-(N-Acetyl-beta-D-glucosaminyl)]n glycanohydrolase" groups:idRef="R_R2092"/>
           <groups:member groups:name="UDP-N-acetylglucosamine diphosphorylase" groups:idRef="R_R778"/>
           <groups:member groups:name="phosphoacetylglucosamine mutase" groups:idRef="R_R632"/>
-          <groups:member groups:name="UTP:N-acetyl-alpha-D-glucosamine-1-phosphate uridylyltransferase" groups:idRef="R_R2108"/>
           <groups:member groups:name="chitin synthase" groups:idRef="R_R211"/>
           <groups:member groups:name="glutamine-fructose-6-phosphate transaminase" groups:idRef="R_R335"/>
           <groups:member groups:name="phosphoglucosamine mutase" groups:idRef="R_R640"/>
+          <groups:member groups:name="UTP:N-acetyl-alpha-D-glucosamine-1-phosphate uridylyltransferase" groups:idRef="R_R2108"/>
           <groups:member groups:name="ATP:D-glucosamine 6-phosphotransferase" groups:idRef="R_R1946"/>
           <groups:member groups:name="N-Acetyl-D-Glucosamine kinase" groups:idRef="R_R2013"/>
           <groups:member groups:name="glucosamine-6-phosphate deaminase" groups:idRef="R_R324"/>
@@ -176671,6 +176968,7 @@
       <groups:group metaid="meta_G_group8" sboTerm="SBO:0000633" groups:id="G_group8" groups:name="Arginine and proline metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
           <groups:member groups:name="argininosuccinate synthase" groups:idRef="R_R153"/>
+          <groups:member groups:name="allophanate hydrolase" groups:idRef="R_R140"/>
           <groups:member groups:name="spermine synthase" groups:idRef="R_R729"/>
           <groups:member groups:name="proline oxidase (NAD)" groups:idRef="R_R672"/>
           <groups:member groups:name="acteylornithine transaminase" groups:idRef="R_R96"/>
@@ -176692,7 +176990,6 @@
           <groups:member groups:name="L-erythro-4-hydroxyglutamate:2-oxoglutarate aminotransferase" groups:idRef="R_R506"/>
           <groups:member groups:name="ornithine transaminase" groups:idRef="R_R610"/>
           <groups:member groups:name="L-erythro-4-hydroxyglutamate:2-oxoglutarate aminotransferase" groups:idRef="R_R507"/>
-          <groups:member groups:name="allophanate hydrolase" groups:idRef="R_R140"/>
           <groups:member groups:name="L-erythro-4-hydroxyglutamate:2-oxoglutarate aminotransferase" groups:idRef="R_R508"/>
           <groups:member groups:name="urea carboxylase" groups:idRef="R_R784"/>
           <groups:member groups:name="arginase" groups:idRef="R_R151"/>
@@ -176774,11 +177071,11 @@
           <groups:member groups:name="3-sulfino-L-alanine:2-oxoglutarate aminotransferase" groups:idRef="R_R2196"/>
           <groups:member groups:name="O-succinylhomoserine lyase (L-cysteine)" groups:idRef="R_R606"/>
           <groups:member groups:name="5-methyltetrahydropteroyltriglutamate-homocysteine S-methyltransferase" groups:idRef="R_R65"/>
-          <groups:member groups:name="2,3-diketo-5-methylthio-1-phosphopentane degradation reaction" groups:idRef="R_R10"/>
           <groups:member groups:name="NO NAME" groups:idRef="R_R2197"/>
           <groups:member groups:name="5-methylthio-5-deoxy-D-ribulose 1-phosphate dehydratase" groups:idRef="R_R66"/>
           <groups:member groups:name="O3-acetyl-L-serine:thiosulfate 2-amino-2-carboxyethyltransferase (reducing, L-cysteine-forming); O3-acetyl-L-serine acetate-lyase (thiosulfate-reducing, L-cysteine-forming)" groups:idRef="R_R2198"/>
           <groups:member groups:name="5&apos;-methylthioadenosine phosphorylase" groups:idRef="R_R55"/>
+          <groups:member groups:name="2,3-diketo-5-methylthio-1-phosphopentane degradation reaction" groups:idRef="R_R10"/>
           <groups:member groups:name="O-succinylhomoserine lyase (elimination)" groups:idRef="R_R1899"/>
           <groups:member groups:name="5-methylthioribose-1-phosphate isomerase" groups:idRef="R_R67"/>
           <groups:member groups:name="L-Cysteine:2-oxoglutarate aminotransferase" groups:idRef="R_R2199"/>
@@ -176939,7 +177236,6 @@
           <groups:member groups:name="(1-3)-beta-D-glucan exchange" groups:idRef="R_R941"/>
           <groups:member groups:name="L-isoleucine exchange" groups:idRef="R_R1217"/>
           <groups:member groups:name="uridine exchange" groups:idRef="R_R1356"/>
-          <groups:member groups:name="spermine exchange" groups:idRef="R_R1326"/>
           <groups:member groups:name="FMN exchange" groups:idRef="R_R1126"/>
           <groups:member groups:name="pyruvate exchange" groups:idRef="R_R1310"/>
           <groups:member groups:name="hypoxanthine exchange" groups:idRef="R_R1173"/>
@@ -176953,6 +177249,7 @@
           <groups:member groups:name="L-lysine exchange" groups:idRef="R_R1220"/>
           <groups:member groups:name="5-formyltetrahydrofolic acid exchange" groups:idRef="R_R991"/>
           <groups:member groups:name="decanoate exchange" groups:idRef="R_R1083"/>
+          <groups:member groups:name="spermine exchange" groups:idRef="R_R1326"/>
           <groups:member groups:name="(R)-mevalonate exchange" groups:idRef="R_R945"/>
           <groups:member groups:name="7,8-diaminononanoate exchange" groups:idRef="R_R992"/>
           <groups:member groups:name="inosine exchange" groups:idRef="R_R1176"/>
@@ -177178,7 +177475,6 @@
           <groups:member groups:name="B-hydroxyacyl-CoA dehydratase (trans-tetracos-2-enoyl-CoA)" groups:idRef="R_R1425"/>
           <groups:member groups:name="fatty-acid--CoA ligase (decanoate)" groups:idRef="R_R297"/>
           <groups:member groups:name="B-ketoacyl-CoA reductase ((S)-3-hydroxypalmitoyl-CoA)" groups:idRef="R_R1414"/>
-          <groups:member groups:name="fatty-acid--CoA ligase (tetradecanoate)" groups:idRef="R_R301"/>
           <groups:member groups:name="B-hydroxyacyl-CoA dehydratase (trans-hexacos-2-enoyl-CoA)" groups:idRef="R_R1426"/>
           <groups:member groups:name="fatty-acid--CoA ligase (dodecanoate)" groups:idRef="R_R298"/>
           <groups:member groups:name="B-ketoacyl-CoA reductase (3-hydroxyoctadecanoyl-CoA)" groups:idRef="R_R1415"/>
@@ -177187,6 +177483,7 @@
           <groups:member groups:name="B-ketoacyl-CoA reductase (3-hydroxyicosanoyl-CoA)" groups:idRef="R_R1416"/>
           <groups:member groups:name="trans-2-enoyl-CoA reductase (n-C16:0CoA)" groups:idRef="R_R1428"/>
           <groups:member groups:name="fatty-acid--CoA ligase (octanoate)" groups:idRef="R_R300"/>
+          <groups:member groups:name="fatty-acid--CoA ligase (tetradecanoate)" groups:idRef="R_R301"/>
           <groups:member groups:name="B-ketoacyl-CoA reductase (3-hydroxydocosanoyl-CoA)" groups:idRef="R_R1417"/>
           <groups:member groups:name="trans-2-enoyl-CoA reductase (n-C18:0CoA)" groups:idRef="R_R1429"/>
           <groups:member groups:name="elongase I (3-oxotetradecanoyl-CoA)" groups:idRef="R_R1406"/>
@@ -177235,14 +177532,14 @@
           <groups:member groups:name="dihydrofolate synthase" groups:idRef="R_R273"/>
           <groups:member groups:name="GTP cyclohydrolase I" groups:idRef="R_R377"/>
           <groups:member groups:name="tetrahydrofolate:L-glutamate gamma-ligase (ADP-forming)" groups:idRef="R_R749"/>
-          <groups:member groups:name="2-amino-4-hydroxy-6-hydroxymethyldihydropteridine diphosphokinase" groups:idRef="R_R14"/>
           <groups:member groups:name="dihydrofolate reductase" groups:idRef="R_R271"/>
           <groups:member groups:name="dihydroneopterin aldolase" groups:idRef="R_R274"/>
           <groups:member groups:name="dihydropteroate synthase" groups:idRef="R_R277"/>
+          <groups:member groups:name="dihydroneopterin monophosphate dephosphorylase" groups:idRef="R_R275"/>
           <groups:member groups:name="alkaline phosphatase (dihydroneopterin)" groups:idRef="R_R137"/>
           <groups:member groups:name="4-amino-4-deoxychorismate synthase" groups:idRef="R_R48"/>
           <groups:member groups:name="dihydrofolate reductase" groups:idRef="R_R272"/>
-          <groups:member groups:name="dihydroneopterin monophosphate dephosphorylase" groups:idRef="R_R275"/>
+          <groups:member groups:name="2-amino-4-hydroxy-6-hydroxymethyldihydropteridine diphosphokinase" groups:idRef="R_R14"/>
           <groups:member groups:name="dihydropteroate synthase" groups:idRef="R_R278"/>
         </groups:listOfMembers>
       </groups:group>
@@ -177304,9 +177601,9 @@
           <groups:member groups:name="D-Glyceraldehyde:NAD+ oxidoreductase" groups:idRef="R_R2069"/>
           <groups:member groups:name="extracellular monobutyrate hydrolysis" groups:idRef="R_R1897"/>
           <groups:member groups:name="ATP:(R)-glycerate 3-phosphotransferase" groups:idRef="R_R2093"/>
-          <groups:member groups:name="diacylglycerol pyrophosphate phosphatase, yeast-specific" groups:idRef="R_R2145"/>
           <groups:member groups:name="glycerol-3-phosphate/dihydroxyacetone phosphate acyltransferase" groups:idRef="R_R353"/>
           <groups:member groups:name="DGPP phosphatase" groups:idRef="R_R1758"/>
+          <groups:member groups:name="diacylglycerol pyrophosphate phosphatase, yeast-specific" groups:idRef="R_R2145"/>
           <groups:member groups:name="Triacyglycerol synthesis" groups:idRef="R_R2165"/>
           <groups:member groups:name="diacylglycerol acyltransferase" groups:idRef="R_R1771"/>
           <groups:member groups:name="glycerol dehydrogenase (NADP-dependent)" groups:idRef="R_R345"/>
@@ -177578,8 +177875,8 @@
       <groups:group metaid="meta_G_group44" sboTerm="SBO:0000633" groups:id="G_group44" groups:name="Methane metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
           <groups:member groups:name="formate dehydrogenase" groups:idRef="R_R308"/>
-          <groups:member groups:name="formaldehyde dehydrogenase" groups:idRef="R_R307"/>
           <groups:member groups:name="S-formylglutathione hydralase" groups:idRef="R_R717"/>
+          <groups:member groups:name="formaldehyde dehydrogenase" groups:idRef="R_R307"/>
         </groups:listOfMembers>
       </groups:group>
       <groups:group metaid="meta_G_group45" sboTerm="SBO:0000633" groups:id="G_group45" groups:name="Model specific" groups:kind="partonomy">
@@ -177589,8 +177886,8 @@
           <groups:member groups:name="Fatty acids pool" groups:idRef="R_xPOOL_FA_EN"/>
           <groups:member groups:name="Fatty acids pool" groups:idRef="R_xPOOL_FA_MM"/>
           <groups:member groups:name="yeast 5 biomass pseudoreaction" groups:idRef="R_R1372"/>
-          <groups:member groups:name="xBIOMASS" groups:idRef="R_xBIOMASS"/>
           <groups:member groups:name="yeast 6 biomass pseudoreaction" groups:idRef="R_R1387"/>
+          <groups:member groups:name="xBIOMASS" groups:idRef="R_xBIOMASS"/>
           <groups:member groups:name="Non-growth associated maintenance (NGAM)" groups:idRef="R_xMAINTENANCE"/>
           <groups:member groups:name="Acyl-CoAs pool" groups:idRef="R_xPOOL_AC_MM"/>
           <groups:member groups:name="lipid pseudoreaction" groups:idRef="R_R1371"/>
@@ -177698,15 +177995,15 @@
         <groups:listOfMembers>
           <groups:member groups:name="3-methyl-2-oxobutanoate hydroxymethyltransferase" groups:idRef="R_R46"/>
           <groups:member groups:name="dephospho-CoA kinase" groups:idRef="R_R265"/>
-          <groups:member groups:name="2-dehydropantoate 2-reductase" groups:idRef="R_R16"/>
           <groups:member groups:name="pantothenate synthase" groups:idRef="R_R617"/>
           <groups:member groups:name="phosphopantothenoylcysteine decarboxylase" groups:idRef="R_R648"/>
+          <groups:member groups:name="pantothenate kinase" groups:idRef="R_R616"/>
           <groups:member groups:name="ATP:pantothenate 4&apos;-phosphotransferase" groups:idRef="R_R1908"/>
           <groups:member groups:name="acetohydroxy acid isomeroreductase" groups:idRef="R_R76"/>
           <groups:member groups:name="dephospho-CoA kinase" groups:idRef="R_R1092"/>
           <groups:member groups:name="pantetheine-phosphate adenylyltransferase" groups:idRef="R_R615"/>
           <groups:member groups:name="ATP:pantothenate 4&apos;-phosphotransferase" groups:idRef="R_R1909"/>
-          <groups:member groups:name="pantothenate kinase" groups:idRef="R_R616"/>
+          <groups:member groups:name="2-dehydropantoate 2-reductase" groups:idRef="R_R16"/>
           <groups:member groups:name="phosphopantothenate-cysteine ligase" groups:idRef="R_R647"/>
         </groups:listOfMembers>
       </groups:group>
@@ -177759,9 +178056,9 @@
           <groups:member groups:name="prephenate dehydrogenase (NADP)" groups:idRef="R_R671"/>
           <groups:member groups:name="3-deoxy-D-arabino-heptulosonate 7-phosphate synthetase" groups:idRef="R_R38"/>
           <groups:member groups:name="indole-3-glycerol-phosphate synthase" groups:idRef="R_R418"/>
-          <groups:member groups:name="2-deoxy-D-arabino-heptulosonate 7-phosphate synthetase" groups:idRef="R_R17"/>
           <groups:member groups:name="chorismate mutase" groups:idRef="R_R214"/>
           <groups:member groups:name="chorismate synthase" groups:idRef="R_R215"/>
+          <groups:member groups:name="2-deoxy-D-arabino-heptulosonate 7-phosphate synthetase" groups:idRef="R_R17"/>
           <groups:member groups:name="anthranilate phosphoribosyltransferase" groups:idRef="R_R147"/>
           <groups:member groups:name="tryptophan synthase (indoleglycerol phosphate)" groups:idRef="R_R769"/>
           <groups:member groups:name="shikimate dehydrogenase" groups:idRef="R_R724"/>
@@ -177796,8 +178093,8 @@
           <groups:member groups:name="ferrochelatase" groups:idRef="R_R302"/>
           <groups:member groups:name="5-aminolevulinate synthase" groups:idRef="R_R61"/>
           <groups:member groups:name="protoporphyrinogen oxidase" groups:idRef="R_R674"/>
-          <groups:member groups:name="uroporphyrinogen methyltransferase" groups:idRef="R_R791"/>
           <groups:member groups:name="hydroxymethylbilane synthase" groups:idRef="R_R409"/>
+          <groups:member groups:name="uroporphyrinogen methyltransferase" groups:idRef="R_R791"/>
           <groups:member groups:name="heme O monooxygenase" groups:idRef="R_R383"/>
           <groups:member groups:name="sirohydrochlorin ferrochetalase" groups:idRef="R_R727"/>
           <groups:member groups:name="uroporphyrinogen decarboxylase (uroporphyrinogen III)" groups:idRef="R_R790"/>
@@ -177836,8 +178133,8 @@
           <groups:member groups:name="hypoxanthine phosphoribosyltransferase (Hypoxanthine)" groups:idRef="R_R414"/>
           <groups:member groups:name="allantoinase" groups:idRef="R_R139"/>
           <groups:member groups:name="GMP synthase" groups:idRef="R_R369"/>
-          <groups:member groups:name="ureidoglycolate hydrolase" groups:idRef="R_R785"/>
           <groups:member groups:name="glycinamide ribonucleotide transformylase" groups:idRef="R_R1892"/>
+          <groups:member groups:name="ureidoglycolate hydrolase" groups:idRef="R_R785"/>
           <groups:member groups:name="nucleoside triphosphatase" groups:idRef="R_R601"/>
           <groups:member groups:name="gnnuc" groups:idRef="R_R370"/>
           <groups:member groups:name="IMP dehydrogenase" groups:idRef="R_R417"/>
@@ -177859,13 +178156,12 @@
           <groups:member groups:name="5&apos;-phosphoribosylformyl glycinamidine synthetase" groups:idRef="R_R59"/>
           <groups:member groups:name="ribonucleoside-triphosphate reductase (GTP)" groups:idRef="R_R704"/>
           <groups:member groups:name="5&apos;-nucleotidase (dAMP)" groups:idRef="R_R980"/>
-          <groups:member groups:name="guanylate kinase" groups:idRef="R_R381"/>
           <groups:member groups:name="phosphoribosylpyrophosphate synthetase" groups:idRef="R_R658"/>
+          <groups:member groups:name="guanylate kinase" groups:idRef="R_R381"/>
           <groups:member groups:name="guanylate kinase (GMP:dATP)" groups:idRef="R_R382"/>
           <groups:member groups:name="NAD nucleosidase nuclear" groups:idRef="R_R567"/>
           <groups:member groups:name="ribonucleotide reductase" groups:idRef="R_R706"/>
           <groups:member groups:name="5&apos;-nucleotidase (dGMP)" groups:idRef="R_R982"/>
-          <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R590"/>
           <groups:member groups:name="2&apos;-Deoxyinosine-5&apos;-triphosphate pyrophosphohydrolase" groups:idRef="R_R1952"/>
           <groups:member groups:name="xanthine phosphoribosyltransferase" groups:idRef="R_R800"/>
           <groups:member groups:name="xanthine dehydrogenase" groups:idRef="R_R1953"/>
@@ -177875,6 +178171,7 @@
           <groups:member groups:name="5&apos;-nucleotidase (XMP)" groups:idRef="R_R986"/>
           <groups:member groups:name="hydroxyisourate hydrolase" groups:idRef="R_R1955"/>
           <groups:member groups:name="OHCU decarboxylase" groups:idRef="R_R1956"/>
+          <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R590"/>
           <groups:member groups:name="ADP-ribose ribophosphohydrolase" groups:idRef="R_R1912"/>
           <groups:member groups:name="adenine phosphoribosyltransferase" groups:idRef="R_R114"/>
           <groups:member groups:name="adenosine kinase" groups:idRef="R_R115"/>
@@ -177933,7 +178230,6 @@
           <groups:member groups:name="dCTP deaminase" groups:idRef="R_R259"/>
           <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R593"/>
           <groups:member groups:name="ITP:uridine 5&apos;-phosphotransferase" groups:idRef="R_R1919"/>
-          <groups:member groups:name="5&apos;-nucleotidase (dCMP)" groups:idRef="R_R981"/>
           <groups:member groups:name="deoxycytidine deaminase" groups:idRef="R_R260"/>
           <groups:member groups:name="dATP:cytidine 5&apos;-phosphotransferase" groups:idRef="R_R1920"/>
           <groups:member groups:name="thioredoxin reductase (NADPH)" groups:idRef="R_R755"/>
@@ -177944,6 +178240,7 @@
           <groups:member groups:name="thioredoxin reductase (NADPH)" groups:idRef="R_R756"/>
           <groups:member groups:name="cytidine kinase (GTP)" groups:idRef="R_R250"/>
           <groups:member groups:name="dGTP:uridine 5&apos;-phosphotransferase" groups:idRef="R_R1922"/>
+          <groups:member groups:name="5&apos;-nucleotidase (dCMP)" groups:idRef="R_R981"/>
           <groups:member groups:name="nucleoside diphosphatase" groups:idRef="R_R585"/>
           <groups:member groups:name="aspartate carbamoyltransferase" groups:idRef="R_R159"/>
           <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R597"/>
@@ -177994,8 +178291,8 @@
           <groups:member groups:name="acetyl-CoA hydrolase" groups:idRef="R_R89"/>
           <groups:member groups:name="(S)-Lactate:ferricytochrome-c 2-oxidoreductase" groups:idRef="R_R2086"/>
           <groups:member groups:name="hydroxyacylglutathione hydrolase" groups:idRef="R_R406"/>
-          <groups:member groups:name="acetyl-CoA C-acetyltransferase" groups:idRef="R_R82"/>
           <groups:member groups:name="(R)-lactate:ferricytochrome-c 2-oxidoreductase" groups:idRef="R_R1"/>
+          <groups:member groups:name="acetyl-CoA C-acetyltransferase" groups:idRef="R_R82"/>
           <groups:member groups:name="lactaldehyde dehydrogenase" groups:idRef="R_R517"/>
           <groups:member groups:name="(R)-lactate:ferricytochrome-c 2-oxidoreductase" groups:idRef="R_R2"/>
           <groups:member groups:name="malic enzyme (NADP)" groups:idRef="R_R538"/>
@@ -178013,17 +178310,17 @@
       </groups:group>
       <groups:group metaid="meta_G_group66" sboTerm="SBO:0000633" groups:id="G_group66" groups:name="Riboflavin metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
-          <groups:member groups:name="2,5-diamino-6-ribitylamino-4(3H)-pyrimidinone 5&apos;-phosphate deaminase" groups:idRef="R_R11"/>
+          <groups:member groups:name="2,5-diamino-6-ribosylamino-4(3H)-pyrimidinone 5&apos;-phosphate reductase (NADPH)" groups:idRef="R_R12"/>
           <groups:member groups:name="riboflavin kinase" groups:idRef="R_R697"/>
+          <groups:member groups:name="3,4-dihydroxy-2-butanone-4-phosphate synthase" groups:idRef="R_R34"/>
           <groups:member groups:name="riboflavin synthase" groups:idRef="R_R700"/>
           <groups:member groups:name="FMN adenylyltransferase" groups:idRef="R_R1125"/>
           <groups:member groups:name="riboflavin kinase" groups:idRef="R_R698"/>
+          <groups:member groups:name="2,5-diamino-6-ribitylamino-4(3H)-pyrimidinone 5&apos;-phosphate deaminase" groups:idRef="R_R11"/>
           <groups:member groups:name="FMN adenylyltransferase" groups:idRef="R_R306"/>
-          <groups:member groups:name="2,5-diamino-6-ribosylamino-4(3H)-pyrimidinone 5&apos;-phosphate reductase (NADPH)" groups:idRef="R_R12"/>
           <groups:member groups:name="GTP cyclohydrolase II" groups:idRef="R_R378"/>
           <groups:member groups:name="riboflavin synthase" groups:idRef="R_R699"/>
           <groups:member groups:name="acid phosphatase (secreted)" groups:idRef="R_R94"/>
-          <groups:member groups:name="3,4-dihydroxy-2-butanone-4-phosphate synthase" groups:idRef="R_R34"/>
         </groups:listOfMembers>
       </groups:group>
       <groups:group metaid="meta_G_group67" sboTerm="SBO:0000633" groups:id="G_group67" groups:name="Sphingolipid metabolism" groups:kind="partonomy">
@@ -178125,22 +178422,21 @@
           <groups:member groups:name="Inositol phosphorylceramide synthase (ceramide-2, 24C), yeast-specific" groups:idRef="R_R2151"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R446"/>
           <groups:member groups:name="mannose-inositol phosphorylceramide synthase (ceramide-2, 24C), yeast-specific" groups:idRef="R_R2152"/>
-          <groups:member groups:name="Inositol phosphorylceramide synthase (ceramide-3, 24C), yeast-specific" groups:idRef="R_R2157"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R447"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R448"/>
           <groups:member groups:name="Inositol phosphoryceramide synthase (ceramide-2, 26C), yeast-specific" groups:idRef="R_R2154"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R449"/>
           <groups:member groups:name="mannose-inositol phosphorylceramide synthase (ceramide-2, 26C), yeast-specific" groups:idRef="R_R2155"/>
+          <groups:member groups:name="Inositol phosphorylceramide synthase (ceramide-3, 24C), yeast-specific" groups:idRef="R_R2157"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R450"/>
           <groups:member groups:name="3-dehydrosphinganine reductase" groups:idRef="R_R37"/>
         </groups:listOfMembers>
       </groups:group>
       <groups:group metaid="meta_G_group68" sboTerm="SBO:0000633" groups:id="G_group68" groups:name="Starch and sucrose metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
-          <groups:member groups:name="1,3-beta-glucan synthase" groups:idRef="R_R4"/>
           <groups:member groups:name="UDP-D-glucuronate carboxy-lyase" groups:idRef="R_R2137"/>
+          <groups:member groups:name="1,3-beta-glucan synthase" groups:idRef="R_R4"/>
           <groups:member groups:name="cellobiose glucohydrolase" groups:idRef="R_R1930"/>
-          <groups:member groups:name="(1-6)-beta-glucan synthase" groups:idRef="R_R5"/>
           <groups:member groups:name="1,4-alpha-D-Glucan glucohydrolase" groups:idRef="R_R2184"/>
           <groups:member groups:name="glucan 1,4-alpha-glucosidase" groups:idRef="R_R323"/>
           <groups:member groups:name="exo-1,3-beta-glucan glucohydrase" groups:idRef="R_R294"/>
@@ -178149,6 +178445,7 @@
           <groups:member groups:name="trehalose-phosphatase" groups:idRef="R_R767"/>
           <groups:member groups:name="1,4-alpha-D-Glucan:1,4-alpha-D-glucan 6-alpha-D-(1,4-alpha-D-glucano)-transferase" groups:idRef="R_R2185"/>
           <groups:member groups:name="alpha,alpha-trehalose-phosphate synthase (UDP-forming)" groups:idRef="R_R143"/>
+          <groups:member groups:name="(1-6)-beta-glucan synthase" groups:idRef="R_R5"/>
           <groups:member groups:name="glycogen phosphorylase" groups:idRef="R_R367"/>
           <groups:member groups:name="UDP-glucose:glycogen 4-alpha-D-glucosyltransferase" groups:idRef="R_R2186"/>
           <groups:member groups:name="glucose 1-dehydrogenase" groups:idRef="R_R2059"/>
@@ -178164,7 +178461,6 @@
           <groups:member groups:name="ergosteryl ester hydrolase (16:1), lipid particle" groups:idRef="R_R1557"/>
           <groups:member groups:name="C-s24 sterol reductase" groups:idRef="R_R188"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (palmitoleoyl-CoA:episterol), ER membrane" groups:idRef="R_R108"/>
-          <groups:member groups:name="squalene synthase" groups:idRef="R_R739"/>
           <groups:member groups:name="C-22 sterol desaturase (NADP)" groups:idRef="R_R177"/>
           <groups:member groups:name="ergosteryl ester hydrolase (18:1), lipid particle" groups:idRef="R_R1558"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (palmitoleoyl-CoA:ergosterol), ER membrane" groups:idRef="R_R109"/>
@@ -178174,7 +178470,7 @@
           <groups:member groups:name="C-3 sterol dehydrogenase (4-methylzymosterol)" groups:idRef="R_R179"/>
           <groups:member groups:name="episteryl ester hydrolase (18:1), lipid particle" groups:idRef="R_R1560"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (palmitoleoyl-CoA:lanosterol), ER membrane" groups:idRef="R_R111"/>
-          <groups:member groups:name="zymosteryl ester hydrolase (16:1), cell envelope" groups:idRef="R_R1567"/>
+          <groups:member groups:name="squalene synthase" groups:idRef="R_R739"/>
           <groups:member groups:name="C-3 sterol keto reductase (4-methylzymosterol)" groups:idRef="R_R180"/>
           <groups:member groups:name="fecosteryl ester hydrolase (16:1), lipid particle" groups:idRef="R_R1561"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (palmitoleoyl-CoA:zymosterol), ER membrane" groups:idRef="R_R112"/>
@@ -178183,6 +178479,7 @@
           <groups:member groups:name="cytochrome P450 lanosterol 14-alpha-demethylase (NADP)" groups:idRef="R_R251"/>
           <groups:member groups:name="C-4 methyl sterol oxidase" groups:idRef="R_R182"/>
           <groups:member groups:name="lanosteryl ester hydrolase (16:1), lipid particle" groups:idRef="R_R1563"/>
+          <groups:member groups:name="zymosteryl ester hydrolase (16:1), cell envelope" groups:idRef="R_R1567"/>
           <groups:member groups:name="C-4 methyl sterol oxidase" groups:idRef="R_R183"/>
           <groups:member groups:name="lanosteryl ester hydrolase (18:1), lipid particle" groups:idRef="R_R1564"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (oleoyl-CoA:episterol), ER membrane" groups:idRef="R_R103"/>
@@ -178359,6 +178656,7 @@
           <groups:member groups:name="phosphatidylethanolamine transport, ER membrane-cytoplasm" groups:idRef="R_R1706"/>
           <groups:member groups:name="NADP(+) transport, cytoplasm-ER membrane" groups:idRef="R_R1591"/>
           <groups:member groups:name="CDP-choline transport, cytoplasm-ER membrane" groups:idRef="R_R1603"/>
+          <groups:member groups:name="phosphatidylcholine transport, ER membrane-cytoplasm" groups:idRef="R_R1705"/>
           <groups:member groups:name="stearoyl-CoA transport, cytoplasm-ER membrane" groups:idRef="R_R1580"/>
           <groups:member groups:name="sn-glycero-3-phosphocholine transport, ER membrane-cytoplasm" groups:idRef="R_R1615"/>
           <groups:member groups:name="triglyceride transport, ER membrane-cytoplasm" groups:idRef="R_R1707"/>
@@ -178402,7 +178700,6 @@
           <groups:member groups:name="myristoyl-CoA transport, cytoplasm-ER membrane" groups:idRef="R_R1577"/>
           <groups:member groups:name="lanosterol transport, cytoplasm-ER membrane" groups:idRef="R_R1612"/>
           <groups:member groups:name="phosphatidyl-L-serine transport, ER membrane-cytoplasm" groups:idRef="R_R1704"/>
-          <groups:member groups:name="phosphatidylcholine transport, ER membrane-cytoplasm" groups:idRef="R_R1705"/>
           <groups:member groups:name="coenzyme A transport, cytoplasm-ER membrane" groups:idRef="R_R1589"/>
           <groups:member groups:name="CMP transport, cytoplasm-ER membrane" groups:idRef="R_R1601"/>
           <groups:member groups:name="palmitoyl-CoA transport, cytoplasm-ER membrane" groups:idRef="R_R1578"/>
@@ -178840,11 +179137,11 @@
           <groups:member groups:name="phosphate transport" groups:idRef="R_R915"/>
           <groups:member groups:name="dihydroxyacetone phosphate transport" groups:idRef="R_R1099"/>
           <groups:member groups:name="2-isopropylmalate transport" groups:idRef="R_R962"/>
-          <groups:member groups:name="2-dehydro-3-deoxy-D-arabino-heptonate7-phohsphate transport" groups:idRef="R_R958"/>
           <groups:member groups:name="isoamyl alcohol transport" groups:idRef="R_R1192"/>
           <groups:member groups:name="2-oxobutanoate transporter" groups:idRef="R_R963"/>
           <groups:member groups:name="carnithine-acetylcarnithine carrier" groups:idRef="R_R825"/>
           <groups:member groups:name="Propanoate:CoA transport" groups:idRef="R_R2025"/>
+          <groups:member groups:name="2-dehydro-3-deoxy-D-arabino-heptonate7-phohsphate transport" groups:idRef="R_R958"/>
           <groups:member groups:name="2-Methylpropanoyl-CoA transport" groups:idRef="R_R2118"/>
           <groups:member groups:name="L-glutamate transport" groups:idRef="R_R875"/>
           <groups:member groups:name="3-carboxy-4-methyl-2-oxopentanoate transport" groups:idRef="R_R967"/>
@@ -179153,11 +179450,11 @@
           <groups:member groups:name="leucyl-tRNA synthetase" groups:idRef="R_R523"/>
           <groups:member groups:name="valyl-tRNA synthetase" groups:idRef="R_R799"/>
           <groups:member groups:name="dihydroxy-acid dehydratase (2,3-dihydroxy-3-methylpentanoate)" groups:idRef="R_R280"/>
-          <groups:member groups:name="valine transaminase, mitochondiral" groups:idRef="R_R797"/>
-          <groups:member groups:name="2-aceto-2-hydroxybutanoate synthase" groups:idRef="R_R13"/>
           <groups:member groups:name="acetolactate synthase" groups:idRef="R_R77"/>
+          <groups:member groups:name="2-aceto-2-hydroxybutanoate synthase" groups:idRef="R_R13"/>
           <groups:member groups:name="isoleucine transaminase" groups:idRef="R_R491"/>
           <groups:member groups:name="2-isopropylmalate synthase" groups:idRef="R_R21"/>
+          <groups:member groups:name="valine transaminase, mitochondiral" groups:idRef="R_R797"/>
           <groups:member groups:name="isoleucine transaminase" groups:idRef="R_R492"/>
           <groups:member groups:name="3-isopropylmalate dehydratase" groups:idRef="R_R44"/>
           <groups:member groups:name="isoleucyl-tRNA synthetase" groups:idRef="R_R493"/>

@@ -1,0 +1,105 @@
+id,compartment,current_name,clean_name,formula,has_formula
+m1545[C_pe],C_pe,(R)-3-hydroxyoctadecanoyl-CoA_ActiveX VT_ERROR:,(R)-3-hydroxyoctadecanoyl-CoA,,False
+m115[C_pe],C_pe,(R)-3-hydroxytetradecanoyl-CoA_ActiveX VT_ERROR:,(R)-3-hydroxytetradecanoyl-CoA,,False
+m1019[C_cy],C_cy,"(R,R)-2,3-butanediol_ActiveX VT_ERROR:","(R,R)-2,3-butanediol",,False
+m1020[C_ex],C_ex,"(R,R)-2,3-butanediol_ActiveX VT_ERROR:","(R,R)-2,3-butanediol",,False
+m575[C_em],C_em,1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:,1-acyl-sn-glycerol 3-phosphate,,False
+m577[C_lp],C_lp,1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:,1-acyl-sn-glycerol 3-phosphate,,False
+m1689[C_cy],C_cy,1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:,1-acyl-sn-glycerol 3-phosphate,,False
+m1691[C_vm],C_vm,1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:,1-acyl-sn-glycerol 3-phosphate,,False
+m1693[C_gm],C_gm,1-acyl-sn-glycerol 3-phosphate_ActiveX VT_ERROR:,1-acyl-sn-glycerol 3-phosphate,,False
+m1197[C_ex],C_ex,D-galacturonate_ActiveX VT_ERROR:,D-galacturonate,,False
+m339[C_cy],C_cy,"P1-(5'-adenosyl),P4-(5'-guanosyl) tetraphosphate_ActiveX VT_ERROR:","P1-(5'-adenosyl),P4-(5'-guanosyl) tetraphosphate",,False
+m1723[C_cy],C_cy,UDP-D-glucuronate_ActiveX VT_ERROR:,UDP-D-glucuronate,,False
+m1459[C_ex],C_ex,butyrate_ActiveX VT_ERROR:,butyrate,,False
+m1465[C_cy],C_cy,butyrate_ActiveX VT_ERROR:,butyrate,,False
+m1522[C_pe],C_pe,butyrate_ActiveX VT_ERROR:,butyrate,,False
+m805[C_mi],C_mi,fMet-tRNA(fMet)_ActiveX VT_ERROR:,fMet-tRNA(fMet),,False
+m1061[C_cy],C_cy,isoamyl acetate_ActiveX VT_ERROR:,isoamyl acetate,,False
+m1062[C_ex],C_ex,isoamyl acetate_ActiveX VT_ERROR:,isoamyl acetate,,False
+m496[C_cy],C_cy,"myo-inositol 1,3,4,5,6-pentakisphosphate_ActiveX VT_ERROR:","myo-inositol 1,3,4,5,6-pentakisphosphate",,False
+m656[C_nu],C_nu,"myo-inositol 1,3,4,5,6-pentakisphosphate_ActiveX VT_ERROR:","myo-inositol 1,3,4,5,6-pentakisphosphate",,False
+m1720[C_cy],C_cy,nicotinate D-ribonucleoside_ActiveX VT_ERROR:,nicotinate D-ribonucleoside,,False
+m1351[C_ex],C_ex,pectin_ActiveX VT_ERROR:,pectin,,False
+m378[C_em],C_em,phosphatidate_ActiveX VT_ERROR:,phosphatidate,,False
+m383[C_mm],C_mm,phosphatidate_ActiveX VT_ERROR:,phosphatidate,,False
+m1675[C_en],C_en,phosphatidate_ActiveX VT_ERROR:,phosphatidate,,False
+m1686[C_vm],C_vm,phosphatidate_ActiveX VT_ERROR:,phosphatidate,,False
+m1688[C_gm],C_gm,phosphatidate_ActiveX VT_ERROR:,phosphatidate,,False
+m1705[C_lp],C_lp,phosphatidate_ActiveX VT_ERROR:,phosphatidate,,False
+m273[C_cy],C_cy,tRNA(Ala)_ActiveX VT_ERROR:,tRNA(Ala),,False
+m314[C_cy],C_cy,tRNA(Arg)_ActiveX VT_ERROR:,tRNA(Arg),,False
+m320[C_cy],C_cy,tRNA(Asn)_ActiveX VT_ERROR:,tRNA(Asn),,False
+m335[C_cy],C_cy,tRNA(Asp)_ActiveX VT_ERROR:,tRNA(Asp),,False
+m447[C_cy],C_cy,tRNA(Cys)_ActiveX VT_ERROR:,tRNA(Cys),,False
+m553[C_cy],C_cy,tRNA(Gln)_ActiveX VT_ERROR:,tRNA(Gln),,False
+m555[C_cy],C_cy,tRNA(Glu)_ActiveX VT_ERROR:,tRNA(Glu),,False
+m590[C_cy],C_cy,tRNA(Gly)_ActiveX VT_ERROR:,tRNA(Gly),,False
+m618[C_cy],C_cy,tRNA(His)_ActiveX VT_ERROR:,tRNA(His),,False
+m746[C_cy],C_cy,tRNA(Ile)_ActiveX VT_ERROR:,tRNA(Ile),,False
+m777[C_cy],C_cy,tRNA(Leu)_ActiveX VT_ERROR:,tRNA(Leu),,False
+m794[C_cy],C_cy,tRNA(Lys)_ActiveX VT_ERROR:,tRNA(Lys),,False
+m797[C_mi],C_mi,"tRNA(Lys), mitchondrial_ActiveX VT_ERROR:","tRNA(Lys), mitchondrial",,False
+m806[C_cy],C_cy,tRNA(Met)_ActiveX VT_ERROR:,tRNA(Met),,False
+m861[C_cy],C_cy,tRNA(Phe)_ActiveX VT_ERROR:,tRNA(Phe),,False
+m905[C_cy],C_cy,tRNA(Pro)_ActiveX VT_ERROR:,tRNA(Pro),,False
+m943[C_cy],C_cy,tRNA(Ser)_ActiveX VT_ERROR:,tRNA(Ser),,False
+m978[C_cy],C_cy,tRNA(Thr)_ActiveX VT_ERROR:,tRNA(Thr),,False
+m987[C_cy],C_cy,tRNA(Trp)_ActiveX VT_ERROR:,tRNA(Trp),,False
+m995[C_cy],C_cy,tRNA(Tyr)_ActiveX VT_ERROR:,tRNA(Tyr),,False
+m998[C_mi],C_mi,"tRNA(Tyr), mitchondrial_ActiveX VT_ERROR:","tRNA(Tyr), mitchondrial",,False
+m1010[C_cy],C_cy,tRNA(Val)_ActiveX VT_ERROR:,tRNA(Val),,False
+m1449[C_em],C_em,trans-hexadec-2-enoyl-CoA_ActiveX VT_ERROR:,trans-hexadec-2-enoyl-CoA,,False
+m897[C_vm],C_vm,1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol,C11H17O13P*2,True
+m1393[C_cy],C_cy,1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol,C11H17O13P*2,True
+m1644[C_en],C_en,1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol,C11H17O13P*2,True
+m1648[C_em],C_em,1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol,C11H17O13P*2,True
+m1679[C_gm],C_gm,1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol,C11H17O13P*2,True
+m1706[C_nu],C_nu,1-phosphatidyl-1D-myo-inositol_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol,C11H17O13P*2,True
+m17[C_vm],C_vm,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate_ActiveX VT_ERROR:","1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate",C11H14O19P3*2,True
+m22[C_en],C_en,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate_ActiveX VT_ERROR:","1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate",C11H14O19P3*2,True
+m1683[C_cy],C_cy,"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate_ActiveX VT_ERROR:","1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate",C11H14O19P3*2,True
+m15[C_vm],C_vm,1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 3-phosphate,C11H15O16P2*2,True
+m20[C_en],C_en,1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 3-phosphate,C11H15O16P2*2,True
+m1676[C_cy],C_cy,1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 3-phosphate,C11H15O16P2*2,True
+m1677[C_em],C_em,1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 3-phosphate,C11H15O16P2*2,True
+m1678[C_gm],C_gm,1-phosphatidyl-1D-myo-inositol 3-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 3-phosphate,C11H15O16P2*2,True
+m1646[C_en],C_en,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:","1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C11H19O19P3*2,True
+m1669[C_cy],C_cy,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:","1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C11H19O19P3*2,True
+m1672[C_nu],C_nu,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:","1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C11H19O19P3*2,True
+m1684[C_em],C_em,"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate_ActiveX VT_ERROR:","1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C11H19O19P3*2,True
+m1643[C_vm],C_vm,1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 4-phosphate,C11H15O16P2*2,True
+m1645[C_en],C_en,1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 4-phosphate,C11H15O16P2*2,True
+m1680[C_cy],C_cy,1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 4-phosphate,C11H15O16P2*2,True
+m1681[C_em],C_em,1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 4-phosphate,C11H15O16P2*2,True
+m1682[C_gm],C_gm,1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 4-phosphate,C11H15O16P2*2,True
+m1718[C_nu],C_nu,1-phosphatidyl-1D-myo-inositol 4-phosphate_ActiveX VT_ERROR:,1-phosphatidyl-1D-myo-inositol 4-phosphate,C11H15O16P2*2,True
+m659[C_nu],C_nu,"1D-myo-inositol 1,3,4,5-tetrakisphosphate_ActiveX VT_ERROR:","1D-myo-inositol 1,3,4,5-tetrakisphosphate",C6H8O18P4,True
+m660[C_nu],C_nu,"1D-myo-inositol 1,4,5,6-tetrakisphosphate_ActiveX VT_ERROR:","1D-myo-inositol 1,4,5,6-tetrakisphosphate",C6H8O18P4,True
+m472[C_cy],C_cy,2-deoxy-D-ribose_ActiveX VT_ERROR:,2-deoxy-D-ribose,C5H10O4,True
+m481[C_cy],C_cy,"7,8-dihydropteroate_ActiveX VT_ERROR:","7,8-dihydropteroate",C14H13N6O3,True
+m487[C_mi],C_mi,"7,8-dihydropteroate_ActiveX VT_ERROR:","7,8-dihydropteroate",C14H13N6O3,True
+m1724[C_cy],C_cy,D-gluconate_ActiveX VT_ERROR:,D-gluconate,C6H11O7,True
+m300[C_cy],C_cy,aminoacetone_ActiveX VT_ERROR:,aminoacetone,C3H8NO,True
+m1651[C_mm],C_mm,cardiolipin_ActiveX VT_ERROR:,cardiolipin,C13H18O17P2*4,True
+m844[C_cy],C_cy,dIDP_ActiveX VT_ERROR:,dIDP,C10H11N4O10P2,True
+m604[C_er],C_er,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1642[C_lp],C_lp,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1649[C_em],C_em,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1670[C_cy],C_cy,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1673[C_nu],C_nu,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1674[C_mm],C_mm,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1696[C_mi],C_mi,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1703[C_vm],C_vm,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1704[C_gm],C_gm,diglyceride_ActiveX VT_ERROR:,diglyceride,C6H8O6,True
+m1050[C_ex],C_ex,folate_ActiveX VT_ERROR:,folate,C19H17N7O6,True
+m1051[C_cy],C_cy,folate_ActiveX VT_ERROR:,folate,C19H17N7O6,True
+m1721[C_cy],C_cy,pantetheine_ActiveX VT_ERROR:,pantetheine,C11H22N2O4S,True
+m1717[C_em],C_em,phosphatidyl-N-methylethanolamine_ActiveX VT_ERROR:,phosphatidyl-N-methylethanolamine,C8H14NO8P*2,True
+m1650[C_mm],C_mm,phosphatidylglycerol_ActiveX VT_ERROR:,phosphatidylglycerol,C8H13O10P*2,True
+m949[C_cy],C_cy,siroheme_ActiveX VT_ERROR:,siroheme,C42H36FeN4O16,True
+m955[C_mi],C_mi,trans-aconitate_ActiveX VT_ERROR:,trans-aconitate,C6H3O6,True
+m956[C_cy],C_cy,trans-aconitate_ActiveX VT_ERROR:,trans-aconitate,C6H3O6,True
+m1399[C_cy],C_cy,triglyceride_ActiveX VT_ERROR:,triglyceride,C6H5O6*3,True
+m1634[C_em],C_em,triglyceride_ActiveX VT_ERROR:,triglyceride,C6H5O6*3,True
+m1640[C_lp],C_lp,triglyceride_ActiveX VT_ERROR:,triglyceride,C6H5O6*3,True

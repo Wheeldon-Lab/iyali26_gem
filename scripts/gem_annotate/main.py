@@ -16,7 +16,7 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import apply_all_patches, fix_ec_code_format, move_tcdb_out_of_ec
+from .patches import apply_all_patches, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -51,6 +51,12 @@ def main():
                 "download from https://www.metanetx.org/mnxdoc/mnxref.html "
                 "to improve fingerprint match rates for deprecated MNXM IDs"
             )
+
+        # Pre-annotation cleanup: strip Excel "ActiveX VT_ERROR" corruption from
+        # metabolite names so the annotation step can match them to MetaNetX.
+        logger.info("=== Pre-annotation: clean ActiveX-corrupted names ===")
+        n_activex = fix_activex_names(model)
+        logger.info(f"  ActiveX name cleanup: {n_activex} metabolite name(s) cleaned")
 
         # Priority 1 + 2a
         logger.info("=== Priority 1+2a: metabolite annotation + formulas ===")

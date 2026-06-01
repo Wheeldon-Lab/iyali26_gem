@@ -45,6 +45,11 @@ _DIRECT_MNXM_TABLE: dict[str, str] = {
     "ceramide-2'-(c26)": "MNXM63156",   # Cer(d18:0/26:0(2OH))    LMSP02020034
     "ceramide-3-(c26)":  "MNXM63157",   # Cer(t18:0/26:0(2OH))    LMSP02030003
     "ceramide-4-(c26)":  "MNXM63127",   # N-(2,3-diOH-C26)-phyto  CHEBI:60384
+    # butyrate: source name was Excel-corrupted (ActiveX) and carried no
+    # formula; after name cleanup the fuzzy match wrongly hit "Butyrate-CoA"
+    # (MNXM10839, a different molecule with no formula).  Pin to real butanoate
+    # (verified via BiGG 'but' xref → MNXM458, C4H7O2, charge -1).
+    "butyrate":          "MNXM458",     # butanoate  C4H7O2  charge -1
 }
 
 # Strategy B1: common synonym → MetaNetX canonical name (must exist in name_index)

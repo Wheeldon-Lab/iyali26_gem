@@ -188,6 +188,37 @@ def fix_coa_charge(model) -> int:
     return fixed
 
 
+# ── Patch 0: clean Excel-corrupted "ActiveX VT_ERROR" names ───────────────
+
+# iYli21 was exported from Excel; some metabolite names had their trailing
+# chemical-formula token replaced by the literal string "ActiveX VT_ERROR:",
+# e.g. "butyrate_ActiveX VT_ERROR:".  The corrupted name prevents
+# annotate_metabolites from matching the metabolite to MetaNetX (no MNXM, no
+# formula).  Stripping the garbage suffix restores a clean name that the
+# annotation step can match.
+#
+# MUST run BEFORE annotate_metabolites so the clean name is used for matching
+# — so it is invoked from main() before annotation, not from apply_all_patches.
+_ACTIVEX_RE = re.compile(r"_?ActiveX VT_ERROR:?\s*$")
+
+
+def fix_activex_names(model) -> int:
+    """
+    Strip the Excel-corruption suffix '_ActiveX VT_ERROR:' from metabolite
+    names.  Returns the number of names cleaned.
+    """
+    fixed = 0
+    for met in model.metabolites:
+        name = met.name or ""
+        if "ActiveX" in name or "VT_ERROR" in name:
+            cleaned = _ACTIVEX_RE.sub("", name).rstrip("_ ").strip()
+            if cleaned and cleaned != name:
+                met.name = cleaned
+                fixed += 1
+                logger.debug(f"  ActiveX name patch: {met.id} → {cleaned!r}")
+    return fixed
+
+
 # ── Patch 5: move misfiled TCDB numbers out of ec-code ────────────────────
 
 # Some transport reactions carry a TCDB (Transporter Classification Database)
