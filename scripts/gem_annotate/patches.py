@@ -188,6 +188,50 @@ def fix_coa_charge(model) -> int:
     return fixed
 
 
+# ── Patch 5: move misfiled TCDB numbers out of ec-code ────────────────────
+
+# Some transport reactions carry a TCDB (Transporter Classification Database)
+# number in their 'ec-code' annotation, e.g. "2.A.1.44.1" or "9.A.6.1.1".
+# These are not EC numbers (second segment is a letter) and fail Memote's
+# ec-code conformity check.  They are valid identifiers, just in the wrong
+# field — move them to the identifiers.org-registered 'tcdb' annotation.
+#
+# NOTE: this must run after all EC codes are populated, so it is invoked from
+# main() (before fix_ec_code_format), not from apply_all_patches.
+_TCDB_RE = re.compile(r"^\d+\.[A-Z]\.")   # TCDB class id, e.g. 2.A.1.44.1
+
+
+def move_tcdb_out_of_ec(model) -> int:
+    """
+    Move TCDB transporter numbers misfiled in 'ec-code' to the 'tcdb'
+    annotation field.  Returns the number of TCDB ids moved.
+    """
+    moved = 0
+    for rxn in model.reactions:
+        ann = rxn.annotation if isinstance(rxn.annotation, dict) else {}
+        ecs = ann.get("ec-code")
+        if not ecs:
+            continue
+        if isinstance(ecs, str):
+            ecs = [ecs]
+        tcdb = [e for e in ecs if _TCDB_RE.match(e)]
+        if not tcdb:
+            continue
+        kept = [e for e in ecs if not _TCDB_RE.match(e)]
+        existing = ann.get("tcdb", [])
+        if isinstance(existing, str):
+            existing = [existing]
+        ann["tcdb"] = sorted(set(existing) | set(tcdb))
+        if kept:
+            ann["ec-code"] = kept
+        else:
+            ann.pop("ec-code", None)
+        rxn.annotation = ann
+        moved += len(tcdb)
+        logger.debug(f"  TCDB cleanup: {rxn.id} moved {tcdb} ec-code → tcdb")
+    return moved
+
+
 # ── Patch 4: EC-code format compliance ───────────────────────────────────
 
 # Some reactions carry EC codes missing the final level (exactly three

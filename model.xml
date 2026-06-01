@@ -58756,7 +58756,7 @@
         <listOfProducts>
           <speciesReference species="M_m3__91__C_mi__93__" stoichiometry="2" constant="true"/>
           <speciesReference species="M_m4__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="2" constant="true"/>
+          <speciesReference species="M_m28__91__C_mi__93__" stoichiometry="2" constant="true"/>
         </listOfProducts>
         <fbc:geneProductAssociation>
           <fbc:or>
@@ -58831,7 +58831,7 @@
         <listOfProducts>
           <speciesReference species="M_m3__91__C_mi__93__" stoichiometry="2" constant="true"/>
           <speciesReference species="M_m4__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="2" constant="true"/>
+          <speciesReference species="M_m28__91__C_mi__93__" stoichiometry="2" constant="true"/>
         </listOfProducts>
         <fbc:geneProductAssociation>
           <fbc:and>
@@ -99913,7 +99913,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn09774"/>
                   <rdf:li rdf:resource="https://identifiers.org/seed.reaction/rxn09859"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96898"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.29.8.3"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/CRNCARtm"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/CRNCARtp"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_CRNCARtm"/>
@@ -99922,6 +99921,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/biggr/r0995"/>
                   <rdf:li rdf:resource="https://identifiers.org/seedr/rxn09774"/>
                   <rdf:li rdf:resource="https://identifiers.org/seedr/rxn09859"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.29.8.3"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -105062,7 +105062,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/TAURtex"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r0934"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104733"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.22.3.3"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/DM_taur_c"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_taur_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_DM_taur_c"/>
@@ -105081,6 +105080,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/TAURCHAe"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/TAURtex"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r0934"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.22.3.3"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -109200,7 +109200,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1061"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2532"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96069"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ASNtex"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ASNtg"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ASNtm"/>
@@ -109226,6 +109225,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r2532"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1061"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2532"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -109323,7 +109323,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96140"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/9.A.6.1.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATP2t_m"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtc"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtn"/>
@@ -109353,6 +109352,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_6578"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1116"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/9.A.6.1.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -109409,7 +109409,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96140"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/9.A.6.1.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATP2t_m"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtc"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtn"/>
@@ -109439,6 +109438,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_6578"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1116"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/9.A.6.1.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -109963,11 +109963,11 @@
                   <rdf:li rdf:resource="https://identifiers.org/rhea/49914"/>
                   <rdf:li rdf:resource="https://identifiers.org/rhea/49915"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR190832"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.29.8.3"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/CRNCAR3tp"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_CRNCAR3tp"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_r2437"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/r2437"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.29.8.3"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -118105,7 +118105,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1061"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2532"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96069"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ASNtex"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ASNtg"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ASNtm"/>
@@ -118131,6 +118130,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r2532"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1061"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2532"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -118937,7 +118937,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2535"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2535m"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR100678"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_hom__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/HOMtex"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_hom__L_e"/>
@@ -118952,6 +118951,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r2535m"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2535"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2535m"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -119734,7 +119734,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526pp"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104354"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_SERtc"/>
@@ -119770,6 +119769,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1435"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526pp"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -119830,7 +119830,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526pp"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104354"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_SERtc"/>
@@ -119867,6 +119866,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1435"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526pp"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -119962,7 +119962,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1440"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2534"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104852"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_thr__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_thr__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_SK_thr__L_c"/>
@@ -119985,6 +119984,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r0925"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1440"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2534"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -124186,7 +124186,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526pp"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104354"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_SERtc"/>
@@ -124223,6 +124222,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1435"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526pp"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -124850,7 +124850,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/TAURtex"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r0934"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104733"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.22.3.3"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/DM_taur_c"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_taur_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_DM_taur_c"/>
@@ -124869,6 +124868,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/TAURCHAe"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/TAURtex"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r0934"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.22.3.3"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -125236,7 +125236,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1440"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2534"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104852"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_thr__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_thr__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_SK_thr__L_c"/>
@@ -125259,6 +125258,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r0925"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1440"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2534"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -134633,7 +134633,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96140"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/9.A.6.1.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATP2t_m"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtc"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtn"/>
@@ -134663,6 +134662,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_6578"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1116"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/9.A.6.1.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -134821,7 +134821,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r2526pp"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR104354"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.44.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_EX_ser__L_e"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_SERtc"/>
@@ -134858,6 +134857,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1435"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r2526pp"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.44.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -135817,7 +135817,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96140"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/9.A.6.1.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATP2t_m"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtc"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtn"/>
@@ -135847,6 +135846,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_6578"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1116"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/9.A.6.1.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -136392,7 +136392,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96140"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/9.A.6.1.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATP2t_m"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtc"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtn"/>
@@ -136422,6 +136421,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_6578"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1116"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/9.A.6.1.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -137301,7 +137301,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96140"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/9.A.6.1.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATP2t_m"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtc"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtn"/>
@@ -137331,6 +137330,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_6578"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1116"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/9.A.6.1.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -138020,7 +138020,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR96140"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/9.A.6.1.1"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATP2t_m"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtc"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/ATPtn"/>
@@ -138050,6 +138049,7 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_HMR_6578"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1116"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1116"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/9.A.6.1.1"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -149517,8 +149517,6 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/R_r1155"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhreaction/r1155"/>
                   <rdf:li rdf:resource="https://identifiers.org/metanetx.reaction/MNXR94813"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.13.1"/>
-                  <rdf:li rdf:resource="https://identifiers.org/ec-code/2.A.1.13.5"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/2OBUTt"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/2OBUTt2ipp"/>
                   <rdf:li rdf:resource="https://identifiers.org/biggr/R_2OBUTt"/>
@@ -149536,6 +149534,8 @@
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_2OBUTt2rpp"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/R_r1155"/>
                   <rdf:li rdf:resource="https://identifiers.org/vmhr/r1155"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.13.1"/>
+                  <rdf:li rdf:resource="https://identifiers.org/tcdb/2.A.1.13.5"/>
                 </rdf:Bag>
               </bqbiol:is>
             </rdf:Description>
@@ -149543,7 +149543,7 @@
         </annotation>
         <listOfReactants>
           <speciesReference species="M_m1868__91__C_ex__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m342__91__C_ex__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m442__91__C_cy__93__" stoichiometry="1" constant="true"/>
@@ -150700,7 +150700,7 @@
       <reaction metaid="meta_R_R2056" sboTerm="SBO:0000185" id="R_R2056" name="L-lysine transport" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
         <listOfReactants>
           <speciesReference species="M_m793__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m1007__91__C_va__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m1888__91__C_va__93__" stoichiometry="1" constant="true"/>
@@ -151653,7 +151653,7 @@
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m2046__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="5" constant="true"/>
+          <speciesReference species="M_m28__91__C_mi__93__" stoichiometry="5" constant="true"/>
         </listOfProducts>
       </reaction>
       <reaction metaid="meta_R_R2078" sboTerm="SBO:0000176" id="R_R2078" name="3-aminopropanal:NAD+ oxidoreductase" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
@@ -152005,7 +152005,7 @@
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m2049__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="4" constant="true"/>
+          <speciesReference species="M_m28__91__C_mi__93__" stoichiometry="4" constant="true"/>
         </listOfProducts>
       </reaction>
       <reaction metaid="meta_R_R2085" sboTerm="SBO:0000176" id="R_R2085" name="UMP:diphosphate phospho-alpha-D-ribosyltransferase" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
@@ -153403,7 +153403,7 @@
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m1971__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="4" constant="true"/>
+          <speciesReference species="M_m28__91__C_mi__93__" stoichiometry="4" constant="true"/>
         </listOfProducts>
       </reaction>
       <reaction metaid="meta_R_R2119" sboTerm="SBO:0000176" id="R_R2119" name="3-Oxopropanoate:NAD+ oxidoreductase (decarboxylating, CoA-acetylating)" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
@@ -154622,7 +154622,7 @@
       <reaction metaid="meta_R_R2167" sboTerm="SBO:0000185" id="R_R2167" name="Decanoyl-CoA transport" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
         <listOfReactants>
           <speciesReference species="M_m2010__91__C_cy__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m382__91__C_mm__93__" stoichiometry="4" constant="true"/>
+          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="4" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m1737__91__C_mm__93__" stoichiometry="1" constant="true"/>
@@ -157528,7 +157528,7 @@
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m1606__91__C_em__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m377__91__C_em__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
       </reaction>
       <reaction metaid="meta_R_R2245" sboTerm="SBO:0000185" id="R_R2245" name="S_Adenosyl_L_homocysteine transport" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
@@ -158523,7 +158523,7 @@
       <reaction metaid="meta_R_R2269" sboTerm="SBO:0000185" id="R_R2269" name="Acetate transport" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
         <listOfReactants>
           <speciesReference species="M_m2053__91__C_pe__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m118__91__C_pe__93__" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m202__91__C_cy__93__" stoichiometry="1" constant="true"/>
@@ -158711,7 +158711,7 @@
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="M_m2056__91__C_ex__93__" stoichiometry="1" constant="true"/>
-          <speciesReference species="M_m10__91__C_cy__93__" stoichiometry="1" constant="true"/>
+          <speciesReference species="M_m342__91__C_ex__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
       </reaction>
       <reaction metaid="meta_R_R2280" sboTerm="SBO:0000627" id="R_R2280" name="3-dehydroshikimate exchange" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
@@ -176619,10 +176619,10 @@
           <groups:member groups:name="[1,4-(N-Acetyl-beta-D-glucosaminyl)]n glycanohydrolase" groups:idRef="R_R2092"/>
           <groups:member groups:name="UDP-N-acetylglucosamine diphosphorylase" groups:idRef="R_R778"/>
           <groups:member groups:name="phosphoacetylglucosamine mutase" groups:idRef="R_R632"/>
+          <groups:member groups:name="UTP:N-acetyl-alpha-D-glucosamine-1-phosphate uridylyltransferase" groups:idRef="R_R2108"/>
           <groups:member groups:name="chitin synthase" groups:idRef="R_R211"/>
           <groups:member groups:name="glutamine-fructose-6-phosphate transaminase" groups:idRef="R_R335"/>
           <groups:member groups:name="phosphoglucosamine mutase" groups:idRef="R_R640"/>
-          <groups:member groups:name="UTP:N-acetyl-alpha-D-glucosamine-1-phosphate uridylyltransferase" groups:idRef="R_R2108"/>
           <groups:member groups:name="ATP:D-glucosamine 6-phosphotransferase" groups:idRef="R_R1946"/>
           <groups:member groups:name="N-Acetyl-D-Glucosamine kinase" groups:idRef="R_R2013"/>
           <groups:member groups:name="glucosamine-6-phosphate deaminase" groups:idRef="R_R324"/>
@@ -176671,7 +176671,6 @@
       <groups:group metaid="meta_G_group8" sboTerm="SBO:0000633" groups:id="G_group8" groups:name="Arginine and proline metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
           <groups:member groups:name="argininosuccinate synthase" groups:idRef="R_R153"/>
-          <groups:member groups:name="allophanate hydrolase" groups:idRef="R_R140"/>
           <groups:member groups:name="spermine synthase" groups:idRef="R_R729"/>
           <groups:member groups:name="proline oxidase (NAD)" groups:idRef="R_R672"/>
           <groups:member groups:name="acteylornithine transaminase" groups:idRef="R_R96"/>
@@ -176693,6 +176692,7 @@
           <groups:member groups:name="L-erythro-4-hydroxyglutamate:2-oxoglutarate aminotransferase" groups:idRef="R_R506"/>
           <groups:member groups:name="ornithine transaminase" groups:idRef="R_R610"/>
           <groups:member groups:name="L-erythro-4-hydroxyglutamate:2-oxoglutarate aminotransferase" groups:idRef="R_R507"/>
+          <groups:member groups:name="allophanate hydrolase" groups:idRef="R_R140"/>
           <groups:member groups:name="L-erythro-4-hydroxyglutamate:2-oxoglutarate aminotransferase" groups:idRef="R_R508"/>
           <groups:member groups:name="urea carboxylase" groups:idRef="R_R784"/>
           <groups:member groups:name="arginase" groups:idRef="R_R151"/>
@@ -177178,6 +177178,7 @@
           <groups:member groups:name="B-hydroxyacyl-CoA dehydratase (trans-tetracos-2-enoyl-CoA)" groups:idRef="R_R1425"/>
           <groups:member groups:name="fatty-acid--CoA ligase (decanoate)" groups:idRef="R_R297"/>
           <groups:member groups:name="B-ketoacyl-CoA reductase ((S)-3-hydroxypalmitoyl-CoA)" groups:idRef="R_R1414"/>
+          <groups:member groups:name="fatty-acid--CoA ligase (tetradecanoate)" groups:idRef="R_R301"/>
           <groups:member groups:name="B-hydroxyacyl-CoA dehydratase (trans-hexacos-2-enoyl-CoA)" groups:idRef="R_R1426"/>
           <groups:member groups:name="fatty-acid--CoA ligase (dodecanoate)" groups:idRef="R_R298"/>
           <groups:member groups:name="B-ketoacyl-CoA reductase (3-hydroxyoctadecanoyl-CoA)" groups:idRef="R_R1415"/>
@@ -177186,7 +177187,6 @@
           <groups:member groups:name="B-ketoacyl-CoA reductase (3-hydroxyicosanoyl-CoA)" groups:idRef="R_R1416"/>
           <groups:member groups:name="trans-2-enoyl-CoA reductase (n-C16:0CoA)" groups:idRef="R_R1428"/>
           <groups:member groups:name="fatty-acid--CoA ligase (octanoate)" groups:idRef="R_R300"/>
-          <groups:member groups:name="fatty-acid--CoA ligase (tetradecanoate)" groups:idRef="R_R301"/>
           <groups:member groups:name="B-ketoacyl-CoA reductase (3-hydroxydocosanoyl-CoA)" groups:idRef="R_R1417"/>
           <groups:member groups:name="trans-2-enoyl-CoA reductase (n-C18:0CoA)" groups:idRef="R_R1429"/>
           <groups:member groups:name="elongase I (3-oxotetradecanoyl-CoA)" groups:idRef="R_R1406"/>
@@ -177304,9 +177304,9 @@
           <groups:member groups:name="D-Glyceraldehyde:NAD+ oxidoreductase" groups:idRef="R_R2069"/>
           <groups:member groups:name="extracellular monobutyrate hydrolysis" groups:idRef="R_R1897"/>
           <groups:member groups:name="ATP:(R)-glycerate 3-phosphotransferase" groups:idRef="R_R2093"/>
+          <groups:member groups:name="diacylglycerol pyrophosphate phosphatase, yeast-specific" groups:idRef="R_R2145"/>
           <groups:member groups:name="glycerol-3-phosphate/dihydroxyacetone phosphate acyltransferase" groups:idRef="R_R353"/>
           <groups:member groups:name="DGPP phosphatase" groups:idRef="R_R1758"/>
-          <groups:member groups:name="diacylglycerol pyrophosphate phosphatase, yeast-specific" groups:idRef="R_R2145"/>
           <groups:member groups:name="Triacyglycerol synthesis" groups:idRef="R_R2165"/>
           <groups:member groups:name="diacylglycerol acyltransferase" groups:idRef="R_R1771"/>
           <groups:member groups:name="glycerol dehydrogenase (NADP-dependent)" groups:idRef="R_R345"/>
@@ -177488,7 +177488,6 @@
           <groups:member groups:name="PI 3,5-P2 phosphatase" groups:idRef="R_R1752"/>
           <groups:member groups:name="6PP-IP5 pyrophosphorylation to 5,6-PP2-IP4" groups:idRef="R_R73"/>
           <groups:member groups:name="inositolphosphotransferase" groups:idRef="R_R1822"/>
-          <groups:member groups:name="1-phosphatidylinositol-3-phosphate 5-kinase" groups:idRef="R_R7"/>
           <groups:member groups:name="PI 4,5-P2 phospholipase C" groups:idRef="R_R1741"/>
           <groups:member groups:name="IPC synthase" groups:idRef="R_R1833"/>
           <groups:member groups:name="5-diphosphoinositol-1,2,3,4,6-pentakisphosphate diphosphohydrolase" groups:idRef="R_R62"/>
@@ -177498,6 +177497,7 @@
           <groups:member groups:name="1-Phosphatidyl-D-myo-inositol inositolphosphohydrolase" groups:idRef="R_R2171"/>
           <groups:member groups:name="IPC synthase" groups:idRef="R_R1834"/>
           <groups:member groups:name="5-diphosphoinositol-1,2,3,4,6-pentakisphosphate synthase" groups:idRef="R_R63"/>
+          <groups:member groups:name="1-phosphatidylinositol-3-phosphate 5-kinase" groups:idRef="R_R7"/>
           <groups:member groups:name="myo-inositol 1-phosphatase" groups:idRef="R_R558"/>
           <groups:member groups:name="PI 4,5-P2 phosphatase" groups:idRef="R_R1754"/>
           <groups:member groups:name="inositolphosphotransferase" groups:idRef="R_R1824"/>
@@ -177507,7 +177507,6 @@
           <groups:member groups:name="IPC synthase" groups:idRef="R_R1825"/>
           <groups:member groups:name="Reaction" groups:idRef="R_R2046"/>
           <groups:member groups:name="4PP-IP5 depyrophosphorylation to IP6" groups:idRef="R_R53"/>
-          <groups:member groups:name="1-phosphatidylinositol-3-phosphate 5-kinase" groups:idRef="R_R8"/>
           <groups:member groups:name="PI 3-P phosphatase" groups:idRef="R_R1744"/>
           <groups:member groups:name="PI 4,5-P2 phosphatase" groups:idRef="R_R1756"/>
           <groups:member groups:name="IPC synthase" groups:idRef="R_R1826"/>
@@ -177516,6 +177515,7 @@
           <groups:member groups:name="PI 3-P phosphatase" groups:idRef="R_R1745"/>
           <groups:member groups:name="phosphatidylinositol 4-kinase" groups:idRef="R_R1837"/>
           <groups:member groups:name="inositolphosphotransferase" groups:idRef="R_R1815"/>
+          <groups:member groups:name="1-phosphatidylinositol-3-phosphate 5-kinase" groups:idRef="R_R8"/>
           <groups:member groups:name="diphosphoinositol-1,3,4,6-tetrakisphosphate diphosphohydrolase" groups:idRef="R_R284"/>
           <groups:member groups:name="PI 3,5-P2 phosphatase" groups:idRef="R_R1757"/>
           <groups:member groups:name="IPC synthase" groups:idRef="R_R1827"/>
@@ -177552,6 +177552,7 @@
       </groups:group>
       <groups:group metaid="meta_G_group41" sboTerm="SBO:0000633" groups:id="G_group41" groups:name="Lysine biosynthesis" groups:kind="partonomy">
         <groups:listOfMembers>
+          <groups:member groups:name="2-aminoadipate transaminase" groups:idRef="R_R15"/>
           <groups:member groups:name="saccharopine dehydrogenase (NAD, L-lysine forming)" groups:idRef="R_R718"/>
           <groups:member groups:name="2-methylcitrate dehydratase" groups:idRef="R_R24"/>
           <groups:member groups:name="homoacontinate hydratase" groups:idRef="R_R395"/>
@@ -177559,7 +177560,6 @@
           <groups:member groups:name="homocitrate synthase" groups:idRef="R_R1170"/>
           <groups:member groups:name="L-aminoadipate-semialdehyde dehydrogenase (NADPH)" groups:idRef="R_R505"/>
           <groups:member groups:name="saccharopine dehydrogenase (NADP, L-glutamate forming)" groups:idRef="R_R719"/>
-          <groups:member groups:name="2-aminoadipate transaminase" groups:idRef="R_R15"/>
           <groups:member groups:name="homocitrate synthase" groups:idRef="R_R396"/>
         </groups:listOfMembers>
       </groups:group>
@@ -177578,8 +177578,8 @@
       <groups:group metaid="meta_G_group44" sboTerm="SBO:0000633" groups:id="G_group44" groups:name="Methane metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
           <groups:member groups:name="formate dehydrogenase" groups:idRef="R_R308"/>
-          <groups:member groups:name="S-formylglutathione hydralase" groups:idRef="R_R717"/>
           <groups:member groups:name="formaldehyde dehydrogenase" groups:idRef="R_R307"/>
+          <groups:member groups:name="S-formylglutathione hydralase" groups:idRef="R_R717"/>
         </groups:listOfMembers>
       </groups:group>
       <groups:group metaid="meta_G_group45" sboTerm="SBO:0000633" groups:id="G_group45" groups:name="Model specific" groups:kind="partonomy">
@@ -177698,15 +177698,15 @@
         <groups:listOfMembers>
           <groups:member groups:name="3-methyl-2-oxobutanoate hydroxymethyltransferase" groups:idRef="R_R46"/>
           <groups:member groups:name="dephospho-CoA kinase" groups:idRef="R_R265"/>
+          <groups:member groups:name="2-dehydropantoate 2-reductase" groups:idRef="R_R16"/>
           <groups:member groups:name="pantothenate synthase" groups:idRef="R_R617"/>
           <groups:member groups:name="phosphopantothenoylcysteine decarboxylase" groups:idRef="R_R648"/>
-          <groups:member groups:name="pantothenate kinase" groups:idRef="R_R616"/>
           <groups:member groups:name="ATP:pantothenate 4&apos;-phosphotransferase" groups:idRef="R_R1908"/>
           <groups:member groups:name="acetohydroxy acid isomeroreductase" groups:idRef="R_R76"/>
           <groups:member groups:name="dephospho-CoA kinase" groups:idRef="R_R1092"/>
           <groups:member groups:name="pantetheine-phosphate adenylyltransferase" groups:idRef="R_R615"/>
           <groups:member groups:name="ATP:pantothenate 4&apos;-phosphotransferase" groups:idRef="R_R1909"/>
-          <groups:member groups:name="2-dehydropantoate 2-reductase" groups:idRef="R_R16"/>
+          <groups:member groups:name="pantothenate kinase" groups:idRef="R_R616"/>
           <groups:member groups:name="phosphopantothenate-cysteine ligase" groups:idRef="R_R647"/>
         </groups:listOfMembers>
       </groups:group>
@@ -177759,9 +177759,9 @@
           <groups:member groups:name="prephenate dehydrogenase (NADP)" groups:idRef="R_R671"/>
           <groups:member groups:name="3-deoxy-D-arabino-heptulosonate 7-phosphate synthetase" groups:idRef="R_R38"/>
           <groups:member groups:name="indole-3-glycerol-phosphate synthase" groups:idRef="R_R418"/>
+          <groups:member groups:name="2-deoxy-D-arabino-heptulosonate 7-phosphate synthetase" groups:idRef="R_R17"/>
           <groups:member groups:name="chorismate mutase" groups:idRef="R_R214"/>
           <groups:member groups:name="chorismate synthase" groups:idRef="R_R215"/>
-          <groups:member groups:name="2-deoxy-D-arabino-heptulosonate 7-phosphate synthetase" groups:idRef="R_R17"/>
           <groups:member groups:name="anthranilate phosphoribosyltransferase" groups:idRef="R_R147"/>
           <groups:member groups:name="tryptophan synthase (indoleglycerol phosphate)" groups:idRef="R_R769"/>
           <groups:member groups:name="shikimate dehydrogenase" groups:idRef="R_R724"/>
@@ -177859,17 +177859,17 @@
           <groups:member groups:name="5&apos;-phosphoribosylformyl glycinamidine synthetase" groups:idRef="R_R59"/>
           <groups:member groups:name="ribonucleoside-triphosphate reductase (GTP)" groups:idRef="R_R704"/>
           <groups:member groups:name="5&apos;-nucleotidase (dAMP)" groups:idRef="R_R980"/>
-          <groups:member groups:name="phosphoribosylpyrophosphate synthetase" groups:idRef="R_R658"/>
           <groups:member groups:name="guanylate kinase" groups:idRef="R_R381"/>
+          <groups:member groups:name="phosphoribosylpyrophosphate synthetase" groups:idRef="R_R658"/>
           <groups:member groups:name="guanylate kinase (GMP:dATP)" groups:idRef="R_R382"/>
           <groups:member groups:name="NAD nucleosidase nuclear" groups:idRef="R_R567"/>
           <groups:member groups:name="ribonucleotide reductase" groups:idRef="R_R706"/>
           <groups:member groups:name="5&apos;-nucleotidase (dGMP)" groups:idRef="R_R982"/>
+          <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R590"/>
           <groups:member groups:name="2&apos;-Deoxyinosine-5&apos;-triphosphate pyrophosphohydrolase" groups:idRef="R_R1952"/>
           <groups:member groups:name="xanthine phosphoribosyltransferase" groups:idRef="R_R800"/>
           <groups:member groups:name="xanthine dehydrogenase" groups:idRef="R_R1953"/>
           <groups:member groups:name="5&apos;-nucleotidase (GMP)" groups:idRef="R_R985"/>
-          <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R590"/>
           <groups:member groups:name="urate oxidase" groups:idRef="R_R1954"/>
           <groups:member groups:name="ribonucleotide reductase" groups:idRef="R_R710"/>
           <groups:member groups:name="5&apos;-nucleotidase (XMP)" groups:idRef="R_R986"/>
@@ -177933,6 +177933,7 @@
           <groups:member groups:name="dCTP deaminase" groups:idRef="R_R259"/>
           <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R593"/>
           <groups:member groups:name="ITP:uridine 5&apos;-phosphotransferase" groups:idRef="R_R1919"/>
+          <groups:member groups:name="5&apos;-nucleotidase (dCMP)" groups:idRef="R_R981"/>
           <groups:member groups:name="deoxycytidine deaminase" groups:idRef="R_R260"/>
           <groups:member groups:name="dATP:cytidine 5&apos;-phosphotransferase" groups:idRef="R_R1920"/>
           <groups:member groups:name="thioredoxin reductase (NADPH)" groups:idRef="R_R755"/>
@@ -177943,7 +177944,6 @@
           <groups:member groups:name="thioredoxin reductase (NADPH)" groups:idRef="R_R756"/>
           <groups:member groups:name="cytidine kinase (GTP)" groups:idRef="R_R250"/>
           <groups:member groups:name="dGTP:uridine 5&apos;-phosphotransferase" groups:idRef="R_R1922"/>
-          <groups:member groups:name="5&apos;-nucleotidase (dCMP)" groups:idRef="R_R981"/>
           <groups:member groups:name="nucleoside diphosphatase" groups:idRef="R_R585"/>
           <groups:member groups:name="aspartate carbamoyltransferase" groups:idRef="R_R159"/>
           <groups:member groups:name="nucleoside diphosphate kinase" groups:idRef="R_R597"/>
@@ -178015,15 +178015,15 @@
         <groups:listOfMembers>
           <groups:member groups:name="2,5-diamino-6-ribitylamino-4(3H)-pyrimidinone 5&apos;-phosphate deaminase" groups:idRef="R_R11"/>
           <groups:member groups:name="riboflavin kinase" groups:idRef="R_R697"/>
-          <groups:member groups:name="3,4-dihydroxy-2-butanone-4-phosphate synthase" groups:idRef="R_R34"/>
           <groups:member groups:name="riboflavin synthase" groups:idRef="R_R700"/>
           <groups:member groups:name="FMN adenylyltransferase" groups:idRef="R_R1125"/>
           <groups:member groups:name="riboflavin kinase" groups:idRef="R_R698"/>
-          <groups:member groups:name="2,5-diamino-6-ribosylamino-4(3H)-pyrimidinone 5&apos;-phosphate reductase (NADPH)" groups:idRef="R_R12"/>
           <groups:member groups:name="FMN adenylyltransferase" groups:idRef="R_R306"/>
+          <groups:member groups:name="2,5-diamino-6-ribosylamino-4(3H)-pyrimidinone 5&apos;-phosphate reductase (NADPH)" groups:idRef="R_R12"/>
           <groups:member groups:name="GTP cyclohydrolase II" groups:idRef="R_R378"/>
           <groups:member groups:name="riboflavin synthase" groups:idRef="R_R699"/>
           <groups:member groups:name="acid phosphatase (secreted)" groups:idRef="R_R94"/>
+          <groups:member groups:name="3,4-dihydroxy-2-butanone-4-phosphate synthase" groups:idRef="R_R34"/>
         </groups:listOfMembers>
       </groups:group>
       <groups:group metaid="meta_G_group67" sboTerm="SBO:0000633" groups:id="G_group67" groups:name="Sphingolipid metabolism" groups:kind="partonomy">
@@ -178125,21 +178125,22 @@
           <groups:member groups:name="Inositol phosphorylceramide synthase (ceramide-2, 24C), yeast-specific" groups:idRef="R_R2151"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R446"/>
           <groups:member groups:name="mannose-inositol phosphorylceramide synthase (ceramide-2, 24C), yeast-specific" groups:idRef="R_R2152"/>
+          <groups:member groups:name="Inositol phosphorylceramide synthase (ceramide-3, 24C), yeast-specific" groups:idRef="R_R2157"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R447"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R448"/>
           <groups:member groups:name="Inositol phosphoryceramide synthase (ceramide-2, 26C), yeast-specific" groups:idRef="R_R2154"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R449"/>
           <groups:member groups:name="mannose-inositol phosphorylceramide synthase (ceramide-2, 26C), yeast-specific" groups:idRef="R_R2155"/>
-          <groups:member groups:name="Inositol phosphorylceramide synthase (ceramide-3, 24C), yeast-specific" groups:idRef="R_R2157"/>
           <groups:member groups:name="IPS phospholipase C" groups:idRef="R_R450"/>
           <groups:member groups:name="3-dehydrosphinganine reductase" groups:idRef="R_R37"/>
         </groups:listOfMembers>
       </groups:group>
       <groups:group metaid="meta_G_group68" sboTerm="SBO:0000633" groups:id="G_group68" groups:name="Starch and sucrose metabolism" groups:kind="partonomy">
         <groups:listOfMembers>
-          <groups:member groups:name="UDP-D-glucuronate carboxy-lyase" groups:idRef="R_R2137"/>
           <groups:member groups:name="1,3-beta-glucan synthase" groups:idRef="R_R4"/>
+          <groups:member groups:name="UDP-D-glucuronate carboxy-lyase" groups:idRef="R_R2137"/>
           <groups:member groups:name="cellobiose glucohydrolase" groups:idRef="R_R1930"/>
+          <groups:member groups:name="(1-6)-beta-glucan synthase" groups:idRef="R_R5"/>
           <groups:member groups:name="1,4-alpha-D-Glucan glucohydrolase" groups:idRef="R_R2184"/>
           <groups:member groups:name="glucan 1,4-alpha-glucosidase" groups:idRef="R_R323"/>
           <groups:member groups:name="exo-1,3-beta-glucan glucohydrase" groups:idRef="R_R294"/>
@@ -178148,7 +178149,6 @@
           <groups:member groups:name="trehalose-phosphatase" groups:idRef="R_R767"/>
           <groups:member groups:name="1,4-alpha-D-Glucan:1,4-alpha-D-glucan 6-alpha-D-(1,4-alpha-D-glucano)-transferase" groups:idRef="R_R2185"/>
           <groups:member groups:name="alpha,alpha-trehalose-phosphate synthase (UDP-forming)" groups:idRef="R_R143"/>
-          <groups:member groups:name="(1-6)-beta-glucan synthase" groups:idRef="R_R5"/>
           <groups:member groups:name="glycogen phosphorylase" groups:idRef="R_R367"/>
           <groups:member groups:name="UDP-glucose:glycogen 4-alpha-D-glucosyltransferase" groups:idRef="R_R2186"/>
           <groups:member groups:name="glucose 1-dehydrogenase" groups:idRef="R_R2059"/>
@@ -178174,6 +178174,7 @@
           <groups:member groups:name="C-3 sterol dehydrogenase (4-methylzymosterol)" groups:idRef="R_R179"/>
           <groups:member groups:name="episteryl ester hydrolase (18:1), lipid particle" groups:idRef="R_R1560"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (palmitoleoyl-CoA:lanosterol), ER membrane" groups:idRef="R_R111"/>
+          <groups:member groups:name="zymosteryl ester hydrolase (16:1), cell envelope" groups:idRef="R_R1567"/>
           <groups:member groups:name="C-3 sterol keto reductase (4-methylzymosterol)" groups:idRef="R_R180"/>
           <groups:member groups:name="fecosteryl ester hydrolase (16:1), lipid particle" groups:idRef="R_R1561"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (palmitoleoyl-CoA:zymosterol), ER membrane" groups:idRef="R_R112"/>
@@ -178182,7 +178183,6 @@
           <groups:member groups:name="cytochrome P450 lanosterol 14-alpha-demethylase (NADP)" groups:idRef="R_R251"/>
           <groups:member groups:name="C-4 methyl sterol oxidase" groups:idRef="R_R182"/>
           <groups:member groups:name="lanosteryl ester hydrolase (16:1), lipid particle" groups:idRef="R_R1563"/>
-          <groups:member groups:name="zymosteryl ester hydrolase (16:1), cell envelope" groups:idRef="R_R1567"/>
           <groups:member groups:name="C-4 methyl sterol oxidase" groups:idRef="R_R183"/>
           <groups:member groups:name="lanosteryl ester hydrolase (18:1), lipid particle" groups:idRef="R_R1564"/>
           <groups:member groups:name="acyl-CoA:sterol acyltransferase (oleoyl-CoA:episterol), ER membrane" groups:idRef="R_R103"/>
@@ -178359,7 +178359,6 @@
           <groups:member groups:name="phosphatidylethanolamine transport, ER membrane-cytoplasm" groups:idRef="R_R1706"/>
           <groups:member groups:name="NADP(+) transport, cytoplasm-ER membrane" groups:idRef="R_R1591"/>
           <groups:member groups:name="CDP-choline transport, cytoplasm-ER membrane" groups:idRef="R_R1603"/>
-          <groups:member groups:name="phosphatidylcholine transport, ER membrane-cytoplasm" groups:idRef="R_R1705"/>
           <groups:member groups:name="stearoyl-CoA transport, cytoplasm-ER membrane" groups:idRef="R_R1580"/>
           <groups:member groups:name="sn-glycero-3-phosphocholine transport, ER membrane-cytoplasm" groups:idRef="R_R1615"/>
           <groups:member groups:name="triglyceride transport, ER membrane-cytoplasm" groups:idRef="R_R1707"/>
@@ -178403,6 +178402,7 @@
           <groups:member groups:name="myristoyl-CoA transport, cytoplasm-ER membrane" groups:idRef="R_R1577"/>
           <groups:member groups:name="lanosterol transport, cytoplasm-ER membrane" groups:idRef="R_R1612"/>
           <groups:member groups:name="phosphatidyl-L-serine transport, ER membrane-cytoplasm" groups:idRef="R_R1704"/>
+          <groups:member groups:name="phosphatidylcholine transport, ER membrane-cytoplasm" groups:idRef="R_R1705"/>
           <groups:member groups:name="coenzyme A transport, cytoplasm-ER membrane" groups:idRef="R_R1589"/>
           <groups:member groups:name="CMP transport, cytoplasm-ER membrane" groups:idRef="R_R1601"/>
           <groups:member groups:name="palmitoyl-CoA transport, cytoplasm-ER membrane" groups:idRef="R_R1578"/>
@@ -178840,11 +178840,11 @@
           <groups:member groups:name="phosphate transport" groups:idRef="R_R915"/>
           <groups:member groups:name="dihydroxyacetone phosphate transport" groups:idRef="R_R1099"/>
           <groups:member groups:name="2-isopropylmalate transport" groups:idRef="R_R962"/>
+          <groups:member groups:name="2-dehydro-3-deoxy-D-arabino-heptonate7-phohsphate transport" groups:idRef="R_R958"/>
           <groups:member groups:name="isoamyl alcohol transport" groups:idRef="R_R1192"/>
           <groups:member groups:name="2-oxobutanoate transporter" groups:idRef="R_R963"/>
           <groups:member groups:name="carnithine-acetylcarnithine carrier" groups:idRef="R_R825"/>
           <groups:member groups:name="Propanoate:CoA transport" groups:idRef="R_R2025"/>
-          <groups:member groups:name="2-dehydro-3-deoxy-D-arabino-heptonate7-phohsphate transport" groups:idRef="R_R958"/>
           <groups:member groups:name="2-Methylpropanoyl-CoA transport" groups:idRef="R_R2118"/>
           <groups:member groups:name="L-glutamate transport" groups:idRef="R_R875"/>
           <groups:member groups:name="3-carboxy-4-methyl-2-oxopentanoate transport" groups:idRef="R_R967"/>
