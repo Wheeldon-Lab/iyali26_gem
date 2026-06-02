@@ -1,0 +1,142 @@
+yli01100	Metabolic pathways - Yarrowia lipolytica
+yli01110	Biosynthesis of secondary metabolites - Yarrowia lipolytica
+yli01200	Carbon metabolism - Yarrowia lipolytica
+yli01210	2-Oxocarboxylic acid metabolism - Yarrowia lipolytica
+yli01212	Fatty acid metabolism - Yarrowia lipolytica
+yli01230	Biosynthesis of amino acids - Yarrowia lipolytica
+yli01232	Nucleotide metabolism - Yarrowia lipolytica
+yli01250	Biosynthesis of nucleotide sugars - Yarrowia lipolytica
+yli01240	Biosynthesis of cofactors - Yarrowia lipolytica
+yli01320	Sulfur cycle - Yarrowia lipolytica
+yli00010	Glycolysis / Gluconeogenesis - Yarrowia lipolytica
+yli00020	Citrate cycle (TCA cycle) - Yarrowia lipolytica
+yli00030	Pentose phosphate pathway - Yarrowia lipolytica
+yli00040	Pentose and glucuronate interconversions - Yarrowia lipolytica
+yli00051	Fructose and mannose metabolism - Yarrowia lipolytica
+yli00052	Galactose metabolism - Yarrowia lipolytica
+yli00053	Ascorbate and aldarate metabolism - Yarrowia lipolytica
+yli00500	Starch and sucrose metabolism - Yarrowia lipolytica
+yli00620	Pyruvate metabolism - Yarrowia lipolytica
+yli00630	Glyoxylate and dicarboxylate metabolism - Yarrowia lipolytica
+yli00640	Propanoate metabolism - Yarrowia lipolytica
+yli00650	Butanoate metabolism - Yarrowia lipolytica
+yli00562	Inositol phosphate metabolism - Yarrowia lipolytica
+yli00190	Oxidative phosphorylation - Yarrowia lipolytica
+yli00710	Carbon fixation by Calvin cycle - Yarrowia lipolytica
+yli00680	Methane metabolism - Yarrowia lipolytica
+yli00910	Nitrogen metabolism - Yarrowia lipolytica
+yli00920	Sulfur metabolism - Yarrowia lipolytica
+yli00061	Fatty acid biosynthesis - Yarrowia lipolytica
+yli00062	Fatty acid elongation - Yarrowia lipolytica
+yli00071	Fatty acid degradation - Yarrowia lipolytica
+yli00100	Steroid biosynthesis - Yarrowia lipolytica
+yli00561	Glycerolipid metabolism - Yarrowia lipolytica
+yli00564	Glycerophospholipid metabolism - Yarrowia lipolytica
+yli00565	Ether lipid metabolism - Yarrowia lipolytica
+yli00600	Sphingolipid metabolism - Yarrowia lipolytica
+yli00590	Arachidonic acid metabolism - Yarrowia lipolytica
+yli00592	alpha-Linolenic acid metabolism - Yarrowia lipolytica
+yli01040	Biosynthesis of unsaturated fatty acids - Yarrowia lipolytica
+yli00230	Purine metabolism - Yarrowia lipolytica
+yli00240	Pyrimidine metabolism - Yarrowia lipolytica
+yli00250	Alanine, aspartate and glutamate metabolism - Yarrowia lipolytica
+yli00260	Glycine, serine and threonine metabolism - Yarrowia lipolytica
+yli00270	Cysteine and methionine metabolism - Yarrowia lipolytica
+yli00280	Valine, leucine and isoleucine degradation - Yarrowia lipolytica
+yli00290	Valine, leucine and isoleucine biosynthesis - Yarrowia lipolytica
+yli00300	Lysine biosynthesis - Yarrowia lipolytica
+yli00310	Lysine degradation - Yarrowia lipolytica
+yli00220	Arginine biosynthesis - Yarrowia lipolytica
+yli00330	Arginine and proline metabolism - Yarrowia lipolytica
+yli00340	Histidine metabolism - Yarrowia lipolytica
+yli00350	Tyrosine metabolism - Yarrowia lipolytica
+yli00360	Phenylalanine metabolism - Yarrowia lipolytica
+yli00380	Tryptophan metabolism - Yarrowia lipolytica
+yli00400	Phenylalanine, tyrosine and tryptophan biosynthesis - Yarrowia lipolytica
+yli00410	beta-Alanine metabolism - Yarrowia lipolytica
+yli00430	Taurine and hypotaurine metabolism - Yarrowia lipolytica
+yli00440	Phosphonate and phosphinate metabolism - Yarrowia lipolytica
+yli00450	Selenocompound metabolism - Yarrowia lipolytica
+yli00460	Cyanoamino acid metabolism - Yarrowia lipolytica
+yli00470	D-Amino acid metabolism - Yarrowia lipolytica
+yli00480	Glutathione metabolism - Yarrowia lipolytica
+yli00520	Amino sugar and nucleotide sugar metabolism - Yarrowia lipolytica
+yli00541	Biosynthesis of various nucleotide sugars - Yarrowia lipolytica
+yli00510	N-Glycan biosynthesis - Yarrowia lipolytica
+yli00513	Various types of N-glycan biosynthesis - Yarrowia lipolytica
+yli00515	Mannose type O-glycan biosynthesis - Yarrowia lipolytica
+yli00514	Other types of O-glycan biosynthesis - Yarrowia lipolytica
+yli00531	Glycosaminoglycan degradation - Yarrowia lipolytica
+yli00563	Glycosylphosphatidylinositol (GPI)-anchor biosynthesis - Yarrowia lipolytica
+yli00604	Glycosphingolipid biosynthesis - ganglio series - Yarrowia lipolytica
+yli00511	Other glycan degradation - Yarrowia lipolytica
+yli00730	Thiamine metabolism - Yarrowia lipolytica
+yli00740	Riboflavin metabolism - Yarrowia lipolytica
+yli00750	Vitamin B6 metabolism - Yarrowia lipolytica
+yli00760	Nicotinate and nicotinamide metabolism - Yarrowia lipolytica
+yli00770	Pantothenate and CoA biosynthesis - Yarrowia lipolytica
+yli00780	Biotin metabolism - Yarrowia lipolytica
+yli00785	Lipoic acid metabolism - Yarrowia lipolytica
+yli00790	Folate biosynthesis - Yarrowia lipolytica
+yli00670	One carbon pool by folate - Yarrowia lipolytica
+yli00860	Porphyrin metabolism - Yarrowia lipolytica
+yli00130	Ubiquinone and other terpenoid-quinone biosynthesis - Yarrowia lipolytica
+yli00900	Terpenoid backbone biosynthesis - Yarrowia lipolytica
+yli00909	Sesquiterpenoid and triterpenoid biosynthesis - Yarrowia lipolytica
+yli00311	Penicillin and cephalosporin biosynthesis - Yarrowia lipolytica
+yli00332	Carbapenem biosynthesis - Yarrowia lipolytica
+yli00261	Monobactam biosynthesis - Yarrowia lipolytica
+yli00999	Biosynthesis of various plant secondary metabolites - Yarrowia lipolytica
+yli00791	Atrazine degradation - Yarrowia lipolytica
+yli03020	RNA polymerase - Yarrowia lipolytica
+yli03022	Basal transcription factors - Yarrowia lipolytica
+yli03040	Spliceosome - Yarrowia lipolytica
+yli03010	Ribosome - Yarrowia lipolytica
+yli00970	Aminoacyl-tRNA biosynthesis - Yarrowia lipolytica
+yli03013	Nucleocytoplasmic transport - Yarrowia lipolytica
+yli03015	mRNA surveillance pathway - Yarrowia lipolytica
+yli03008	Ribosome biogenesis in eukaryotes - Yarrowia lipolytica
+yli03060	Protein export - Yarrowia lipolytica
+yli04141	Protein processing in endoplasmic reticulum - Yarrowia lipolytica
+yli04130	SNARE interactions in vesicular transport - Yarrowia lipolytica
+yli04120	Ubiquitin mediated proteolysis - Yarrowia lipolytica
+yli04122	Sulfur relay system - Yarrowia lipolytica
+yli03050	Proteasome - Yarrowia lipolytica
+yli03018	RNA degradation - Yarrowia lipolytica
+yli03030	DNA replication - Yarrowia lipolytica
+yli03410	Base excision repair - Yarrowia lipolytica
+yli03420	Nucleotide excision repair - Yarrowia lipolytica
+yli03430	Mismatch repair - Yarrowia lipolytica
+yli03440	Homologous recombination - Yarrowia lipolytica
+yli03450	Non-homologous end-joining - Yarrowia lipolytica
+yli03460	Fanconi anemia pathway - Yarrowia lipolytica
+yli03082	ATP-dependent chromatin remodeling - Yarrowia lipolytica
+yli03083	Polycomb repressive complex - Yarrowia lipolytica
+yli03250	Viral life cycle - HIV-1 - Yarrowia lipolytica
+yli03272	Virion - Hepatitis viruses - Yarrowia lipolytica
+yli02010	ABC transporters - Yarrowia lipolytica
+yli04011	MAPK signaling pathway - yeast - Yarrowia lipolytica
+yli04070	Phosphatidylinositol signaling system - Yarrowia lipolytica
+yli04082	Neuroactive ligand signaling - Yarrowia lipolytica
+yli04081	Hormone signaling - Yarrowia lipolytica
+yli04517	IgSF CAM signaling - Yarrowia lipolytica
+yli04518	Integrin signaling - Yarrowia lipolytica
+yli04519	Cadherin signaling - Yarrowia lipolytica
+yli04144	Endocytosis - Yarrowia lipolytica
+yli04145	Phagocytosis - Yarrowia lipolytica
+yli04142	Lysosome biogenesis - Yarrowia lipolytica
+yli04146	Peroxisome - Yarrowia lipolytica
+yli04149	Peroxisome - yeast - Yarrowia lipolytica
+yli04138	Autophagy - yeast - Yarrowia lipolytica
+yli04136	Autophagy - other - Yarrowia lipolytica
+yli04139	Mitophagy - yeast - Yarrowia lipolytica
+yli04148	Efferocytosis - Yarrowia lipolytica
+yli04111	Cell cycle - yeast - Yarrowia lipolytica
+yli04113	Meiosis - yeast - Yarrowia lipolytica
+yli04814	Motor proteins - Yarrowia lipolytica
+yli04820	Cytoskeleton in muscle cells - Yarrowia lipolytica
+yli04620	Toll-like receptor signaling pathway - Yarrowia lipolytica
+yli04981	Folate transport and metabolism - Yarrowia lipolytica
+yli04382	Cornified envelope formation - Yarrowia lipolytica
+yli05100	Bacterial invasion of epithelial cells - Yarrowia lipolytica
+yli01501	beta-Lactam resistance - Yarrowia lipolytica
