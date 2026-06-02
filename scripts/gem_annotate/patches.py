@@ -188,6 +188,55 @@ def fix_coa_charge(model) -> int:
     return fixed
 
 
+# ── Patch 6: cation formula/charge self-consistency ───────────────────────
+
+# A set of protonated amines/cations carry a NEUTRAL formula but a positive
+# charge — the two are mutually inconsistent (a +1 ammonium must have one more
+# H than its neutral form).  This unbalances every reaction they participate
+# in (e.g. sphinganine's 8 sphingolipid reactions).  Fix the formula to the
+# protonated (ionic) form, matching the MetaNetX chem_prop value for the
+# metabolite's own MNXM.
+#
+# Whitelist keyed by (current_formula, charge) → target_formula, so a same-
+# formula species with a different charge is never touched.  Each target is
+# the MetaNetX formula for that metabolite's MNXM (verified 2026-06).
+_CATION_FORMULA_FIX: dict[tuple[str, int], str] = {
+    ("C11H18N4O4", 1): "C11H19N4O4",   # MNXM735139  2-[3-carboxy-3-(methylammonio)propyl]-L-his
+    ("C15H22N6O5S", 1): "C15H23N6O5S", # MNXM1363767 S-adenosyl-L-methionine
+    ("C18H39NO2", 1): "C18H40NO2",     # MNXM733692  sphinganine
+    ("C2H7NO", 1): "C2H8NO",           # MNXM218     ethanolamine
+    ("C3H7NO", 1): "C3H8NO",           # MNXM736082  3-aminopropanal
+    ("C4H12N2", 2): "C4H14N2",         # MNXM118     putrescine (+2)
+    ("C4H9NO", 1): "C4H10NO",          # MNXM422     4-aminobutanal
+    ("C5H12N4O", 1): "C5H13N4O",       # MNXM2617    4-guanidinobutanamide
+    ("C6H11N3O", 1): "C6H12N3O",       # MNXM1281    L-histidinol
+    ("C6H13NO2S", 1): "C6H14NO2S",     # MNXM681265  S-methyl-L-methionine
+    ("C6H14N2O2", 1): "C6H15N2O2",     # MNXM1364268 L-lysine
+    ("C6H14N4O2", 1): "C6H15N4O2",     # MNXM739527  L-arginine
+    ("C7H19N3", 3): "C7H22N3",         # MNXM124     spermidine (+3)
+    ("C8H12N2O2", 1): "C8H13N2O2",     # MNXM548     pyridoxamine
+}
+
+
+def fix_cation_formula_consistency(model) -> int:
+    """
+    Fix protonated cations whose formula is the neutral form but charge is
+    positive.  Only metabolites matching both (formula, charge) in the
+    whitelist are changed.  Returns the number of metabolites patched.
+    """
+    fixed = 0
+    for met in model.metabolites:
+        if met.formula is None or met.charge is None:
+            continue
+        key = (met.formula.strip(), int(met.charge))
+        target = _CATION_FORMULA_FIX.get(key)
+        if target:
+            met.formula = target
+            fixed += 1
+            logger.debug(f"  cation formula patch: {met.id} {key[0]} → {target}")
+    return fixed
+
+
 # ── Patch 0: clean Excel-corrupted "ActiveX VT_ERROR" names ───────────────
 
 # iYli21 was exported from Excel; some metabolite names had their trailing
@@ -332,9 +381,11 @@ def apply_all_patches(model) -> dict:
     counts = {
         "nadp_plus_fixed":   fix_nadp_plus_formula(model),
         "ceramide_fixed":    fix_ceramide_formulas(model),
+        "cation_formula_fixed": fix_cation_formula_consistency(model),
     }
     logger.info(
         f"  patches applied: NADP+={counts['nadp_plus_fixed']} copies, "
-        f"ceramide={counts['ceramide_fixed']} copies"
+        f"ceramide={counts['ceramide_fixed']} copies, "
+        f"cation-formula={counts['cation_formula_fixed']} copies"
     )
     return counts
