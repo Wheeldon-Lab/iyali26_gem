@@ -16,7 +16,7 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import apply_all_patches, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
+from .patches import add_isozyme_gprs, apply_all_patches, clean_ec_overload, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -297,6 +297,16 @@ def main():
     logger.info(f"  TCDB cleanup: moved {n_tcdb} TCDB number(s) from ec-code → tcdb")
     n_ec_padded = fix_ec_code_format(model)
     logger.info(f"  EC format: padded {n_ec_padded} three-segment EC code(s) with '.-'")
+
+    # EC-overload cleanup must run LAST: after all EC back-fill and format
+    # steps, so the back-fill cannot re-introduce the dropped EC numbers.
+    n_ec_cleaned = clean_ec_overload(model)
+    logger.info(f"  EC overload cleanup: removed polluting EC from {n_ec_cleaned} reaction(s)")
+
+    # Isozyme GPR additions: add curated CLIB89 isozyme genes to existing
+    # reactions' GPR via 'or' (safe subset only; see patches.add_isozyme_gprs).
+    n_gpr_added = add_isozyme_gprs(model)
+    logger.info(f"  Isozyme GPR additions: {n_gpr_added} (reaction, gene) pair(s) added")
 
     ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")

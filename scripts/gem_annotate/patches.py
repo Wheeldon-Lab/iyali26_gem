@@ -360,6 +360,148 @@ def fix_ec_code_format(model) -> int:
     return fixed
 
 
+# ── Patch 7: EC-overload cleanup ──────────────────────────────────────────
+
+# Some reactions accumulated 5+ EC numbers from MetaNetX MNXR `classifs`
+# back-fill — a single, well-defined reaction tagged with EC numbers spanning
+# multiple enzyme classes (e.g. R1893 mannitol dehydrogenase carried 11 EC
+# including glutathione transferase 2.5.1.18).  This "EC soup" pollutes
+# EC-based analysis and inflates Memote's EC inconsistency.
+#
+# The authoritative fix uses KEGG reaction-level ENZYME data: keep only the
+# intersection of the reaction's current EC set with the EC numbers KEGG
+# assigns to its kegg.reaction id.  That curation is done offline by
+# scripts/audit_ec_overload.py, which writes data/ec_overload_audit.csv with
+# a per-reaction keep/drop decision.  This patch *applies* the rows marked
+# action=clean — it never invents EC numbers (keep_ec is always a subset of
+# the reaction's current ec-code, double-checked below).
+#
+# Runs LAST in the pipeline (after all EC back-fill and format steps) so the
+# back-fill cannot re-introduce the dropped EC numbers.
+_EC_OVERLOAD_AUDIT_CSV = "data/ec_overload_audit.csv"
+
+
+def clean_ec_overload(model, audit_csv: str | None = None) -> int:
+    """
+    Apply the KEGG-curated EC-overload cleanup from the audit CSV.
+
+    For each audit row with action=='clean', replace the reaction's 'ec-code'
+    with the curated keep_ec set — but ONLY if keep_ec is a subset of the
+    reaction's current ec-code (guards against the CSV drifting out of sync
+    with the model).  Returns the number of reactions cleaned.
+    """
+    import csv
+    import os
+
+    if audit_csv is None:
+        # patches.py is at scripts/gem_annotate/patches.py -> repo root is ../../
+        root = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))))
+        audit_csv = os.path.join(root, _EC_OVERLOAD_AUDIT_CSV)
+
+    if not os.path.exists(audit_csv):
+        logger.warning(f"  EC-overload audit CSV not found: {audit_csv} — skipping")
+        return 0
+
+    cleaned = 0
+    with open(audit_csv) as f:
+        for row in csv.DictReader(f):
+            if row.get("action") != "clean":
+                continue
+            rid = row["reaction"]
+            keep = {e for e in row["keep_ec"].split(";") if e}
+            if not keep:
+                continue
+            try:
+                rxn = model.reactions.get_by_id(rid)
+            except KeyError:
+                logger.warning(f"  EC-overload: reaction {rid} not in model — skipping")
+                continue
+            ann = rxn.annotation if isinstance(rxn.annotation, dict) else {}
+            cur = ann.get("ec-code")
+            if not cur:
+                continue
+            if isinstance(cur, str):
+                cur = [cur]
+            cur_set = set(cur)
+            # subset guard: only proceed if keep_ec really is a subset of current
+            if not keep <= cur_set:
+                logger.warning(
+                    f"  EC-overload: {rid} keep_ec {sorted(keep)} not subset of "
+                    f"current {sorted(cur_set)} — skipping (CSV out of sync)")
+                continue
+            if cur_set == keep:
+                continue  # already clean, nothing to drop
+            rxn.annotation["ec-code"] = sorted(keep)
+            cleaned += 1
+            logger.debug(
+                f"  EC-overload: {rid} {sorted(cur_set)} → {sorted(keep)}")
+    return cleaned
+
+
+# ── Patch 8: isozyme GPR additions ────────────────────────────────────────
+
+# CLIB89 expansion funnel (S2 Table -> KEGG metabolic relevance -> MetaNetX
+# reaction mapping -> de-dup against model EC) identified genes whose EC is
+# already carried by an existing model reaction: these are isozymes that
+# should be added to that reaction's GPR (NOT new reactions).
+#
+# This patch applies only the SAFE subset curated in
+# data/gpr_isozyme_additions.csv: each gene maps to <=3 reactions and none of
+# those reactions has an 'and' (multi-subunit complex) GPR — so adding the
+# gene with 'or' is unambiguous.  Genes hitting broad ECs (many reactions) or
+# complex GPRs are excluded and left for manual review.
+#
+# Only 'or' additions are made; existing genes and reaction stoichiometry are
+# never touched.  Idempotent: a gene already in the rule is skipped.
+_GPR_ADDITIONS_CSV = "data/gpr_isozyme_additions.csv"
+
+
+def add_isozyme_gprs(model, additions_csv: str | None = None) -> int:
+    """
+    Add curated isozyme genes to existing reactions' GPR via 'or'.
+
+    Reads data/gpr_isozyme_additions.csv (columns: reaction, add_gene, ...).
+    For each (reaction, gene): if the gene is not already in the reaction's
+    gene_reaction_rule, append it with 'or' (or set it as the sole rule if the
+    reaction had no GPR).  Returns the number of (reaction, gene) additions made.
+    """
+    import csv
+    import os
+
+    if additions_csv is None:
+        root = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))))
+        additions_csv = os.path.join(root, _GPR_ADDITIONS_CSV)
+
+    if not os.path.exists(additions_csv):
+        logger.warning(f"  GPR additions CSV not found: {additions_csv} — skipping")
+        return 0
+
+    added = 0
+    with open(additions_csv) as f:
+        for row in csv.DictReader(f):
+            rid = row["reaction"]
+            gene = row["add_gene"].strip()
+            if not gene:
+                continue
+            try:
+                rxn = model.reactions.get_by_id(rid)
+            except KeyError:
+                logger.warning(f"  GPR add: reaction {rid} not in model — skipping")
+                continue
+            rule = rxn.gene_reaction_rule.strip()
+            # idempotent: skip if gene already present as a token
+            existing = set(re.findall(r"[A-Za-z0-9_]+", rule))
+            if gene in existing:
+                continue
+            new_rule = gene if not rule else f"{rule} or {gene}"
+            rxn.gene_reaction_rule = new_rule
+            added += 1
+            logger.debug(f"  GPR add: {rid} += {gene}")
+    return added
+
+
 # ── Top-level driver ──────────────────────────────────────────────────────
 
 def apply_all_patches(model) -> dict:
