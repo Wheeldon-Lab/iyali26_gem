@@ -16,7 +16,7 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import add_isozyme_gprs, apply_all_patches, clean_ec_overload, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
+from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, fill_neutral_formulas, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -307,6 +307,15 @@ def main():
     # reactions' GPR via 'or' (safe subset only; see patches.add_isozyme_gprs).
     n_gpr_added = add_isozyme_gprs(model)
     logger.info(f"  Isozyme GPR additions: {n_gpr_added} (reaction, gene) pair(s) added")
+
+    # Annotate those newly added genes (they entered after the main gene
+    # annotation + SBO steps, so they need sbo / ncbigene / kegg / uniprot here).
+    n_gene_annot = annotate_isozyme_genes(model)
+    logger.info(f"  Isozyme gene annotation: {n_gene_annot} gene(s) annotated")
+
+    # Fill formulas for definite-neutral metabolites (charge=0, unambiguous).
+    n_form = fill_neutral_formulas(model)
+    logger.info(f"  Neutral formula fill: {n_form} metabolite copy(ies) filled")
 
     ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")
