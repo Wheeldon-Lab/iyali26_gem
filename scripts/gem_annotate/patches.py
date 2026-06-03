@@ -502,6 +502,178 @@ def add_isozyme_gprs(model, additions_csv: str | None = None) -> int:
     return added
 
 
+# ── Patch 9: annotate the isozyme genes added by patch 8 ───────────────────
+
+# The genes added by add_isozyme_gprs enter the model with no annotation.
+# The pipeline's main gene-annotation step (genes.annotate_genes) and SBO step
+# both run BEFORE the GPR additions, so they never reach these new genes —
+# leaving them with empty annotation (regresses memote gene-SBO /
+# gene-product-annotation, and they re-appear empty on every full rebuild).
+#
+# This patch annotates exactly those genes: sbo (SBO:0000243), ncbigene +
+# kegg.genes (from NCBI feature table / KEGG yli, local), and uniprot
+# (best-effort network lookup via xref:geneid).  Runs right after
+# add_isozyme_gprs.  Idempotent: genes already carrying an sbo are skipped.
+_FEATURE_TABLE = "data/ncbi/clib89_feature_table.txt"
+_KEGG_GENES = "data/kegg/yli_genes.tsv"
+
+
+def _fetch_uniprot_for_geneid(geneid: str):
+    """Best-effort UniProt accession from a GeneID xref. None on failure."""
+    import urllib.parse
+    import urllib.request
+    q = urllib.parse.quote(f"xref:geneid-{geneid}")
+    url = (f"https://rest.uniprot.org/uniprotkb/search?query={q}"
+           f"&fields=accession&format=tsv&size=1")
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resp:
+            lines = resp.read().decode().splitlines()
+        if len(lines) >= 2 and lines[1].strip():
+            return lines[1].strip()
+    except Exception:
+        pass
+    return None
+
+
+def annotate_isozyme_genes(model, additions_csv: str | None = None,
+                           network: bool = True) -> int:
+    """
+    Annotate the isozyme genes added by add_isozyme_gprs.
+
+    Adds sbo / ncbigene / kegg.genes (local) and uniprot (network, optional).
+    Idempotent: a gene that already has an 'sbo' annotation is skipped.
+    Returns the number of genes annotated.
+    """
+    import csv
+    import os
+
+    root = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))))
+    if additions_csv is None:
+        additions_csv = os.path.join(root, _GPR_ADDITIONS_CSV)
+    if not os.path.exists(additions_csv):
+        logger.warning(f"  gene annotate: {additions_csv} not found — skipping")
+        return 0
+
+    # YALI1 (no underscore) -> GeneID from NCBI feature table
+    y2g = {}
+    ft = os.path.join(root, _FEATURE_TABLE)
+    if os.path.exists(ft):
+        with open(ft) as f:
+            next(f)
+            for line in f:
+                c = line.rstrip("\n").split("\t")
+                if len(c) < 17:
+                    continue
+                locus, gid = c[16].strip(), c[15].strip()
+                if locus and gid:
+                    y2g.setdefault(locus.replace("YALI1_", "YALI1"), gid)
+
+    # GeneIDs present in KEGG yli
+    kegg_ids = set()
+    kg = os.path.join(root, _KEGG_GENES)
+    if os.path.exists(kg):
+        with open(kg) as f:
+            for line in f:
+                kegg_ids.add(line.split("\t", 1)[0].replace("yli:", ""))
+
+    genes = sorted({r["add_gene"] for r in csv.DictReader(open(additions_csv))})
+    annotated = 0
+    for g in genes:
+        try:
+            gene = model.genes.get_by_id(g)
+        except KeyError:
+            continue
+        ann = dict(gene.annotation) if gene.annotation else {}
+        if ann.get("sbo") == "SBO:0000243":
+            continue  # idempotent
+        ann["sbo"] = "SBO:0000243"
+        gid = y2g.get(g)
+        if gid:
+            ann["ncbigene"] = gid
+            if gid in kegg_ids:
+                ann["kegg.genes"] = f"yli:{gid}"
+            if network:
+                up = _fetch_uniprot_for_geneid(gid)
+                if up:
+                    ann["uniprot"] = up
+        gene.annotation = ann
+        annotated += 1
+        logger.debug(f"  gene annotate: {g} ncbigene={ann.get('ncbigene','-')} "
+                     f"uniprot={ann.get('uniprot','-')}")
+    return annotated
+
+
+# ── Patch 10: fill formulas for definite neutral metabolites ──────────────
+
+# A set of metabolites carried no formula but have a definite chemical
+# identity.  Their MetaNetX (metanetx.chemical) ids turned out to be empty
+# shells with no formula in chem_prop, so the formula was looked up by name in
+# PubChem instead (scripts/audit_missing_formula.py ->
+# data/missing_formula_fill.csv).
+#
+# This patch applies ONLY the safe subset: metabolites that are neutral in
+# their physiological state (terpenes, esters, amines, nitriles, alcohols,
+# aldehydes, peroxide) where charge = 0 is unambiguous.  Charged species
+# (carboxylates, CoA-thioesters, phosphate esters, dipeptides) are deliberately
+# excluded — the model's own charge convention for those is internally
+# inconsistent (e.g. UDP-glucose charge 0 vs GDP-mannose -2), so there is no
+# single correct value to fill and getting it wrong would unbalance reactions.
+#
+# Model formula convention is neutral-H + separate charge (H_model = H_neutral),
+# so the PubChem neutral formula is exactly what the model wants.  Idempotent:
+# metabolites that already have a formula are skipped.
+_NEUTRAL_FILL_CSV = "data/missing_formula_fill.csv"
+
+
+def fill_neutral_formulas(model, fill_csv: str | None = None) -> int:
+    """
+    Fill formula (and charge 0) for definite-neutral metabolites listed in the
+    fill CSV with status=ready and charge=0, excluding dipeptides.
+
+    Matches by metabolite name; only fills metabolites whose formula is
+    currently empty.  Returns the number of metabolite copies filled.
+    """
+    import csv
+    import os
+    import re as _re
+
+    if fill_csv is None:
+        root = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))))
+        fill_csv = os.path.join(root, _NEUTRAL_FILL_CSV)
+    if not os.path.exists(fill_csv):
+        logger.warning(f"  neutral fill: {fill_csv} not found — skipping")
+        return 0
+
+    dipeptide = _re.compile(
+        r"^(gly|ala|cys|pro|asp|glu|ser|thr|val|leu|ile|phe|tyr|trp|his|lys|"
+        r"arg|asn|gln|met)[-_]", _re.I)
+
+    targets = {}  # name -> formula
+    with open(fill_csv) as f:
+        for row in csv.DictReader(f):
+            if row.get("status") != "ready" or row.get("charge") != "0":
+                continue
+            if dipeptide.match(row["name"]):
+                continue
+            if row["formula"] and row["formula"] != "(查不到)":
+                targets[row["name"]] = row["formula"]
+
+    filled = 0
+    for met in model.metabolites:
+        if met.formula:
+            continue
+        f = targets.get(met.name)
+        if not f:
+            continue
+        met.formula = f
+        met.charge = 0
+        filled += 1
+        logger.debug(f"  neutral fill: {met.id} ({met.name}) <- {f} charge=0")
+    return filled
+
+
 # ── Top-level driver ──────────────────────────────────────────────────────
 
 def apply_all_patches(model) -> dict:
