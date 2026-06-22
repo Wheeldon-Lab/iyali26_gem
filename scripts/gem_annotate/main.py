@@ -16,7 +16,7 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, fill_neutral_formulas, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
+from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -316,6 +316,11 @@ def main():
     # Fill formulas for definite-neutral metabolites (charge=0, unambiguous).
     n_form = fill_neutral_formulas(model)
     logger.info(f"  Neutral formula fill: {n_form} metabolite copy(ies) filled")
+
+    # Lipid chain-menu extension: add C16:1 palmitoleoyl-CoA to the acyl-CoA pools
+    # (Y. lipolytica makes ~8% but the pool omitted it). Idempotent.
+    n_c161 = extend_acyl_pool_c161(model)
+    logger.info(f"  C16:1 acyl-CoA pool extension: {n_c161} pool(s) extended")
 
     ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")
