@@ -674,6 +674,62 @@ def fill_neutral_formulas(model, fill_csv: str | None = None) -> int:
     return filled
 
 
+# ── Lipid chain-menu extension: add C16:1 palmitoleoyl-CoA to acyl-CoA pools ──
+
+# Y. lipolytica W29 makes ~8% palmitoleate (C16:1) but the iYli21 acyl-CoA pools
+# omit it (Carsanba 2020, Table 3: C16:1 = 8.3% on glucose, day 2 —
+# https://pmc.ncbi.nlm.nih.gov/articles/PMC7409262/, verified 2026-06).
+# We add palmitoleoyl-CoA to the 3 acyl-CoA pools (xPOOL_AC_EM/LP/MM), giving it
+# 8.3% of the pool and scaling the existing 6 chains by (1 - 0.083) so the substrate
+# weight sum stays 0.951 (= the unchanged product coefficient). palmitoleoyl-CoA
+# already exists in all three compartments, so no new metabolite is created.
+# Fatty-acid pools (xPOOL_FA_*) are intentionally NOT touched here.
+_AC_POOL_C161_FRACTION = 0.083                       # C16:1 share within the pool
+_AC_POOLS = ("xPOOL_AC_EM", "xPOOL_AC_LP", "xPOOL_AC_MM")
+# palmitoleoyl-CoA id per acyl-CoA-pool compartment (verified present in model)
+_PALMITOLEOYL_COA = {"C_em": "m243[C_em]", "C_lp": "m1486[C_lp]", "C_mm": "m1624[C_mm]"}
+
+
+def extend_acyl_pool_c161(model) -> int:
+    """
+    Add C16:1 palmitoleoyl-CoA to the 3 acyl-CoA pools and re-scale the existing
+    6 chains so the substrate weight sum (= product coefficient, 0.951) is unchanged.
+
+    Idempotent: a pool that already contains its palmitoleoyl-CoA is skipped.
+    Returns the number of pools extended. Does not create metabolites and does not
+    touch the fatty-acid pools.
+    """
+    extended = 0
+    for rid in _AC_POOLS:
+        try:
+            rxn = model.reactions.get_by_id(rid)
+        except KeyError:
+            continue
+        comp = next(iter({m.compartment for m in rxn.metabolites}))
+        c161_id = _PALMITOLEOYL_COA.get(comp)
+        if c161_id is None:
+            continue
+        c161 = model.metabolites.get_by_id(c161_id)
+        if c161 in rxn.metabolites:          # already extended → idempotent skip
+            continue
+
+        # substrate weight sum (must equal the product coefficient, preserved)
+        sub_sum = sum(-c for m, c in rxn.metabolites.items() if c < 0)
+        scale = 1.0 - _AC_POOL_C161_FRACTION
+        # scale the 6 existing acyl-CoA substrates in place
+        delta = {}
+        for met, coef in rxn.metabolites.items():
+            if coef < 0:
+                delta[met] = coef * scale - coef     # bring coef to coef*scale
+        rxn.add_metabolites(delta)
+        # add palmitoleoyl-CoA at its share of the (unchanged) total
+        rxn.add_metabolites({c161: -sub_sum * _AC_POOL_C161_FRACTION})
+        extended += 1
+        logger.info("  C16:1 pool extension: %s += %s (%.4f), 6 chains x%.3f"
+                    % (rid, c161_id, sub_sum * _AC_POOL_C161_FRACTION, scale))
+    return extended
+
+
 # ── Top-level driver ──────────────────────────────────────────────────────
 
 def apply_all_patches(model) -> dict:
