@@ -1,0 +1,26 @@
+category,metric,value,note
+scale,reactions,4456,iYli21 has 2301
+scale,metabolites,2172,iYli21 has ~1900
+scale,genes,1027,
+scale,species,Phaeodactylum tricornutum,oleaginous model diatom
+modeling,generic_acyl_CoA_metabolites,0,iYli21 uses generic pooled acyl-CoA
+modeling,pool_reactions,0,iYli21 has 9
+modeling,SLIME_reactions,0,Chalmers-style lumping uses SLIME
+chain_expansion,metabolites_with_chainlength_token,552,name carries explicit CXX:Y
+chain_expansion,distinct_chainlength_species,17,the expansion 'menu'
+chain_expansion,chainlength_list,14:0 16:0 16:1 16:2 16:3 16:4 18:0 18:1 18:2 18:3 18:4 20:3 20:4 20:5 22:5 22:6 24:0,14:0 .. 24:0 incl EPA/DHA
+chain_expansion,CoA_related_metabolites,326,
+chain_expansion,ACP_related_metabolites,73,diatom FAS uses ACP
+chain_expansion,explicitly_named_acyl_metabolites,320,palmitoyl/oleoyl/...
+conservation,metabolites_with_formula,2164/2172,99.6% coverage
+conservation,lipid_reactions_checked,3033,by name keyword
+conservation,lipid_reactions_balanced,3031,iYli21 has 902 imbalanced
+conservation,lipid_reactions_imbalanced,0,
+conservation,lipid_reactions_skipped_emptyformula,2,
+conservation,formula_pmtcoa_c,C37H62N7O17P3S,Palmitoyl-CoA (n-C16:0CoA) charge -4
+conservation,formula_odecoa_c,C39H64N7O17P3S,Octadecenoyl-CoA (n-C18:1CoA) charge -4
+conservation,formula_tdcoa_c,C35H58N7O17P3S,Tetradecanoyl-CoA (n-C14:0CoA) charge -4
+combinatorial_cost,AGPAT_reactions_sn1xsn2,63,~N^2 (2 acyl positions)
+combinatorial_cost,DGAT_reactions_to_TAG,1121,~N^3 (3 acyl positions)
+combinatorial_cost,distinct_TAG_species,84,
+gene_machinery,genes_in_lipid_reactions,139/1027,

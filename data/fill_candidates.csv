@@ -1,0 +1,255 @@
+metabolite_id,name,formula,is_lipid,n_reactions_solved,source_reactions
+m1974[C_cy],(S)-3-Hydroxyisobutyrate,C4H7O3,no,1,R2114
+m1975[C_cy],(S)-Methylmalonate semialdehyde,C4H4O3,no,1,R2074
+m1808[C_cy],2'-deoxyinosine-5-phosphate_,C10H8N4O7P,no,1,R1952
+m474[C_cy],2-deoxy-D-ribofuranose 1-phosphate_,C5H11O7P,no,1,R264
+m1927[C_cy],2_Octaprenyl_6_hydroxyphenol__5_repeating_units,C36H55O2,no,1,R2248
+m1923[C_nu],2_Octaprenyl_6_hydroxyphenol__5_repeating_units,C36H55O2,no,1,R2249
+m1924[C_nu],2_Octaprenyl_6_methoxyphenol__5_repeating_units,C37H57O2,no,1,R2242
+m1928[C_cy],2_Octaprenylphenol__5_repeating_units_,C36H55O,no,1,R2247
+m1958[C_cy],"3,4-dihydroxymandelaldehyde",C8H7O4,no,1,R2100
+m1956[C_cy],"3,4-dihydroxymandelate",C8H6O5,no,1,R2099
+m2030[C_cy],3-Sulfinylpyruvate,C3H4O5S,no,1,R2196
+m1957[C_cy],3-methoxy-4-hydroxymandelate,C9H9O5,no,1,R2098
+m643[C_cy],4-methyl-5-(2-phosphonooxyethyl)thiazole_,C6H9NO4PS,no,1,R408
+m1852[C_cy],5-Keto-D-Gluconic Acid,C6H9O7,no,1,R2000
+m1845[C_cy],5-aminopentanoate,C5H10NO2,no,1,R1991
+m1816[C_cy],5-hydroxyisourate_,C5H4N4O4,no,1,R1954
+m1878[C_va],Ala-Gly,C5H10N2O3,no,1,R2034
+m1877[C_cy],Ala-Gly,C5H10N2O3,no,1,R2033
+m2035[C_cy],Cys-Gly,C5H10N2O3S,no,1,R2200
+m1891[C_cy],"D-Glucono-1,5-lactone",C6H12O6,no,1,R2059
+m1810[C_cy],D-glucosamine_,C6H14NO5,no,1,R1946
+m2019[C_cy],Dehydrodolichol diphosphate,C30H52O7P2,no,1,R2178
+m1989[C_er],Dolichyl beta-D-glucosyl phosphate,C31H56O9P,no,1,R2138
+m1961[C_er],GDP-mannose,C16H22N5O16P2,no,1,R2102
+m1871[C_va],Gly-Asp,C6H10N2O5,no,1,R2021
+m1870[C_cy],Gly-Asp,C6H10N2O5,no,1,R2020
+m1866[C_va],Gly-Pro,C7H12N2O3,no,1,R2039
+m1865[C_cy],Gly-Pro,C7H12N2O3,no,1,R2038
+m1862[C_va],Gly_Glu,C7H12N2O5,no,1,R2029
+m1861[C_cy],Gly_Glu,C7H12N2O5,no,1,R2028
+m2044[C_cy],Indolepyruvate,C11H8NO3,no,1,R2072
+m543[C_cy],L-gamma-glutamyl-L-alanine_,C8H14N2O5,no,1,R317
+m2031[C_cy],Mercaptopyruvate,C3H4O3S,no,1,R2199
+m1969[C_er],"N,N-diacetylrhitobiosyldiphosphodolichol",C41H79N2O17P2,no,1,R2105
+m1968[C_er],N-acetyl-D-glucosaminyldiphosphodolichol,C33H62NO12P2,no,1,R2106
+m1817[C_cy],OHCU_,C5H6N4O5,no,1,R1955
+m339[C_cy],"P1-(5'-adenosyl),P4-(5'-guanosyl) tetraphosphate",C20H29N10O20P4,no,1,R168
+m2026[C_cy],Phenylacetic acid,C8H6O2,no,1,R2191
+m971[C_ex],TDP_,C12H20N4O7P2S,no,1,R750
+m975[C_cy],TDP_,C12H18N4O7P2S,no,1,R752
+m1116[C_mi],TDP_,C12H18N4O7P2S,no,1,R933
+m976[C_cy],TTP_,C12H19N4O10P3S,no,1,R753
+m1889[C_go],UDP-D-galactose,C15H24N2O17P2,no,1,R2057
+m1723[C_cy],UDP-D-glucuronate,C15H17N2O18P2,no,1,R1910
+m1964[C_cy],UDP-N-acetyl-D-glucosamine,C17H28N3O17P2,no,1,R2108
+m1965[C_er],UDP-N-acetyl-D-glucosamine,C17H28N3O17P2,no,1,R2107
+m1988[C_er],UDP-glucose,C15H22N2O17P2,no,1,R2139
+m1930[C_cy],all_trans_Octaprenyl_diphosphate__5_repeating_units,C30H52O7P2,no,1,R2250
+m1813[C_cy],cellobiose_,C12H22O11,no,1,R1930
+m1789[C_cy],decanol_,C10H22O,no,1,R1863
+m1814[C_cy],dehydroalanine_,C3H5NO2,no,1,R1942
+m1805[C_ex],dibutyrin_,C11H18O5,no,1,R1896
+m1827[C_cy],erythrose_,C4H8O4,no,1,R1961
+m1900[C_cy],gamma_Amino_gamma_cyanobutanoate,C5H8N2O2,no,1,R2213
+m1815[C_cy],hydroxypyruvate_,C3H4O4,no,1,R1939
+m2057[C_cy],m2057[C_cy],C26H45N7O17P3S,no,1,R2281
+m2058[C_cy],m2058[C_cy],C26H45N7O17P3S,no,1,R2282
+m2059[C_cy],m2059[C_cy],C26H47N7O18P3S,no,1,R2283
+m2060[C_cy],m2060[C_cy],C26H45N7O18P3S,no,1,R2284
+m1806[C_ex],monobutyrate_,C7H13O4,no,1,R1897
+m496[C_cy],"myo-inositol 1,3,4,5,6-pentakisphosphate",C6H11O21P5,no,1,R284
+m656[C_nu],"myo-inositol 1,3,4,5,6-pentakisphosphate",C6H16O21P5,no,1,R422
+m1720[C_cy],nicotinate D-ribonucleoside,C11H14NO6,no,1,R1903
+m1934[C_cy],omega-hydroxy-decanoate,C10H20O3,no,1,R2254
+m1404[C_cy],quinaldic acid_,C10H7NO3,no,1,R1375
+m2020[C_cy],"trans,trans-Farnesyl diphosphate",C15H28O7P2,no,1,R2179
+m1555[C_pe],(R)-3-hydroxy-cis-dodec-5-enoyl-CoA_,C33H54N7O18P3S,yes,1,R1513
+m1557[C_pe],(R)-3-hydroxy-cis-hexadec-7-enoyl-CoA_,C37H63N7O18P3S,yes,1,R1515
+m1553[C_pe],(R)-3-hydroxy-cis-hexadec-9-enoyl-CoA_,C37H64N7O18P3S,yes,1,R1511
+m1556[C_pe],(R)-3-hydroxy-cis-octadec-9-enoyl-CoA_,C39H68N7O18P3S,yes,1,R1514
+m1558[C_pe],(R)-3-hydroxy-cis-tetradec-5-enoyl-CoA_,C35H61N7O18P3S,yes,1,R1533
+m1554[C_pe],(R)-3-hydroxy-cis-tetradec-7-enoyl-CoA_,C35H59N7O18P3S,yes,1,R1512
+m1551[C_pe],(R)-3-hydroxydocosanoyl-CoA_,C43H78N7O18P3S,yes,1,R1509
+m1546[C_pe],(R)-3-hydroxyhexacosanoyl-CoA_,C47H86N7O18P3S,yes,1,R1504
+m1550[C_pe],(R)-3-hydroxyicosanoyl-CoA_,C41H75N7O18P3S,yes,1,R1525
+m1545[C_pe],(R)-3-hydroxyoctadecanoyl-CoA,C39H70N7O18P3S,yes,1,R1503
+m1544[C_pe],(R)-3-hydroxypalmitoyl-CoA_,C37H66N7O18P3S,yes,1,R1502
+m1552[C_pe],(R)-3-hydroxytetracosanoyl-CoA_,C45H82N7O18P3S,yes,1,R1510
+m115[C_pe],(R)-3-hydroxytetradecanoyl-CoA,C35H63N7O18P3S,yes,1,R42
+m2011[C_er],"1,2-Diacyl-sn-glycerol",C55H101O5,yes,1,R2168
+m1994[C_cy],"1,2-Diacyl-sn-glycerol",C55H101O5,yes,1,R2169
+m1685[C_vm],"1,2-diacylglycerol 3-diphosphate_",C39H75O11P2,yes,1,R1758
+m1687[C_gm],"1,2-diacylglycerol 3-diphosphate_",C39H75O11P2,yes,1,R1759
+m575[C_em],1-acyl-sn-glycerol 3-phosphate,C21H41O7P,yes,1,R352
+m577[C_lp],1-acyl-sn-glycerol 3-phosphate,C21H41O7P,yes,1,R353
+m1657[C_em],1-acylglycerophosphocholine_C9H20NO7PR,C26H54NO7P,yes,1,R1731
+m1660[C_en],1-acylglycerophosphocholine_C9H20NO7PR,C26H54NO7P,yes,1,R1733
+m1702[C_lp],1-acylglycerophosphocholine_C9H20NO7PR,C26H54NO7P,yes,1,R1788
+m789[C_mm],1-acylglycerophosphocholine_C9H20NO7PR,C26H52NO7P,yes,1,R530
+m1663[C_en],1-acylglycerophosphoethanolamine_,C23H47NO7P,yes,1,R1735
+m1656[C_em],1-acylglycerophosphoethanolamine_,C23H48NO7P,yes,1,R1728
+m1699[C_lp],1-acylglycerophosphoethanolamine_,C23H46NO7P,yes,1,R1766
+m1668[C_en],1-acylglycerophosphoinositol_,C27H51O12P,yes,1,R1739
+m1666[C_en],1-acylglycerophosphoserine_,C5H14NO6P,yes,1,R1736
+m1695[C_lp],1-monoglyceride_,C21H41O4,yes,1,R1765
+m1644[C_en],1-phosphatidyl-1D-myo-inositol,C45H84O13P,yes,1,R1738
+m1648[C_em],1-phosphatidyl-1D-myo-inositol,C45H84O13P,yes,1,R1805
+m1706[C_nu],1-phosphatidyl-1D-myo-inositol,C45H84O13P,yes,1,R1812
+m1679[C_gm],1-phosphatidyl-1D-myo-inositol,C45H84O13P,yes,1,R1815
+m1393[C_cy],1-phosphatidyl-1D-myo-inositol,C45H84O13P,yes,1,R1749
+m897[C_vm],1-phosphatidyl-1D-myo-inositol,C45H86O13P,yes,1,R665
+m22[C_en],"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate",C45H86O19P3,yes,1,R1752
+m17[C_vm],"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate",C45H86O19P3,yes,1,R1814
+m1683[C_cy],"1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate",C45H86O19P3,yes,1,R1783
+m20[C_en],1-phosphatidyl-1D-myo-inositol 3-phosphate,C45H85O16P2,yes,1,R1744
+m1677[C_em],1-phosphatidyl-1D-myo-inositol 3-phosphate,C45H85O16P2,yes,1,R1746
+m1678[C_gm],1-phosphatidyl-1D-myo-inositol 3-phosphate,C45H85O16P2,yes,1,R1747
+m15[C_vm],1-phosphatidyl-1D-myo-inositol 3-phosphate,C45H86O16P2,yes,1,R7
+m1676[C_cy],1-phosphatidyl-1D-myo-inositol 3-phosphate,C45H85O16P2,yes,1,R1745
+m1646[C_en],"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C45H86O19P3,yes,1,R1754
+m1669[C_cy],"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C45H86O19P3,yes,1,R1779
+m1672[C_nu],"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C45H86O19P3,yes,1,R1781
+m1684[C_em],"1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate",C45H86O19P3,yes,1,R1811
+m1645[C_en],1-phosphatidyl-1D-myo-inositol 4-phosphate,C45H85O16P2,yes,1,R1748
+m1680[C_cy],1-phosphatidyl-1D-myo-inositol 4-phosphate,C45H85O16P2,yes,1,R1780
+m1681[C_em],1-phosphatidyl-1D-myo-inositol 4-phosphate,C45H85O16P2,yes,1,R1810
+m1682[C_gm],1-phosphatidyl-1D-myo-inositol 4-phosphate,C45H84O16P2,yes,1,R1837
+m1718[C_nu],1-phosphatidyl-1D-myo-inositol 4-phosphate,C45H84O16P2,yes,1,R1838
+m1643[C_vm],1-phosphatidyl-1D-myo-inositol 4-phosphate,C45H86O16P2,yes,1,R1716
+m1972[C_cy],2-Methylprop-2-enoyl-CoA,C25H40N7O17P3S,yes,1,R2116
+m1653[C_mm],3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate_,C42H80O13P2,yes,1,R1836
+m1990[C_cy],3-hydroxypropionyl-coA,C24H39N7O18P3S,yes,1,R2140
+m1567[C_pe],3-oxo-cis-dodec-5-enoyl-CoA_,C33H50N7O18P3S,yes,1,R1542
+m1569[C_pe],3-oxo-cis-hexadec-7-enoyl-CoA_,C37H60N7O18P3S,yes,1,R1532
+m1565[C_pe],3-oxo-cis-hexadec-9-enoyl-CoA_,C37H61N7O18P3S,yes,1,R1528
+m1568[C_pe],3-oxo-cis-octadec-9-enoyl-CoA_,C39H65N7O18P3S,yes,1,R1531
+m1570[C_pe],3-oxo-cis-tetradec-5-enoyl-CoA_,C35H58N7O18P3S,yes,1,R1545
+m1566[C_pe],3-oxo-cis-tetradec-7-enoyl-CoA_,C35H56N7O18P3S,yes,1,R1529
+m1809[C_cy],5-oxoproline_,C5H7NO3,yes,1,R1932
+m1984[C_er],Acyl-coA,C23H38N7O17P3S,yes,1,R2135
+m379[C_em],CDP-diacylglycerol_,C48H86N3O15P2,yes,1,R196
+m384[C_mm],CDP-diacylglycerol_,C48H86N3O15P2,yes,1,R197
+m1980[C_cy],Ceramide-1 (Sphinganine:n-C24:0),C42H85NO3,yes,1,R2127
+m1979[C_cy],Ceramide-1 (Sphinganine:n-C26:0),C44H89NO3,yes,1,R2124
+m1982[C_cy],Ceramide-2 (Phytosphingosine:n-C24:0),C42H85NO4,yes,1,R2131
+m1983[C_cy],Ceramide-2 (Phytosphingosine:n-C26:0),C44H88NO4,yes,1,R2132
+m2007[C_cy],Ceramide-3 (Phytosphingosine:n-C24:0OH),C42H85NO5,yes,1,R2158
+m2008[C_cy],Ceramide-3 (Phytosphingosine:n-C26:0OH),C44H89NO5,yes,1,R2164
+m1949[C_cy],D-glycerate,C3H5O4,yes,1,R2079
+m1985[C_er],Dihydroceramide,C44H87NO4,yes,1,R2134
+m1890[C_cy],Glycerate,C3H4O4,yes,1,R2058
+m2048[C_cy],Glyceron phosphate,C3H5O6P,yes,1,R2089
+m2028[C_er],Hexadecanoic acid,C2H4O2,yes,1,R2194
+m2009[C_cy],Hexadecenoyl-CoA,C37H64N7O17P3S,yes,1,R2166
+m1995[C_cy],"Inositol phosphorylceramide, ceramide-1 (24C), yeast-specific",C4190H8483N100O308P,yes,1,R2143
+m1996[C_cy],"Inositol phosphorylceramide, ceramide-1 (26C), yeast-specific",C4390H8883N100O308P,yes,1,R2148
+m1997[C_cy],"Inositol phosphorylceramide, ceramide-2 (24C), yeast-specific",C4190H8483N100O408P,yes,1,R2151
+m1998[C_cy],"Inositol phosphorylceramide, ceramide-2 (26C), yeast-specific",C4390H8783N100O408P,yes,1,R2154
+m1999[C_cy],"Inositol phosphorylceramide, ceramide-3 (24C), yeast-specific",C4190H8483N100O508P,yes,1,R2157
+m2000[C_cy],"Inositol phosphorylceramide, ceramide-3 (26C), yeast-specific",C4390H8883N100O508P,yes,1,R2161
+m1863[C_va],L-glycine,C2H5NO2,yes,1,R2030
+m1722[C_cy],N-pantothenoylcysteine_,C12H20N2O6S,yes,1,R1909
+m1986[C_er],Phytoceramide,C44H87NO5,yes,1,R2136
+m1981[C_cy],Phytosphingosine,C18H39NO3,yes,1,R2130
+m1991[C_cy],Propenoyl-coA,C24H37N7O17P3S,yes,1,R2141
+m2014[C_er],Triacylglycerol,C57H103O6,yes,1,R2170
+m569[C_em],acylglycerone phosphate_,C21H37O7P,yes,1,R350
+m572[C_lp],acylglycerone phosphate_,C21H37O7P,yes,1,R351
+m1495[C_en],arachidate_,C20H39O2,yes,1,R1460
+m1499[C_en],behenate_,C22H44O2,yes,1,R1461
+m1505[C_em],behenate_,C22H44O2,yes,1,R1464
+m1508[C_lp],behenate_,C22H44O2,yes,1,R1467
+m1651[C_mm],cardiolipin,C81H152O17P2,yes,1,R1721
+m1571[C_pe],cis-dec-3-enoyl-CoA_,C31H48N7O17P3S,yes,1,R1546
+m1535[C_pe],cis-dodec-5-enoyl-CoA_,C33H54N7O17P3S,yes,1,R1541
+m1538[C_pe],cis-hexadec-7-enoyl-CoA_,C37H63N7O17P3S,yes,1,R1543
+m1540[C_pe],cis-tetradec-5-enoyl-CoA_,C35H58N7O17P3S,yes,1,R1544
+m1533[C_pe],cis-tetradec-7-enoyl-CoA_,C35H59N7O17P3S,yes,1,R1540
+m1649[C_em],diglyceride,C39H73O5,yes,1,R1720
+m1642[C_lp],diglyceride,C39H74O5,yes,1,R1763
+m1670[C_cy],diglyceride,C39H73O5,yes,1,R1776
+m1673[C_nu],diglyceride,C39H73O5,yes,1,R1782
+m1674[C_mm],diglyceride,C39H73O5,yes,1,R1784
+m1704[C_gm],diglyceride,C39H73O5,yes,1,R1795
+m1703[C_vm],diglyceride,C39H72O5,yes,1,R1774
+m1792[C_cy],dodecanol_,C12H26O,yes,1,R1865
+m1794[C_cy],hexadecanol_,C16H34O,yes,1,R1867
+m1432[C_em],icosanoyl-CoA_,C41H73N7O17P3S,yes,1,R1410
+m1519[C_pe],icosanoyl-CoA_,C41H74N7O17P3S,yes,1,R1538
+m1518[C_cy],icosanoyl-CoA_,C41H73N7O17P3S,yes,1,R1582
+m1498[C_en],icosanoyl-CoA_,C41H73N7O17P3S,yes,1,R1649
+m1711[C_go],inositol-P-ceramide A-(C24)_,C48H96NO11P,yes,1,R1829
+m1712[C_go],inositol-P-ceramide A-(C26)_,C50H100NO11P,yes,1,R1830
+m1707[C_go],inositol-P-ceramide B'-(C24)_,C48H96NO12P,yes,1,R1825
+m1708[C_go],inositol-P-ceramide B'-(C26)_,C50H100NO12P,yes,1,R1826
+m1713[C_go],inositol-P-ceramide B-(C24)_,C48H96NO12P,yes,1,R1831
+m1714[C_go],inositol-P-ceramide B-(C26)_,C50H100NO12P,yes,1,R1832
+m1709[C_go],inositol-P-ceramide C-(C24)_,C48H96NO13P,yes,1,R1827
+m1710[C_go],inositol-P-ceramide C-(C26)_,C50H100NO13P,yes,1,R1828
+m1715[C_go],inositol-P-ceramide D-(C24)_,C48H96NO14P,yes,1,R1833
+m1716[C_go],inositol-P-ceramide D-(C26)_,C50H100NO14P,yes,1,R1834
+m1654[C_mm],monolysocardiolipin_,C63H119O16P2,yes,1,R1723
+m514[C_pe],octadec-9-ynoyl-CoA_,C39H74N7O17P3S,yes,1,R296
+m1938[C_cy],omega-hydroxy-dodecanoate,C12H24O3,yes,1,R2258
+m1942[C_cy],omega-hydroxy-hexadecanoate,C16H32O3,yes,1,R2262
+m1935[C_cy],omega-oxo-decanoate,C10H17O3,yes,1,R2253
+m1939[C_cy],omega-oxo-dodecanoate,C12H21O3,yes,1,R2257
+m1943[C_cy],omega-oxo-hexadecanoate,C16H29O3,yes,1,R2261
+m378[C_em],phosphatidate,C39H73O8P,yes,1,R1843
+m1705[C_lp],phosphatidate,C39H73O8P,yes,1,R1846
+m1993[C_cy],phosphatidate,C39H73O8P,yes,1,R2144
+m1675[C_en],phosphatidate,C39H74O8P,yes,1,R1743
+m383[C_mm],phosphatidate,C39H73O8P,yes,1,R1791
+m1688[C_gm],phosphatidate,C39H73O8P,yes,1,R1796
+m1686[C_vm],phosphatidate,C39H73O8P,yes,1,R1800
+m1396[C_cy],phosphatidyl-L-serine_C8H11NO10PR2,C23H47NO7P,yes,1,R2052
+m872[C_gm],phosphatidyl-L-serine_C8H11NO10PR2,C23H47NO7P,yes,1,R2053
+m1631[C_em],phosphatidyl-L-serine_C8H11NO10PR2,C23H47NO7P,yes,1,R1704
+m868[C_mm],phosphatidyl-L-serine_C8H11NO10PR2,C23H47NO7P,yes,1,R1792
+m875[C_vm],phosphatidyl-L-serine_C8H11NO10PR2,C23H47NO7P,yes,1,R1802
+m1665[C_en],phosphatidyl-L-serine_C8H11NO10PR2,C23H47NO7P,yes,1,R1808
+m1719[C_em],"phosphatidyl-N,N-dimethylethanolamine_C8H11NO10PR2",C43H82NO8P,yes,1,R1844
+m1717[C_em],phosphatidyl-N-methylethanolamine,C42H80NO8P,yes,1,R1835
+m1894[C_go],phosphatidylcholine,C44H87NO8P,yes,1,R2049
+m1632[C_em],phosphatidylcholine_C10H18NO8PR2,C44H84NO8P,yes,1,R1726
+m1659[C_en],phosphatidylcholine_C10H18NO8PR2,C44H87NO8P,yes,1,R1732
+m1701[C_lp],phosphatidylcholine_C10H18NO8PR2,C44H87NO8P,yes,1,R1767
+m791[C_mm],phosphatidylcholine_C10H18NO8PR2,C44H84NO8P,yes,1,R1794
+m1397[C_cy],phosphatidylcholine_C10H18NO8PR2,C44H87NO8P,yes,1,R2050
+m1633[C_em],phosphatidylethanolamine_C7H12NO8PR2,C41H78NO8P,yes,1,R1725
+m1662[C_en],phosphatidylethanolamine_C7H12NO8PR2,C41H80NO8P,yes,1,R1734
+m1700[C_lp],phosphatidylethanolamine_C7H12NO8PR2,C41H78NO8P,yes,1,R1787
+m870[C_mm],phosphatidylethanolamine_C7H12NO8PR2,C41H78NO8P,yes,1,R1793
+m877[C_vm],phosphatidylethanolamine_C7H12NO8PR2,C41H78NO8P,yes,1,R1803
+m1398[C_cy],phosphatidylethanolamine_C7H12NO8PR2,C41H80NO8P,yes,1,R2051
+m874[C_gm],phosphatidylethanolamine_C7H12NO8PR2,C22H48NO5P,yes,1,R630
+m1650[C_mm],phosphatidylglycerol,C42H81O10P,yes,1,R1742
+m1875[C_cy],propionyl-CoA,C24H39N7O17P3S,yes,1,R2024
+m1647[C_em],sn-2-acyl-1-lysophosphatidylinositol_,C27H52O12P,yes,1,R1719
+m1536[C_pe],"trans-2,cis-5-dodecadienoyl-CoA_",C33H52N7O17P3S,yes,1,R1495
+m1541[C_pe],"trans-2,cis-5-tetradecadienoyl-CoA_",C35H56N7O17P3S,yes,1,R1498
+m1539[C_pe],"trans-2,cis-7-hexadecadienoyl-CoA_",C37H61N7O17P3S,yes,1,R1497
+m1534[C_pe],"trans-2,cis-7-tetradecadienoyl-CoA_",C35H57N7O17P3S,yes,1,R1494
+m1532[C_pe],"trans-2,cis-9-hexadecadienoyl-CoA_",C37H62N7O17P3S,yes,1,R1493
+m1537[C_pe],"trans-2,cis-9-octadecadienoyl-CoA_",C39H66N7O17P3S,yes,1,R1496
+m1577[C_pe],"trans-2,trans-4-dodecadienoyl-CoA_",C33H50N7O17P3S,yes,1,R1554
+m1578[C_pe],"trans-2,trans-4-tetradecadienoyl-CoA_",C35H54N7O17P3S,yes,1,R1555
+m1573[C_pe],"trans-3,cis-5-dodecadienoyl-CoA_",C33H50N7O17P3S,yes,1,R1552
+m1575[C_pe],"trans-3,cis-5-tetradecadienoyl-CoA_",C35H54N7O17P3S,yes,1,R1553
+m1526[C_pe],trans-but-2-enoyl-CoA_,C25H40N7O17P3S,yes,1,R1487
+m1452[C_em],trans-docos-2-enoyl-CoA_,C43H76N7O17P3S,yes,1,R1424
+m1530[C_pe],trans-docos-2-enoyl-CoA_,C43H76N7O17P3S,yes,1,R1491
+m1574[C_pe],trans-dodec-3-enoyl-CoA_,C33H52N7O17P3S,yes,1,R1548
+m1527[C_pe],trans-hex-2-enoyl-CoA_,C27H44N7O17P3S,yes,1,R1488
+m1449[C_em],trans-hexadec-2-enoyl-CoA,C37H64N7O17P3S,yes,1,R1421
+m1451[C_em],trans-icos-2-enoyl-CoA_,C41H72N7O17P3S,yes,1,R1423
+m1529[C_pe],trans-icos-2-enoyl-CoA_,C41H72N7O17P3S,yes,1,R1490
+m1528[C_pe],trans-oct-2-enoyl-CoA_,C29H48N7O17P3S,yes,1,R1489
+m1453[C_em],trans-tetracos-2-enoyl-CoA_,C45H80N7O17P3S,yes,1,R1425
+m1531[C_pe],trans-tetracos-2-enoyl-CoA_,C45H80N7O17P3S,yes,1,R1492
+m1576[C_pe],trans-tetradec-3-enoyl-CoA_,C35H56N7O17P3S,yes,1,R1551
+m1634[C_em],triglyceride,C57H103O6,yes,1,R1729
+m1640[C_lp],triglyceride,C57H106O6,yes,1,R1771
+m1399[C_cy],triglyceride,C57H103O6,yes,1,R1707
