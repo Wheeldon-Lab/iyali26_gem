@@ -730,6 +730,61 @@ def extend_acyl_pool_c161(model) -> int:
     return extended
 
 
+# ── Charge fix, Stage 1: free monocarboxylate/sulfonate anions left at charge 0 ──
+#
+# These 4 metabolites store the DEPROTONATED (anion) formula but were left at
+# charge 0 — a missing-charge bug, not a wrong formula. Setting charge = -1 makes
+# each metabolite formula/charge self-consistent and balances the reactions they
+# touch, WITHOUT any formula edit. This is the "provably-safe" subset from the
+# charge-convention strategy review: each touches only reactions that become
+# balanced (or were already mass-imbalanced for other reasons), breaking none.
+#
+# Verified anchors (pH ~7.3 major microspecies):
+#   m965 taurocholic acid C26H44NO7S -> -1: ChEBI:36257 taurocholate(1-), formula
+#        matches the model exactly (verified this session)
+#        https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:36257
+#   m1403 kynurenic acid C10H7NO3 -> -1: monocarboxylic acid, KEGG C01717 (verified)
+#        https://www.kegg.jp/entry/C01717
+#   m286 ureidoglycolic acid C3H6N2O4 -> -1: carboxylate, KEGG C00603 (verified)
+#        https://www.kegg.jp/entry/C00603
+#   m753 1-pyrroline-3-hydroxy-5-carboxylate C5H6NO3 -> -1: name is the carboxylate;
+#        formula already deprotonated; in-model R1194 balances and R500 improves
+#        (charge gap -3 -> -2), consistent with a -1 anion (inferred, model-self-consistent)
+#
+# Note: m1403 = -1 also adds a charge term to R1375 (spontaneous kynurenic ->
+# quinaldic), but R1375 is ALREADY mass-imbalanced (drops C10H7NO3 from nothing) —
+# a pre-existing modeling error, flagged separately for curation. The -1 charge is
+# the chemically correct value; we do not freeze it to flatter a broken reaction.
+_CHARGE_STAGE1 = {
+    "m286[C_cy]":  -1,   # ureidoglycolic acid
+    "m753[C_mi]":  -1,   # 1-pyrroline-3-hydroxy-5-carboxylate
+    "m965[C_cy]":  -1,   # taurocholic acid
+    "m1403[C_cy]": -1,   # kynurenic acid
+}
+
+
+def fix_charge_stage1(model) -> int:
+    """Set 4 free anionic metabolites from charge 0 to -1 (formula unchanged).
+
+    Idempotent: a metabolite already at the target charge is skipped. Returns the
+    number of metabolites changed. See _CHARGE_STAGE1 for per-metabolite sources.
+    """
+    changed = 0
+    for mid, target in _CHARGE_STAGE1.items():
+        try:
+            met = model.metabolites.get_by_id(mid)
+        except KeyError:
+            continue
+        if met.charge == target:
+            continue
+        old = met.charge
+        met.charge = target
+        changed += 1
+        logger.info("  Charge Stage 1: %s (%s) charge %s -> %d"
+                    % (mid, met.name, old, target))
+    return changed
+
+
 # ── Top-level driver ──────────────────────────────────────────────────────
 
 def apply_all_patches(model) -> dict:

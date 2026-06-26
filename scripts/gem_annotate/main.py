@@ -16,7 +16,7 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_ec_code_format, move_tcdb_out_of_ec
+from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_ec_code_format, move_tcdb_out_of_ec
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -321,6 +321,11 @@ def main():
     # (Y. lipolytica makes ~8% but the pool omitted it). Idempotent.
     n_c161 = extend_acyl_pool_c161(model)
     logger.info(f"  C16:1 acyl-CoA pool extension: {n_c161} pool(s) extended")
+
+    # Charge fix Stage 1: 4 free anionic metabolites left at charge 0 (formula
+    # already deprotonated) -> -1. Fixes 5 reactions, breaks 0 (verified). Idempotent.
+    n_chg1 = fix_charge_stage1(model)
+    logger.info(f"  Charge Stage 1: {n_chg1} metabolite(s) set to -1")
 
     ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")
