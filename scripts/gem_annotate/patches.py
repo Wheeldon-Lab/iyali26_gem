@@ -785,6 +785,63 @@ def fix_charge_stage1(model) -> int:
     return changed
 
 
+# ── Charge fix, Stage 2: anion-stored metabolites identified by InChI dH ──────
+#
+# Found by the InChI-dH discriminator (full-model scan): a metabolite whose stored
+# formula has FEWER H than its own embedded-InChI neutral formula (dH < 0) is already
+# the deprotonated anion, so setting charge = dH leaves the (formula, charge) pair a
+# real protonation microspecies WITHOUT any formula edit. This avoids the FMN/FAD
+# trap (those are dH == 0 = neutral-stored, and are deliberately NOT touched here).
+#
+# All 7 below were reaction-safety-gated on a cold model reload: balanced 914 -> 921
+# (+7: R313/R322/R344/R567/R764/R768/R769), 0 reactions broken (full mass+charge).
+#
+# The 3 farnesyl-diphosphate copies MUST be changed together: R1116 is an FPP
+# cross-membrane transport (m512[C_cy] <=> m610[C_mi]) that only balances when both
+# ends carry the same charge.
+#
+# Verified charges (pH ~7.3 major microspecies, opened this session):
+#   glyceraldehyde-3-phosphate(2-) C3H5O6P  -> -2  ChEBI:59776 (verified, formula matches)
+#       https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:59776
+#   farnesyl diphosphate(3-)       C15H25O7P2 -> -3  ChEBI:175763 (verified, formula matches)
+#       https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:175763
+#   ADP-ribose                     C15H21N5O14P2 -> -2  (InChI dH = -2, model-embedded InChI)
+#   1-pyrroline-3-OH-5-carboxylate C5H6NO3       -> -1  (InChI dH = -1; sibling m753 already -1)
+#
+# NOT included: m966[C_va] vacuolar taurocholate — chemically -1 but R746 needs an
+# H+ inserted first (see the r746-taurocholate-m966-needs-hplus note); deferred.
+_CHARGE_STAGE2 = {
+    "m536[C_cy]":  -2,   # D-glyceraldehyde 3-phosphate
+    "m818[C_nu]":  -2,   # ADP-ribose (nucleus)
+    "m1725[C_cy]": -2,   # ADP-ribose (cytosol)
+    "m512[C_cy]":  -3,   # farnesyl diphosphate  ┐
+    "m610[C_mi]":  -3,   # farnesyl diphosphate  ├ change together (R1116 symmetry)
+    "m411[C_lp]":  -3,   # farnesyl diphosphate  ┘
+    "m764[C_cy]":  -1,   # 1-pyrroline-3-hydroxy-5-carboxylate
+}
+
+
+def fix_charge_stage2(model) -> int:
+    """Set 7 anion-stored metabolites (InChI dH < 0) to their dH charge (formula unchanged).
+
+    Idempotent. Returns the number of metabolites changed. See _CHARGE_STAGE2 for sources.
+    """
+    changed = 0
+    for mid, target in _CHARGE_STAGE2.items():
+        try:
+            met = model.metabolites.get_by_id(mid)
+        except KeyError:
+            continue
+        if met.charge == target:
+            continue
+        old = met.charge
+        met.charge = target
+        changed += 1
+        logger.info("  Charge Stage 2: %s (%s) charge %s -> %d"
+                    % (mid, met.name, old, target))
+    return changed
+
+
 # ── Top-level driver ──────────────────────────────────────────────────────
 
 def apply_all_patches(model) -> dict:
