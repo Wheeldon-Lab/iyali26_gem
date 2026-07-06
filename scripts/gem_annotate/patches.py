@@ -502,6 +502,57 @@ def add_isozyme_gprs(model, additions_csv: str | None = None) -> int:
     return added
 
 
+# ── Patch 8b: remove mis-annotated genes from reaction GPRs ────────────────
+#
+# Two genes were assigned to reactions whose enzyme they do NOT catalyse — a
+# reaction-mis-annotation (the gene's real protein is a different enzyme). Both
+# are OR-isozyme partners, so removing them leaves the true catalyst in place and
+# does NOT change any FBA/growth result — it only corrects GPR biology and removes
+# a false-negative contaminant from essential-gene screening.
+#
+# Verified this session against UniProt (opened):
+#   YALI1E07744g -> UniProt Q6C6P1 = glycoside hydrolase family 65 (trehalase),
+#     NOT transketolase (EC 2.2.1.1). Wrongly placed in R765/R766; real
+#     transketolase is the partner YALI1D02625g.
+#     https://rest.uniprot.org/uniprotkb/Q6C6P1.json
+#   YALI1E11370g -> similar to PET112/GatB, UniProt P33893 = glutamyl-tRNA(Gln)
+#     amidotransferase subunit B (EC 6.3.5.-), NOT prephenate dehydrogenase.
+#     Wrongly placed in R671; real prephenate dehydrogenase is the partner
+#     YALI1F23441g.  https://rest.uniprot.org/uniprotkb/P33893.json
+#
+# (R671 also carries a self-contradictory EC 6.3.5.7 vs its "prephenate
+# dehydrogenase" name — flagged for separate curation, NOT changed here.)
+_GPR_MISANNOTATION_REMOVALS = {
+    "R765": "YALI1E07744g",
+    "R766": "YALI1E07744g",
+    "R671": "YALI1E11370g",
+}
+
+
+def remove_misannotated_gprs(model) -> int:
+    """Remove mis-annotated isozyme genes from reaction GPRs (safe: all 'or' cases,
+    true partner retained). Returns the number of (reaction, gene) removals made.
+    Idempotent; refuses to empty a GPR."""
+    removed = 0
+    for rid, gene in _GPR_MISANNOTATION_REMOVALS.items():
+        try:
+            rxn = model.reactions.get_by_id(rid)
+        except KeyError:
+            logger.warning(f"  GPR removal: reaction {rid} not in model — skipping")
+            continue
+        toks = set(re.findall(r"YALI1[A-Za-z0-9]+", rxn.gene_reaction_rule))
+        if gene not in toks:
+            continue  # idempotent: already removed
+        remaining = sorted(t for t in toks if t != gene)
+        if not remaining:
+            logger.warning(f"  GPR removal: {rid} -= {gene} would empty GPR — skipping")
+            continue
+        rxn.gene_reaction_rule = " or ".join(remaining) if len(remaining) > 1 else remaining[0]
+        removed += 1
+        logger.info(f"  GPR removal (mis-annotation): {rid} -= {gene} -> '{rxn.gene_reaction_rule}'")
+    return removed
+
+
 # ── Patch 9: annotate the isozyme genes added by patch 8 ───────────────────
 
 # The genes added by add_isozyme_gprs enter the model with no annotation.
