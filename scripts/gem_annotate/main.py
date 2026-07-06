@@ -16,7 +16,7 @@ from .genes import annotate_genes
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec
+from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec, remove_misannotated_gprs
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -307,6 +307,12 @@ def main():
     # reactions' GPR via 'or' (safe subset only; see patches.add_isozyme_gprs).
     n_gpr_added = add_isozyme_gprs(model)
     logger.info(f"  Isozyme GPR additions: {n_gpr_added} (reaction, gene) pair(s) added")
+
+    # Remove mis-annotated genes from GPRs (E07744g trehalase wrongly in R765/R766
+    # transketolase; E11370g GatB wrongly in R671 prephenate DH). Safe 'or' cases,
+    # true partner retained -> 0 growth impact. See patches.remove_misannotated_gprs.
+    n_gpr_removed = remove_misannotated_gprs(model)
+    logger.info(f"  Mis-annotation GPR removals: {n_gpr_removed} (reaction, gene) pair(s) removed")
 
     # Annotate those newly added genes (they entered after the main gene
     # annotation + SBO steps, so they need sbo / ncbigene / kegg / uniprot here).
