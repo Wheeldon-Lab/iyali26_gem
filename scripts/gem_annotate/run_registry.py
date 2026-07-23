@@ -197,6 +197,7 @@ def backfill(research_root: Path) -> dict[str, int]:
     root = Path(research_root).resolve()
     added_runs = 0
     added_duplicates = 0
+    added_corrections = 0
     for manifest_path in sorted((root / "artifacts" / "results").rglob("run_manifest.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         if "run_key" in manifest and "experiment_id" in manifest:
@@ -225,6 +226,28 @@ def backfill(research_root: Path) -> dict[str, int]:
             status="complete",
         ):
             added_runs += 1
+        for previous in read_records(root):
+            if (
+                previous.get("record_type") == "run"
+                and previous.get("output_dir") == str(manifest_path.parent.resolve())
+                and previous.get("workflow") != details["workflow"]
+            ):
+                correction = {
+                    "schema_version": 1,
+                    "record_type": "classification_correction",
+                    "record_id": sha256_json(
+                        {"supersedes": previous["record_id"], "workflow": details["workflow"]}
+                    ),
+                    "recorded_at": utc_now(),
+                    "output_dir": str(manifest_path.parent.resolve()),
+                    "relationship": {
+                        "type": "supersedes_classification",
+                        "record_id": previous["record_id"],
+                        "workflow": details["workflow"],
+                    },
+                }
+                if append_record(root, correction):
+                    added_corrections += 1
 
     relocation = root / "relocation_manifest.csv"
     if relocation.is_file():
@@ -249,7 +272,11 @@ def backfill(research_root: Path) -> dict[str, int]:
                 }
                 if append_record(root, record):
                     added_duplicates += 1
-    return {"runs": added_runs, "duplicates": added_duplicates}
+    return {
+        "runs": added_runs,
+        "duplicates": added_duplicates,
+        "classification_corrections": added_corrections,
+    }
 
 
 def _parser() -> argparse.ArgumentParser:
