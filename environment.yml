@@ -1,0 +1,14 @@
+name: gem_annotate
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - cobra>=0.29
+  - pandas>=2.0
+  - requests>=2.31
+  - python-dotenv
+  - pip
+  - pip:
+    - requests-cache

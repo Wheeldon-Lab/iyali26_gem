@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-23T21:48:20Z",
+  "source_head_before_cleanup": "694e6ac739a4b9598c302290743d9131ff0179c2",
+  "starting_model": {
+    "path": "data/iyali26.xml",
+    "sha256": "5c8c199e2c5b622e97daf2b3500f763f83519fb598702a11dd153052c6a99f9d"
+  },
+  "canonical_model": {
+    "path": "model.xml",
+    "sha256": "b3f60933aa9503ab63ab5d8bca58a9525b8c81534d3eac72cf66d2769ff44f48"
+  },
+  "external_research_workspace": {
+    "environment_variable": "IYALI26_RESEARCH_ROOT",
+    "manifest_sha256": "ed6e60b7318d4410369a74d3f7eb4ea050a6a0a985109dd5ab2b0d179a2d7616",
+    "relocation_manifest_sha256": "ad8b1bb316cb4c6a47eed6c3fe474146c03c7e0a7b6a43952499a3eb2be1be75"
+  },
+  "verification": {
+    "deterministic_rebuild_sha256": "b3f60933aa9503ab63ab5d8bca58a9525b8c81534d3eac72cf66d2769ff44f48",
+    "matches_pre_cleanup_model": true,
+    "pytest_direct": "169 passed",
+    "pytest_module": "169 passed"
+  }
+}
