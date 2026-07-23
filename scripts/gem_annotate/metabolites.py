@@ -15,7 +15,7 @@ _DIRECT_MNXM_TABLE: dict[str, str] = {
     "water": "WATER",
     "h+": "MNXM1",
     "h(+)": "MNXM1",
-    "h+_p+1": "MNXM1",   # iYli21 charge-notation name for proton
+    "h+_p+1": "MNXM1",   # iYali26 charge-notation name for proton
     "proton": "MNXM1",
     "o2": "MNXM735438",
     "oxygen": "MNXM735438",
@@ -27,8 +27,8 @@ _DIRECT_MNXM_TABLE: dict[str, str] = {
     "2-oxoadipate": "MNXM263",
     "aminoacetone": "MNXM1106",
     "5-phospho-alpha-d-ribose 1-diphosphate": "MNXM1104453",
-    # ── Yeast sphingolipid ceramides (iYli21 internal numbering) ──────────
-    # iYli21's "ceramide-N" names are internal labels, NOT standard chemical
+    # ── Yeast sphingolipid ceramides (iYali26 internal numbering) ──────────
+    # iYali26's "ceramide-N" names are internal labels, NOT standard chemical
     # names.  Strategy B would name-match them to UNRELATED MetaNetX entries
     # that happen to use the label as a primary name — e.g. "ceramide-1" →
     # MNXM1513336 ("Ceramide 1", C63H125NO6), a different/larger molecule.
@@ -108,7 +108,7 @@ def _clean_formula(formula: str) -> str:
 
 def _parse_name_formula(raw_name: str) -> tuple[str, str]:
     """
-    iYli21 name format: 'chemical name_FORMULA'
+    iYali26 name format: 'chemical name_FORMULA'
     Returns (chem_name, formula).  formula may be '' if not parseable.
 
     Charge notation suffixes like 'p+1', 'p-2' are not formulas; strip them
@@ -546,104 +546,30 @@ def _build_compartment_met_index(model) -> dict[str, dict[str, object]]:
     return index
 
 
-def fix_proton_water_balance(model) -> None:
+def fix_proton_water_balance(model) -> dict:
+    """Balance eligible internal reactions with H+ and H2O.
+
+    The former implementation corrected hydrogen/oxygen while ignoring charge
+    and selected an arbitrary side for multi-compartment reactions.  That could
+    turn a mass-balanced reaction into a charge-imbalanced one (R540 was the
+    sentinel failure).  The shared microspecies engine now requires the exact
+    simultaneous-balance condition ``H - 2*O == charge`` and refuses boundary,
+    heavy-element and membrane-coupling ambiguities.
+
+    Returns the structured audit report produced by
+    :func:`microspecies.balance_protons_and_water`.
     """
-    For each internal reaction unbalanced only in H and/or O, add H+ / H2O.
 
-    Uses bigg.metabolite annotation ("h", "h2o") for exact metabolite lookup
-    instead of name-string matching, avoiding wrong-compartment assignments.
+    # Local import keeps the annotation helpers independent of the curation
+    # engine while avoiding duplicate acid/base rules.
+    from .microspecies import balance_protons_and_water
 
-    For transport reactions spanning multiple compartments the overall H/O
-    imbalance is distributed evenly across compartments that have both H+ and
-    H2O available; if no compartment qualifies the reaction is skipped.
-    """
-    comp_index = _build_compartment_met_index(model)
-    fixed = 0
-    skipped_no_formula = 0
-
-    for rxn in model.reactions:
-        # skip exchange/demand/sink reactions (≤1 metabolite)
-        if len(rxn.metabolites) <= 1:
-            continue
-        # skip if any metabolite missing formula
-        if any(not met.formula for met in rxn.metabolites):
-            skipped_no_formula += 1
-            continue
-
-        try:
-            balance = rxn.check_mass_balance()
-        except Exception:
-            continue
-
-        if not balance:
-            continue
-
-        elements = set(balance.keys())
-        # Only fix if imbalance is purely H and/or O (charge ignored)
-        if not elements.issubset({"H", "O", "charge"}):
-            continue
-
-        h_imb = balance.get("H", 0)
-        o_imb = balance.get("O", 0)
-        if h_imb == 0 and o_imb == 0:
-            continue
-
-        # Collect compartments present in this reaction
-        rxn_comps = {met.compartment for met in rxn.metabolites}
-
-        # Choose target compartment: prefer one that already has both h and h2o
-        # in comp_index; fall back to majority compartment.
-        def has_needed(comp):
-            ci = comp_index.get(comp, {})
-            need_h2o = o_imb != 0
-            need_h   = (h_imb != 0) or (o_imb != 0 and h_imb - 2 * o_imb != 0)
-            if need_h2o and ci.get("h2o") is None:
-                return False
-            if need_h and ci.get("h") is None and not need_h2o:
-                return False
-            return True
-
-        candidates = [c for c in rxn_comps if has_needed(c)]
-        if candidates:
-            # prefer majority compartment among candidates
-            comps_list = [met.compartment for met in rxn.metabolites]
-            target_comp = max(candidates, key=comps_list.count)
-        else:
-            # fall back to overall majority compartment
-            comps_list = [met.compartment for met in rxn.metabolites]
-            target_comp = max(rxn_comps, key=comps_list.count)
-
-        ci = comp_index.get(target_comp, {})
-
-        additions: dict = {}
-
-        if o_imb != 0:
-            water = ci.get("h2o")
-            if water is None:
-                continue
-            # add_metabolites uses combine=True, so pass only the delta to add
-            additions[water] = -o_imb
-            # After adding o_imb H2O molecules, remaining H imbalance:
-            h_residual = h_imb - 2 * o_imb
-        else:
-            h_residual = h_imb
-
-        if h_residual != 0:
-            proton = ci.get("h")
-            if proton is None and o_imb != 0:
-                # H2O already staged — apply it even without proton fix
-                pass
-            elif proton is None:
-                continue
-            else:
-                # add_metabolites uses combine=True, so pass only the delta to add
-                additions[proton] = -h_residual
-
-        if additions:
-            rxn.add_metabolites(additions)
-            fixed += 1
-
+    report = balance_protons_and_water(model)
     logger.info(
-        f"Proton/water balance: {fixed} reactions fixed, "
-        f"{skipped_no_formula} skipped (missing formula)"
+        "Charge-aware proton/water balance: %d reactions fixed, %d rejected, "
+        "%d skipped (missing formula/charge)",
+        report["changed_reactions"],
+        report["rejected_reactions"],
+        report["skipped_missing_formula"],
     )
+    return report

@@ -1,7 +1,7 @@
 """
 diagnose_pipeline_steps.py — trace what each annotation-pipeline step does to a single reaction.
 
-Loads the raw iYli21 model from data/iyli21.xml, then runs the pipeline step by
+Loads the raw iYali26 model from data/iyali26.xml, then runs the pipeline step by
 step, taking a snapshot of the chosen reaction (annotation, equation, metabolite
 formulas, GPR genes) before and after each step.  At the end, prints a
 per-step diff showing exactly what changed.
@@ -35,7 +35,10 @@ logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 # ctx is a dict carrying loaded MetaNetX tables / flags between steps.
 PIPELINE_STEPS: list[tuple[str, str]] = [
     ("metabolites",        "Priority 1+2a: annotate_metabolites"),
-    ("ho_balance_1",       "Priority 2b: H+/H2O balance (first pass)"),
+    ("known_patches",      "Known formula/data patches"),
+    ("microspecies",       "Rhea/ChEBI pH 7.3 active microspecies"),
+    ("hydroxide",          "Normalize OH- to H2O - H+"),
+    ("ho_balance_1",       "Priority 2b: charge-aware H+/H2O balance (first pass)"),
     ("reactions_4a",       "Priority 4a: annotate_reactions"),
     ("merge_duplicates",   "Stoichiometric: merge duplicate metabolites"),
     ("exchange_bounds",    "Priority 2c: set_exchange_bounds"),
@@ -47,9 +50,16 @@ PIPELINE_STEPS: list[tuple[str, str]] = [
     ("reactions_4e",       "Priority 4e: annotate_remaining_reactions"),
     ("ec_backfill",        "EC backfill: gene ec-code → reaction"),
     ("xref_backfill",      "Reaction xref backfill (MNXR → bigg/kegg/rhea/ec)"),
-    ("ho_balance_2",       "Priority 2b: H+/H2O balance (second pass)"),
+    ("ho_balance_2",       "Priority 2b: charge-aware H+/H2O balance (second pass)"),
     ("sbo",                "SBO term assignment"),
-    ("normalize",          "Final: normalize_all_annotations"),
+    ("normalize",          "Normalize annotation keys/values"),
+    ("formula_fill",       "Late chemistry: curated neutral-formula fill"),
+    ("acyl_pool",          "Late chemistry: C16:1 acyl-pool extension"),
+    ("charge_stage1",      "Late chemistry: curated charge stage 1"),
+    ("charge_stage2",      "Late chemistry: curated charge stage 2"),
+    ("microspecies_final", "Final chemistry gate: exact microspecies target set"),
+    ("hydroxide_final",    "Final chemistry gate: OH- normalization"),
+    ("ho_balance_final",   "Final chemistry gate: charge-aware H+/H2O balance"),
 ]
 
 
@@ -306,8 +316,37 @@ def _step_metabolites(model, ctx):
     annotate_metabolites(model, ctx["chem_xref"], ctx["chem_prop_data"])
 
 
+@step("known_patches")
+def _step_known_patches(model, ctx):
+    _ensure_mnx_loaded(ctx)
+    if not ctx.get("mnx_loaded"):
+        print("    [SKIPPED — main.py gates known patches on MetaNetX]")
+        return
+    from gem_annotate.patches import apply_all_patches
+
+    apply_all_patches(model)
+
+
+@step("microspecies")
+def _step_microspecies(model, ctx):
+    from gem_annotate.microspecies import apply_curated_microspecies
+
+    apply_curated_microspecies(model)
+
+
+@step("hydroxide")
+def _step_hydroxide(model, ctx):
+    from gem_annotate.microspecies import normalize_hydroxide_reactions
+
+    normalize_hydroxide_reactions(model)
+
+
 @step("ho_balance_1")
 def _step_ho1(model, ctx):
+    _ensure_mnx_loaded(ctx)
+    if not ctx.get("mnx_loaded"):
+        print("    [SKIPPED — main.py gates the first balance pass on MetaNetX]")
+        return
     from gem_annotate.metabolites import fix_proton_water_balance
     fix_proton_water_balance(model)
 
@@ -456,6 +495,55 @@ def _step_normalize(model, ctx):
     normalize_all_annotations(model)
 
 
+@step("formula_fill")
+def _step_formula_fill(model, ctx):
+    from gem_annotate.patches import fill_neutral_formulas
+
+    fill_neutral_formulas(model)
+
+
+@step("acyl_pool")
+def _step_acyl_pool(model, ctx):
+    from gem_annotate.patches import extend_acyl_pool_c161
+
+    extend_acyl_pool_c161(model)
+
+
+@step("charge_stage1")
+def _step_charge_stage1(model, ctx):
+    from gem_annotate.patches import fix_charge_stage1
+
+    fix_charge_stage1(model)
+
+
+@step("charge_stage2")
+def _step_charge_stage2(model, ctx):
+    from gem_annotate.patches import fix_charge_stage2
+
+    fix_charge_stage2(model)
+
+
+@step("microspecies_final")
+def _step_microspecies_final(model, ctx):
+    from gem_annotate.microspecies import apply_curated_microspecies
+
+    apply_curated_microspecies(model)
+
+
+@step("hydroxide_final")
+def _step_hydroxide_final(model, ctx):
+    from gem_annotate.microspecies import normalize_hydroxide_reactions
+
+    normalize_hydroxide_reactions(model)
+
+
+@step("ho_balance_final")
+def _step_ho_final(model, ctx):
+    from gem_annotate.metabolites import fix_proton_water_balance
+
+    fix_proton_water_balance(model)
+
+
 # ─────────────────────────────────────────────────────────────
 # Main driver
 # ─────────────────────────────────────────────────────────────
@@ -471,7 +559,7 @@ def main():
     parser.add_argument("--list-steps", action="store_true",
                         help="List available step short-names and exit")
     parser.add_argument("--model", default=str(STARTING_MODEL_PATH),
-                        help="Starting SBML model (default: data/iyli21.xml)")
+                        help="Starting SBML model (default: data/iyali26.xml)")
     parser.add_argument("--show-empty", action="store_true",
                         help="Print '(no changes)' for steps that didn't touch the reaction "
                              "(default: skip those steps in output)")
@@ -525,7 +613,7 @@ def main():
     emit(f"TRACING: {args.rxn_id}  ({current['rxn_name']!r})")
     emit("=" * 80)
     emit("")
-    emit("INITIAL STATE (raw iyli21.xml):")
+    emit("INITIAL STATE (raw iyali26.xml):")
     emit(f"  equation : {current['equation']}")
     emit(f"  bounds   : [{current['lower_bound']}, {current['upper_bound']}]")
     emit(f"  GPR      : {current['gpr'] or '(none)'}")

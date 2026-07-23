@@ -25,7 +25,7 @@ def set_exchange_bounds(model, medium_bigg: dict[str, float] | None = None,
         Strip the compartment suffix from the BiGG ID (e.g. "glc__D_e" → "glc__D")
         and look up in medium_bigg.
       Tier 2 — chemical name fallback (for metabolites without BiGG annotation):
-        Parse the name from the iYli21 "name_FORMULA" convention and look up
+        Parse the name from the iYali26 "name_FORMULA" convention and look up
         in medium_names (case-insensitive).
 
     If either tier matches  → set lb = medium value (negative = uptake allowed).

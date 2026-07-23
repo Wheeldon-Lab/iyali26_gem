@@ -76,8 +76,8 @@ def has_formula(mnxm_id: str) -> bool:
 
 # ── 4. Load model metabolites ─────────────────────────────────────────────────
 
-print("Loading model metabolites from iyli21.xml …")
-tree = ET.parse(DATA / "iyli21.xml")
+print("Loading model metabolites from iyali26.xml …")
+tree = ET.parse(DATA / "iyali26.xml")
 root = tree.getroot()
 ns_sbml = "http://www.sbml.org/sbml/level3/version1/core"
 
@@ -132,7 +132,7 @@ SPECIAL_MNXM_IN_MODEL = {
 def mnxm_in_model(mnxm_id: str) -> bool:
     """
     Check if a MetaNetX metabolite ID corresponds to a metabolite
-    already in the iYli21 model.
+    already in the iYali26 model.
     Strategy: formula matching via chem_prop, with special-case overrides.
     """
     if mnxm_id in SPECIAL_MNXM_IN_MODEL:

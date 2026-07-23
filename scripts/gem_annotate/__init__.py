@@ -1,7 +1,12 @@
 """
-gem_annotate — annotation pipeline for the iYli21 GEM of Yarrowia lipolytica.
+gem_annotate — annotation pipeline for the iYali26 GEM of Yarrowia lipolytica.
 """
 
-from .main import main
+
+def main(*args, **kwargs):
+    """Load the pipeline lazily so CLI path configuration takes effect first."""
+    from .main import main as run_main
+
+    return run_main(*args, **kwargs)
 
 __all__ = ["main"]
