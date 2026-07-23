@@ -288,7 +288,6 @@ def annotate_remaining_reactions(
     multi_truly_ambiguous = 0
 
     exchanges = set(model.exchanges)
-    demands   = set(model.demands)
 
     # Pre-compute the set of raw (pre-normalise) MNXM IDs that trigger _MNXM_NORMALIZE,
     # so we can cheaply detect whether any metabolite in a reaction was remapped.
@@ -563,7 +562,9 @@ def annotate_remaining_reactions(
 
             if ec_numbers:
                 candidates: list[str] = []
-                for ec in set(ec_numbers):
+                # Candidate order must not depend on Python's per-process hash
+                # seed: later logic can select the first otherwise-equal match.
+                for ec in sorted(set(ec_numbers)):
                     candidates.extend(ec_to_mnxr.get(ec, []))
                 candidates = list(dict.fromkeys(candidates))
 

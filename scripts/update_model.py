@@ -1,5 +1,5 @@
 """
-update_model.py — full annotation pipeline for iYli21 GEM.
+update_model.py — full annotation pipeline for iYali26 GEM.
 
 Priority order:
   1. Metabolite cross-database annotation via MetaNetX chem_xref + chem_prop
@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-STARTING_MODEL_PATH = REPO_ROOT / "data" / "iyli21.xml"
+STARTING_MODEL_PATH = REPO_ROOT / "data" / "iyali26.xml"
 OUTPUT_MODEL_PATH = REPO_ROOT / "model.xml"
 MNX_DIR = REPO_ROOT / "data" / "metanetx"
 
@@ -156,14 +156,14 @@ def load_reac_prop(path: Path) -> dict:
 
 
 # ─────────────────────────────────────────────
-# Helper: parse name_formula from iYli21 name strings
+# Helper: parse name_formula from iYali26 name strings
 # ─────────────────────────────────────────────
 
 _FORMULA_RE = re.compile(r"^[A-Z][A-Za-z0-9]*$")   # no *, +, -, spaces
 
 def _parse_name_formula(raw_name: str) -> tuple[str, str]:
     """
-    iYli21 name format: 'chemical name_FORMULA'
+    iYali26 name format: 'chemical name_FORMULA'
     Returns (chem_name, formula).  formula may be '' if not parseable.
     """
     if "_" not in raw_name:
@@ -402,7 +402,7 @@ def fix_proton_water_balance(model) -> None:
 
 # Minimal aerobic medium for Y. lipolytica W29 on glucose.
 # Primary key: BiGG metabolite ID (no compartment suffix).
-# Fallback key: lowercased chemical name (before trailing "_FORMULA" in iYli21 names).
+# Fallback key: lowercased chemical name (before trailing "_FORMULA" in iYali26 names).
 # Value: uptake lower bound (mmol / gDW / h).  -1000 = effectively unlimited.
 MINIMAL_MEDIUM_BIGG: dict[str, float] = {
     # carbon
@@ -430,7 +430,7 @@ MINIMAL_MEDIUM_BIGG: dict[str, float] = {
 }
 
 # Fallback name-based keys for metabolites that lack bigg.metabolite annotation.
-# Lowercased chemical name extracted from iYli21 "name_FORMULA" convention.
+# Lowercased chemical name extracted from iYali26 "name_FORMULA" convention.
 MINIMAL_MEDIUM_NAMES: dict[str, float] = {
     "d-glucose":      -10.0,
     "glucose":        -10.0,
@@ -464,7 +464,7 @@ def set_exchange_bounds(model, medium_bigg: dict[str, float] | None = None,
         Strip the compartment suffix from the BiGG ID (e.g. "glc__D_e" → "glc__D")
         and look up in medium_bigg.
       Tier 2 — chemical name fallback (for metabolites without BiGG annotation):
-        Parse the name from the iYli21 "name_FORMULA" convention and look up
+        Parse the name from the iYali26 "name_FORMULA" convention and look up
         in medium_names (case-insensitive).
 
     If either tier matches  → set lb = medium value (negative = uptake allowed).
@@ -1412,7 +1412,7 @@ def report_gaps(gaps: dict) -> None:
     logger.info(f"  Dead-end metabolites (no consumer): {len(dead_ends)}")
 
     # Show worst blocked subsystems if reaction subsystem info available
-    # (iYli21 may not have subsystems — fall back to first 20 IDs)
+    # (iYali26 may not have subsystems — fall back to first 20 IDs)
     logger.info(f"  First 20 blocked: {blocked[:20]}")
     if orphans:
         logger.info(f"  Orphans (first 10): {orphans[:10]}")
@@ -1560,7 +1560,7 @@ def merge_duplicate_metabolites(
 # main
 # ─────────────────────────────────────────────
 
-def main():
+def _legacy_main():
     if not STARTING_MODEL_PATH.exists():
         logger.error(f"Could not find starting model at {STARTING_MODEL_PATH}")
         return
@@ -1632,6 +1632,23 @@ def main():
     logger.info(f"Saving updated model to: {OUTPUT_MODEL_PATH.name}")
     write_sbml_model(model, str(OUTPUT_MODEL_PATH))
     logger.info("Model build complete.")
+
+
+def main():
+    """Delegate the retired monolith to the canonical, evidence-gated pipeline.
+
+    The historical implementation above predates the explicit YALI0/YALI1
+    crosswalk and must not be used for a formal rebuild.  Keeping this wrapper
+    preserves the old command while ensuring it executes the maintained
+    package implementation instead of the unsafe same-suffix locus matching.
+    """
+    logger.warning(
+        "scripts/update_model.py is a compatibility entry point; delegating "
+        "to scripts.gem_annotate.main"
+    )
+    from scripts.gem_annotate.main import main as canonical_main
+
+    return canonical_main()
 
 
 if __name__ == "__main__":

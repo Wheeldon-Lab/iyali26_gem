@@ -12,7 +12,7 @@ Metabolic-relevance verdict (external evidence, not the model):
     no_data       = no pathway and no EC (KEGG didn't cover it; NOT a verdict
                     of "non-metabolic", just "this data line can't tell")
 
-Also reports the subset that is metabolic AND not already in iYli21 -> the
+Also reports the subset that is metabolic AND not already in iYali26 -> the
 real curation candidate pool.
 
 Outputs: data/yali1_yali0_map/s2_metabolic_genes.csv
@@ -164,10 +164,10 @@ def main():
     metab = [r for r in rows if r["verdict"] == "metabolic"]
     metab_in = [r for r in metab if r["in_model"] == "yes"]
     metab_out = [r for r in metab if r["in_model"] == "no"]
-    print("\n=== METABOLIC subset vs iYli21 ===")
+    print("\n=== METABOLIC subset vs iYali26 ===")
     print(f"  metabolic total: {len(metab)}")
-    print(f"  already in iYli21: {len(metab_in)}")
-    print(f"  NOT in iYli21 (curation candidate pool): {len(metab_out)}")
+    print(f"  already in iYali26: {len(metab_in)}")
+    print(f"  NOT in iYali26 (curation candidate pool): {len(metab_out)}")
 
     metab_out_no_yali0 = [r for r in metab_out if not r["yali0"]]
     print(f"    of which CLIB89-specific (no YALI0): {len(metab_out_no_yali0)}")

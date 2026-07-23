@@ -1,29 +1,74 @@
 """
-main.py — orchestration entry point for the iYli21 annotation pipeline.
+main.py — orchestration entry point for the iYali26 annotation pipeline.
 """
 
 import logging
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from cobra.io import read_sbml_model, write_sbml_model
+from cobra.io import read_sbml_model
 
 from .biomass import fix_biomass_reaction
-from .config import CACHE_DIR, MNX_DIR, OUTPUT_MODEL_PATH, REPO_ROOT, STARTING_MODEL_PATH
+from .config import (
+    CACHE_DIR,
+    CURATION_DATA_DIR,
+    MNX_DIR,
+    OUTPUT_MODEL_PATH,
+    REPO_ROOT,
+    STARTING_MODEL_PATH,
+)
 from .exchange import configure_medium, set_exchange_bounds
+from .gap_fill_direction import DEFAULT_GAP_FILL_DIRECTION_TABLE
 from .gaps import DUPLICATE_PAIRS, add_gap_fill_reactions, find_gaps, merge_duplicate_metabolites, report_gaps
 from .annotate_reactions_extended import annotate_remaining_reactions
 from .ec_annotation import enrich_genes_with_ec
-from .genes import annotate_genes
+from .essentiality_evidence import sha256_file
+from .genes import annotate_genes, apply_curated_gene_annotation_overrides
 from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
-from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec, remove_misannotated_gprs
+from .microspecies import apply_curated_microspecies, normalize_hydroxide_reactions
+from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, apply_curated_essentiality_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec, remove_misannotated_gprs, remove_spurious_transport_reactions, split_trna_charging_from_biomass
+from .provisional_capacity import apply_provisional_isozyme_capacities
 from .reactions import annotate_reactions, backfill_reaction_xrefs
+from .sbml import write_deterministic_sbml_model
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def main():
+def _deterministic_model_sha256(model) -> str:
+    """Hash the exact in-memory canonical-stage model before an overlay."""
+    with TemporaryDirectory(prefix="iyali26-provisional-reference-") as directory:
+        reference_path = Path(directory) / "model.xml"
+        write_deterministic_sbml_model(model, reference_path)
+        return sha256_file(reference_path)
+
+
+def main(
+    provisional_capacity_path: Path | None = None,
+    trna_biomass_mode: str | None = None,
+    output_model_path: Path = OUTPUT_MODEL_PATH,
+):
+    output_model_path = Path(output_model_path)
+    if provisional_capacity_path is not None:
+        provisional_capacity_path = Path(provisional_capacity_path)
+        if output_model_path.resolve() == OUTPUT_MODEL_PATH.resolve():
+            raise ValueError(
+                "a provisional capacity profile cannot overwrite canonical "
+                "model.xml; provide a separate output_model_path"
+            )
+    if trna_biomass_mode not in {None, "split"}:
+        raise ValueError(f"unsupported tRNA biomass mode: {trna_biomass_mode}")
+    if (
+        trna_biomass_mode is not None
+        and output_model_path.resolve() == OUTPUT_MODEL_PATH.resolve()
+    ):
+        raise ValueError(
+            "an experimental tRNA biomass overlay cannot overwrite canonical "
+            "model.xml; provide a separate output_model_path"
+        )
+
     if not STARTING_MODEL_PATH.exists():
         logger.error(f"Could not find starting model at {STARTING_MODEL_PATH}")
         return
@@ -67,19 +112,46 @@ def main():
         logger.info("=== Patches: known data-bug fixes ===")
         apply_all_patches(model)
 
-        # Priority 2b
-        logger.info("=== Priority 2b: H+/H2O balance ===")
-        fix_proton_water_balance(model)
-
-        # Priority 4a  (Strategy C needs metabolite annotations from 1+2a above)
-        logger.info("=== Priority 4a: reaction annotation ===")
-        annotate_reactions(model, reac_xref, reac_prop)
     else:
         logger.warning(
             f"MetaNetX files not found in {MNX_DIR}. "
             "Download chem_xref.tsv, chem_prop.tsv, reac_xref.tsv from "
             "https://www.metanetx.org/mnxdoc/mnxref.html"
         )
+
+    # Curated chemical identities override raw/name-derived and MetaNetX values.
+    # Formula and charge are applied atomically from the pH 7.3 Rhea/ChEBI table.
+    # Families that still need a connected-component migration remain recorded as
+    # component_review and are never changed by this pipeline stage.
+    logger.info("=== Chemical convention: Rhea/ChEBI pH 7.3 microspecies ===")
+    microspecies_report = apply_curated_microspecies(model)
+    logger.info(
+        "  Microspecies: %d metabolite(s) changed; %d already canonical; "
+        "%d family/families deferred",
+        microspecies_report["changed_metabolites"],
+        microspecies_report["already_canonical"],
+        microspecies_report["deferred_families"],
+    )
+
+    # MetaNetX canonicalisation: OH- is represented as H2O - H+.  Only exact,
+    # single-compartment hydroxide reactions are normalised; transport and
+    # boundary cases require explicit curation of ion coupling.
+    hydroxide_report = normalize_hydroxide_reactions(model)
+    logger.info(
+        "  Hydroxide normalisation: %d reaction(s) changed; %d rejected",
+        hydroxide_report["changed_reactions"],
+        hydroxide_report["rejected_reactions"],
+    )
+
+    if mnx_ok:
+        # Priority 2b.  The balancer is charge-aware: it may add H+/H2O only
+        # when mass and charge can be brought to zero simultaneously.
+        logger.info("=== Priority 2b: charge-aware H+/H2O balance ===")
+        fix_proton_water_balance(model)
+
+        # Priority 4a  (Strategy C needs metabolite annotations from 1+2a above)
+        logger.info("=== Priority 4a: reaction annotation ===")
+        annotate_reactions(model, reac_xref, reac_prop)
 
     # Stoichiometric consistency: merge known duplicate metabolite pairs
     # These pairs were identified by MIS analysis (metabolites appearing in
@@ -102,6 +174,16 @@ def main():
     # Priority 4b — network required, skip if offline
     logger.info("=== Priority 4b: gene annotation via UniProt ===")
     annotate_genes(model)
+
+    # Curated assembly-identity corrections run after broad automatic matching
+    # but before ID-mapping and EC enrichment, so stale accessions cannot seed
+    # downstream annotations. These edits affect metadata only, never GPRs.
+    logger.info("=== Priority 4b+: curated gene identity overrides ===")
+    n_gene_identity_overrides = apply_curated_gene_annotation_overrides(model)
+    logger.info(
+        "  Curated gene identity overrides: %d gene(s) corrected",
+        n_gene_identity_overrides,
+    )
 
     # Priority 4c — ncbigene → UniProt ID-mapping for genes still missing uniprot
     logger.info("=== Priority 4c: UniProt ID-mapping (ncbigene → UniProtKB) ===")
@@ -160,7 +242,7 @@ def main():
     logger.info(f"  Blocked reactions after medium extension: {blocked_before_medium}")
 
     # Priority 6: gap-fill — insert P0 reactions from gap_fill_prioritized.csv
-    gap_fill_csv = REPO_ROOT / "data" / "gap_fill_prioritized.csv"
+    gap_fill_csv = CURATION_DATA_DIR / "gap_fill_prioritized.csv"
     if gap_fill_csv.exists():
         logger.info("=== Priority 6: gap-fill reaction insertion (P0) ===")
         add_gap_fill_reactions(
@@ -168,6 +250,7 @@ def main():
             csv_path=gap_fill_csv,
             mnx_dir=MNX_DIR if mnx_ok else None,
             cache_dir=CACHE_DIR,
+            direction_curation_path=DEFAULT_GAP_FILL_DIRECTION_TABLE,
         )
         logger.info("=== Priority 6b: post-gap-fill FVA ===")
         gaps_after = find_gaps(model)
@@ -314,6 +397,19 @@ def main():
     n_gpr_removed = remove_misannotated_gprs(model)
     logger.info(f"  Mis-annotation GPR removals: {n_gpr_removed} (reaction, gene) pair(s) removed")
 
+    # Remove spurious carrier-free CoA-thioester transport (R1172: HMG-CoA crossing
+    # the inner mito membrane with no carrier — impossible; both pools synthesized
+    # independently). Inert + geneless -> WT-safe, no essentiality change. See
+    # patches.remove_spurious_transport_reactions.
+    n_transport_removed = remove_spurious_transport_reactions(model)
+    logger.info(f"  Spurious transport removals: {n_transport_removed} reaction(s) removed")
+
+    # Evidence-gated essentiality corrections. Schema-v2 rows require a direct
+    # Y. lipolytica evidence dossier, skeptic pass, explicit human approval and
+    # a live target fingerprint. EG-GPR-001 is the only legacy-v1 exception.
+    essentiality_patches = apply_curated_essentiality_patches(model)
+    logger.info(f"  Curated essentiality patches: {len(essentiality_patches)} applied")
+
     # Annotate those newly added genes (they entered after the main gene
     # annotation + SBO steps, so they need sbo / ncbigene / kegg / uniprot here).
     n_gene_annot = annotate_isozyme_genes(model)
@@ -338,11 +434,71 @@ def main():
     n_chg2 = fix_charge_stage2(model)
     logger.info(f"  Charge Stage 2: {n_chg2} metabolite(s) set to InChI-dH charge")
 
+    # Final chemistry gate.  Formula fills and curated charge patches above run
+    # after the historical second balance pass, so validate the exact common-ion
+    # target set again and give newly checkable reactions one strict balance pass.
+    # This currently repairs R2065, R2097 and R2274; the simultaneous mass/charge
+    # condition prevents an H+/H2O adjustment from hiding an ion-form mismatch.
+    logger.info("=== Final chemistry gate: microspecies + charge-aware balance ===")
+    final_microspecies_report = apply_curated_microspecies(model)
+    logger.info(
+        "  Final microspecies validation: %d changed; target set %s",
+        final_microspecies_report["changed_metabolites"],
+        final_microspecies_report["target_set_fingerprint"],
+    )
+    final_hydroxide_report = normalize_hydroxide_reactions(model)
+    logger.info(
+        "  Final hydroxide normalisation: %d changed; %d rejected",
+        final_hydroxide_report["changed_reactions"],
+        final_hydroxide_report["rejected_reactions"],
+    )
+    final_balance_report = fix_proton_water_balance(model)
+    logger.info(
+        "  Final H+/H2O balance: %d changed; %d rejected",
+        final_balance_report["changed_reactions"],
+        final_balance_report["rejected_reactions"],
+    )
+    if final_balance_report["changes"]:
+        logger.info(
+            "  Final balanced reactions: %s",
+            ", ".join(
+                change["reaction_id"] for change in final_balance_report["changes"]
+            ),
+        )
+
+    # Optional experimental build profile. Apply it after every canonical
+    # structural and chemistry operation so later pipeline steps cannot make a
+    # copied backup branch diverge from its parent. This remains separate from
+    # the evidence-gated patch table and can never target canonical model.xml.
+    if provisional_capacity_path is not None:
+        provisional_reference_sha256 = _deterministic_model_sha256(model)
+        capacity_audit = apply_provisional_isozyme_capacities(
+            model,
+            provisional_capacity_path,
+            reference_model_sha256=provisional_reference_sha256,
+        )
+        logger.warning(
+            "  Applied %d provisional isozyme-capacity split(s); experimental "
+            "profile only",
+            len(capacity_audit),
+        )
+
+    if trna_biomass_mode == "split":
+        trna_audit = split_trna_charging_from_biomass(model)
+        logger.warning(
+            "  Applied %d fully split tRNA-biomass coupling reactions; "
+            "experimental B-group overlay only",
+            len(trna_audit),
+        )
+
     ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")
 
-    logger.info(f"Saving updated model to: {OUTPUT_MODEL_PATH.name}")
-    write_sbml_model(model, str(OUTPUT_MODEL_PATH))
+    logger.info(f"Saving updated model to: {output_model_path.name}")
+    # COBRApy stores Group.members as sets, so its stock writer emits pathway
+    # members in hash-random order.  Canonicalise that serialization detail so
+    # the byte-level SHA used by the evidence ledger is reproducible.
+    write_deterministic_sbml_model(model, output_model_path)
     logger.info("Model build complete.")
 
 
