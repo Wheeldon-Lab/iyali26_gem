@@ -387,7 +387,16 @@ def test_cli_phase1_analyze_and_conditional_train(
     output = tmp_path / "cli_results"
 
     class FakeRunner:
-        def __init__(self, _config, output_dir, *, resume=True):
+        def __init__(
+            self,
+            _config,
+            output_dir,
+            *,
+            resume=True,
+            research_root=None,
+            force_rerun=False,
+            reproduction_reason=None,
+        ):
             self.output_dir = Path(output_dir)
             self.resume = resume
 
