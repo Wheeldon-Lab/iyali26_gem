@@ -6,6 +6,7 @@ import argparse
 import json
 import signal
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from types import FrameType
 from typing import Sequence
@@ -14,6 +15,7 @@ from .config import load_experiment_config
 from .experiment import (
     ExperimentRunner,
     HardTimeoutExceeded,
+    run_identity,
 )
 from .fmpe import train_fmpe
 from scripts.gem_annotate.config import load_project_paths
@@ -28,7 +30,7 @@ def _parser() -> argparse.ArgumentParser:
     for name in ("phase1", "analyze", "train-fmpe"):
         command = subparsers.add_parser(name)
         command.add_argument("--config", type=Path, required=True)
-        command.add_argument("--output", type=Path, required=True)
+        command.add_argument("--output", type=Path, required=name != "phase1")
         command.add_argument(
             "--research-root",
             type=Path,
@@ -75,12 +77,18 @@ def _clear_alarm(previous) -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.command == "phase1" and args.force_rerun and not args.reproduction_reason:
+            raise ValueError("--force-rerun requires --reproduction-reason")
         config = load_experiment_config(
             args.config,
             repo_root=Path.cwd(),
             research_root=args.research_root,
         )
         project_paths = load_project_paths(args.research_root, required=True)
+        if args.command == "phase1" and args.output is None:
+            _, _, run_key = run_identity(config)
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            args.output = project_paths.results / "flow" / f"{run_key[:12]}-{timestamp}"
         previous_alarm = _install_alarm(config.hard_timeout_seconds)
         try:
             if args.command == "phase1":
