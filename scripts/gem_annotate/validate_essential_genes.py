@@ -1887,6 +1887,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.force_rerun and not args.reproduction_reason:
+        parser.error("--force-rerun requires --reproduction-reason")
+
     try:
         project_paths = load_project_paths(args.research_root, required=True)
         project_paths.require(project_paths.essentiality, project_paths.media)

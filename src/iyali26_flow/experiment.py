@@ -187,6 +187,23 @@ def _code_provenance(repo_root: Path) -> dict[str, str]:
     }
 
 
+def run_identity(config: ExperimentConfig) -> tuple[dict[str, dict[str, str]], dict[str, str], str]:
+    """Return the verified material and code fingerprint for a flow run."""
+
+    verified_inputs = config.verify_inputs()
+    code_sources = _code_provenance(config.repo_root)
+    run_key = sha256_json(
+        {
+            "experiment_id": config.experiment_id,
+            "config_sha256": config.config_sha256,
+            "inputs": verified_inputs,
+            "package_version": __version__,
+            "code_sources": code_sources,
+        }
+    )
+    return verified_inputs, code_sources, run_key
+
+
 class ExperimentRunner:
     """Run, checkpoint, resume and analyze the fixed phase-one protocol."""
 
@@ -209,17 +226,7 @@ class ExperimentRunner:
         self._soft_deadline = (
             self._invocation_started + config.soft_time_budget_seconds
         )
-        self._verified_inputs = config.verify_inputs()
-        self._code_sources = _code_provenance(config.repo_root)
-        self._run_key = sha256_json(
-            {
-                "experiment_id": config.experiment_id,
-                "config_sha256": config.config_sha256,
-                "inputs": self._verified_inputs,
-                "package_version": __version__,
-                "code_sources": self._code_sources,
-            }
-        )
+        self._verified_inputs, self._code_sources, self._run_key = run_identity(config)
         self._research_root = Path(research_root).resolve() if research_root else None
         self._previous_run = (
             guard_duplicate_run(
