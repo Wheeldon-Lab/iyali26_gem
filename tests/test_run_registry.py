@@ -69,6 +69,14 @@ def test_backfill_appends_without_rewriting_historical_manifest(tmp_path: Path) 
         encoding="utf-8",
     )
 
-    assert backfill(tmp_path) == {"runs": 1, "duplicates": 1}
+    assert backfill(tmp_path) == {
+        "runs": 1,
+        "duplicates": 1,
+        "classification_corrections": 0,
+    }
     assert manifest_path.read_bytes() == before
-    assert backfill(tmp_path) == {"runs": 0, "duplicates": 0}
+    assert backfill(tmp_path) == {
+        "runs": 0,
+        "duplicates": 0,
+        "classification_corrections": 0,
+    }
