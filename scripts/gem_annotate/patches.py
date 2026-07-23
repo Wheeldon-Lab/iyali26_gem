@@ -1,5 +1,5 @@
 """
-patches.py — known data-bug patches for the iYli21 model.
+patches.py — known data-bug patches for the iYali26 model.
 
 Each patch fixes a discrete, documented error in the source SBML.  Patches
 are applied early in the pipeline, immediately after metabolite annotation,
@@ -9,13 +9,13 @@ chemically correct model.
 Currently applied patches:
 
   1. NADP+ formula fix
-     iYli21 stores NADP+ as C21H28N7O17P3 (one H short of the KEGG C00006
+     iYali26 stores NADP+ as C21H28N7O17P3 (one H short of the KEGG C00006
      reference C21H29N7O17P3).  This affects 6 compartmental copies and
      ~126 reactions that use NADP+/NADPH, which had cascading effects on
      ceramide synthesis (see patch 2).
 
   2. Ceramide formula corrections
-     iYli21 stores ceramide-1-(C24/C26) with formula C63H125NO6, which is
+     iYali26 stores ceramide-1-(C24/C26) with formula C63H125NO6, which is
      inconsistent with the LIPID MAPS / Yeast-GEM reference value
      C42H85NO3 (C24) / C44H89NO3 (C26).  ceramide-2/2'/3/4 are simply
      missing formulas.  These were left wrong/missing because the upstream
@@ -34,22 +34,25 @@ Currently applied patches:
 from __future__ import annotations
 
 import logging
+import math
 import re
+
+from .config import ESSENTIALITY_DIR
 
 logger = logging.getLogger(__name__)
 
 
 # ── Patch 1: NADP+ formula fix ────────────────────────────────────────────
 
-# iYli21 NADP+ copies (all compartments). Identified by metabolite name
-# prefix "NADP(+)_" which is the iYli21 naming convention.
+# iYali26 NADP+ copies (all compartments). Identified by metabolite name
+# prefix "NADP(+)_" which is the iYali26 naming convention.
 # Formula correction: C21H28N7O17P3 → C21H29N7O17P3 (KEGG C00006).
 _NADP_PLUS_OLD_FORMULA = "C21H28N7O17P3"
 _NADP_PLUS_NEW_FORMULA = "C21H29N7O17P3"
 
 
 def _is_nadp_plus(met) -> bool:
-    """Identify NADP+ by name (handles iYli21 'NADP(+)_C21H28N7O17P3' naming)."""
+    """Identify NADP+ by name (handles iYali26 'NADP(+)_C21H28N7O17P3' naming)."""
     name = (met.name or "")
     return name.startswith("NADP(+)") or name.lower().startswith("nadp(+)")
 
@@ -81,7 +84,7 @@ def fix_nadp_plus_formula(model) -> int:
 # ── Patch 2: Ceramide formula corrections ─────────────────────────────────
 
 # Map: lowercased base name (compartment-independent) → (formula_C24, formula_C26)
-# Base name is what comes BEFORE the trailing "_" or "_FORMULA" in iYli21 names.
+# Base name is what comes BEFORE the trailing "_" or "_FORMULA" in iYali26 names.
 # E.g. "ceramide-1-(C24)_" matches base "ceramide-1-(c24)".
 _CERAMIDE_FORMULAS_C24 = {
     "ceramide-1-(c24)":  "C42H85NO3",   # Cer(d18:0/24:0)        LMSP02020012
@@ -105,7 +108,7 @@ _CERAMIDE_1_KNOWN_BAD_FORMULA = "C63H125NO6"
 
 
 def _base_name(met) -> str:
-    """Return the iYli21 base name (lowercased, strip trailing _ and _FORMULA)."""
+    """Return the iYali26 base name (lowercased, strip trailing _ and _FORMULA)."""
     n = (met.name or "").lower().rstrip("_").strip()
     # Strip trailing "_<FORMULA>" if present (e.g. "ceramide-1-(c24)_c63h125no6")
     if "_" in n:
@@ -161,7 +164,7 @@ def fix_ceramide_formulas(model) -> int:
 
 # ── Patch 3: free CoA charge fix ──────────────────────────────────────────
 
-# iYli21 stores free coenzyme A (KEGG C00010) with charge 0, but the correct
+# iYali26 stores free coenzyme A (KEGG C00010) with charge 0, but the correct
 # physiological charge is -4.  Only the 9 free-CoA copies are affected; the
 # acyl-CoA species (tetracosanoyl-CoA, acetyl-CoA, …) already carry charge -4.
 # Identified by: name starts with "coenzyme A", formula == C21H36N7O16P3S, charge == 0.
@@ -239,7 +242,7 @@ def fix_cation_formula_consistency(model) -> int:
 
 # ── Patch 0: clean Excel-corrupted "ActiveX VT_ERROR" names ───────────────
 
-# iYli21 was exported from Excel; some metabolite names had their trailing
+# iYali26 was exported from Excel; some metabolite names had their trailing
 # chemical-formula token replaced by the literal string "ActiveX VT_ERROR:",
 # e.g. "butyrate_ActiveX VT_ERROR:".  The corrupted name prevents
 # annotate_metabolites from matching the metabolite to MetaNetX (no MNXM, no
@@ -553,6 +556,962 @@ def remove_misannotated_gprs(model) -> int:
     return removed
 
 
+# ── Patch 8c: remove spurious carrier-free CoA-thioester transport ─────────
+#
+# R1172 models 3-hydroxy-3-methylglutaryl-CoA (HMG-CoA) crossing the inner
+# mitochondrial membrane directly and reversibly, with no carrier and no GPR:
+#     m646[C_cy] <=> m648[C_mi]   (HMG-CoA cyt <-> HMG-CoA mito)
+# HMG-CoA is a CoA-thioester, and the inner mitochondrial membrane is impermeable
+# to acyl-CoA / CoA-thioesters — acyl groups cross only as carnitine esters via the
+# carnitine shuttle, and HMG-CoA has no such carrier. Verified this session (opened):
+#   "Fatty acyl CoA is impermeable to the inner mitochondrial membrane, so it is
+#    carried in the form of fatty acyl carnitine."
+#     https://library.med.utah.edu/NetBiochem/FattyAcids/8_4.html
+#   "Since the mitochondrial inner membrane is not permeable to acyl-CoAs, acyl
+#    groups are transferred from CoA to carnitine..."
+#     https://pmc.ncbi.nlm.nih.gov/articles/PMC8066319/
+# Both HMG-CoA pools are synthesized independently in their own compartment
+# (cytosol R411; mito R412/R1973), so the transport is not needed for connectivity.
+# Under SD-Leu- it carries zero flux and has no GPR, so removing it is WT-safe and
+# changes no gene's essentiality — this is a model-correctness fix, not a recall fix.
+_SPURIOUS_TRANSPORT_REMOVALS = ["R1172"]
+
+
+def remove_spurious_transport_reactions(model) -> int:
+    """Remove biochemically impossible transport reactions (carrier-free CoA-thioester
+    crossing the inner mitochondrial membrane). Returns the number removed. Idempotent;
+    keeps the shared metabolites (remove_orphans=False) since other reactions use them."""
+    removed = 0
+    for rid in _SPURIOUS_TRANSPORT_REMOVALS:
+        try:
+            rxn = model.reactions.get_by_id(rid)
+        except KeyError:
+            continue  # idempotent: already removed
+        model.remove_reactions([rxn], remove_orphans=False)
+        removed += 1
+        logger.info(f"  Spurious transport removal: {rid} (carrier-free CoA-thioester transport)")
+    return removed
+
+
+# ── Evidence-gated essentiality curation patches ──────────────────────────
+
+_ESSENTIALITY_PATCHES_CSV = ESSENTIALITY_DIR / "curated_model_patches.csv"
+_ESSENTIALITY_OPERATIONS = {
+    "set_gpr",
+    "set_bounds",
+    "remove_reaction",
+    "couple_trna_biomass",
+    "partition_cpa_ura2",
+}
+_ESSENTIALITY_VALUE_OPERATIONS = {
+    "set_gpr",
+    "set_bounds",
+    "couple_trna_biomass",
+}
+
+
+def partition_cpa_ura2_pathways(model) -> dict[str, str]:
+    """Separate the arginine CPA1/CPA2 pool from the channelled URA2 pathway.
+
+    YALI1E11768g (URA2) is a multifunctional pyrimidine enzyme whose carbamoyl
+    phosphate intermediate is channelled directly from its CPS domains to its
+    ATCase domain.  The source model instead exposes that intermediate through
+    the same reaction and metabolite pool used by the arginine-specific CPA1/
+    CPA2 complex.  That representation makes all three genes interchangeable.
+
+    This patch keeps the existing reaction and metabolite counts unchanged:
+
+    * R159 becomes the net, channelled URA2 CPS + ATCase reaction;
+    * R190 becomes the arginine-specific CPA1 AND CPA2 reaction;
+    * m325 remains the explicit carbamoyl-phosphate pool used by R190/R607.
+
+    The physical mitochondrial relocation is deliberately deferred because the
+    current GEM lacks an evidence-backed glutamine/citrulline transport module.
+    The function is idempotent and returns an auditable before/after snapshot.
+    """
+    required_reactions = ("R159", "R190", "R607")
+    required_metabolites = (
+        "m10[C_cy]",
+        "m32[C_cy]",
+        "m35[C_cy]",
+        "m50[C_cy]",
+        "m130[C_cy]",
+        "m141[C_cy]",
+        "m143[C_cy]",
+        "m199[C_cy]",
+        "m267[C_cy]",
+        "m325[C_cy]",
+        "m326[C_cy]",
+    )
+    try:
+        reactions = {rid: model.reactions.get_by_id(rid) for rid in required_reactions}
+        metabolites = {
+            mid: model.metabolites.get_by_id(mid) for mid in required_metabolites
+        }
+    except KeyError as exc:
+        raise ValueError(f"CPA/URA2 partition requires {exc.args[0]}") from exc
+
+    r159 = reactions["R159"]
+    r190 = reactions["R190"]
+    r607 = reactions["R607"]
+    carbamoyl_phosphate = metabolites["m325[C_cy]"]
+
+    def assign_subsystem(reaction, subsystem_name: str) -> None:
+        """Keep both the reaction attribute and SBML Groups package in sync."""
+        subsystem_groups = [
+            group
+            for group in model.groups
+            if group.kind == "partonomy"
+            and group.annotation.get("sbo") == "SBO:0000633"
+        ]
+        target_groups = [
+            group for group in subsystem_groups if group.name == subsystem_name
+        ]
+        if len(target_groups) != 1:
+            raise ValueError(
+                f"CPA/URA2 partition requires one subsystem group named {subsystem_name!r}"
+            )
+        target_group = target_groups[0]
+        for group in subsystem_groups:
+            if reaction in group.members and group is not target_group:
+                group.remove_members([reaction])
+        if reaction not in target_group.members:
+            target_group.add_members([reaction])
+        reaction.subsystem = subsystem_name
+
+    if (
+        carbamoyl_phosphate not in r190.metabolites
+        or carbamoyl_phosphate not in r607.metabolites
+    ):
+        raise ValueError("CPA/URA2 partition requires m325 in both R190 and R607")
+
+    before = (
+        f"R159={r159.reaction} [{r159.gene_reaction_rule}]; "
+        f"R190={r190.reaction} [{r190.gene_reaction_rule}]"
+    )
+
+    # Net stoichiometry of the source R190 CPS reaction plus R159 ATCase
+    # reaction, with the channelled carbamoyl-phosphate intermediate cancelled.
+    target_r159 = {
+        "m10[C_cy]": -1.0,
+        "m32[C_cy]": -1.0,
+        "m35[C_cy]": 2.0,
+        "m50[C_cy]": 1.0,
+        "m130[C_cy]": -1.0,
+        "m141[C_cy]": -2.0,
+        "m143[C_cy]": 2.0,
+        "m199[C_cy]": -1.0,
+        "m267[C_cy]": -1.0,
+        "m326[C_cy]": 1.0,
+    }
+    if r159.metabolites:
+        r159.add_metabolites(
+            {metabolite: -coefficient for metabolite, coefficient in r159.metabolites.items()}
+        )
+    r159.add_metabolites(
+        {metabolites[mid]: coefficient for mid, coefficient in target_r159.items()}
+    )
+    r159.name = (
+        "pyrimidine-specific carbamoyl-phosphate synthase/aspartate "
+        "carbamoyltransferase (channelled)"
+    )
+    assign_subsystem(r159, "Pyrimidine metabolism")
+    r159.gene_reaction_rule = "YALI1E11768g"
+    r159.annotation["ec-code"] = ["2.1.3.2", "3.5.1.2", "6.3.4.16", "6.3.5.5"]
+    r159.notes["essentiality_curation"] = (
+        "URA2-only net reaction; its carbamoyl-phosphate intermediate is "
+        "channelled and is not shared with arginine biosynthesis."
+    )
+
+    r190.name = "arginine-specific carbamoyl-phosphate synthase (glutamine-hydrolysing)"
+    assign_subsystem(r190, "Arginine and proline metabolism")
+    r190.gene_reaction_rule = "YALI1C33005g and YALI1D09420g"
+    r190.annotation["ec-code"] = ["3.5.1.2", "6.3.4.16", "6.3.5.5"]
+    r190.notes["essentiality_curation"] = (
+        "Arginine-specific CPA2/CPA1 heterodimer; no longer interchangeable with URA2."
+    )
+    carbamoyl_phosphate.notes["pathway_pool"] = (
+        "Explicit arginine-specific pool produced by R190 and consumed by R607; "
+        "the URA2 intermediate is channelled inside R159."
+    )
+
+    after = (
+        f"R159={r159.reaction} [{r159.gene_reaction_rule}]; "
+        f"R190={r190.reaction} [{r190.gene_reaction_rule}]"
+    )
+    return {"before": before, "after": after}
+
+
+def couple_trna_charging_to_biomass(
+    model,
+    biomass_id: str = "biomass_C",
+    template_id: str = "R1387",
+) -> list[dict[str, str | float]]:
+    """Replace free amino-acid biomass drains with charged-tRNA carriers.
+
+    The source model already contains 20 cytosolic aminoacyl-tRNA synthetase
+    reactions and a locked, carrier-balanced tRNA biomass template. This patch
+    uses the active biomass amino-acid coefficients but requires each amino acid
+    to pass through its charging reaction: biomass consumes charged tRNA and
+    returns the corresponding uncharged tRNA with the same coefficient.
+
+    This preserves each tRNA carrier exactly and is idempotent. It refuses to
+    make a partial change unless all 20 amino-acid/tRNA mappings are complete.
+    """
+    candidate_ids = {"R1387", "R1710"}
+    try:
+        biomass = model.reactions.get_by_id(biomass_id)
+        template = model.reactions.get_by_id(template_id)
+    except KeyError as exc:
+        raise ValueError(
+            f"tRNA coupling requires reactions {biomass_id} and {template_id}"
+        ) from exc
+
+    mappings: list[tuple[object, object, object, object, float]] = []
+    already_coupled = 0
+    charged_metabolites = sorted(
+        [
+            metabolite
+            for metabolite, coefficient in template.metabolites.items()
+            if coefficient < 0 and "trna" in (metabolite.name or "").lower()
+        ],
+        key=lambda metabolite: metabolite.id,
+    )
+    for charged in charged_metabolites:
+        charging_reactions = sorted(
+            [reaction for reaction in charged.reactions if reaction.id not in candidate_ids],
+            key=lambda reaction: reaction.id,
+        )
+        if len(charging_reactions) != 1:
+            raise ValueError(
+                f"Expected one charging reaction for {charged.id}; found "
+                f"{[reaction.id for reaction in charging_reactions]}"
+            )
+        charging = charging_reactions[0]
+        uncharged = [
+            metabolite
+            for metabolite, coefficient in charging.metabolites.items()
+            if coefficient < 0 and "trna" in (metabolite.name or "").lower()
+        ]
+        amino_acids = [
+            metabolite
+            for metabolite, coefficient in charging.metabolites.items()
+            if coefficient < 0
+            and metabolite in biomass.metabolites
+            and biomass.metabolites[metabolite] < 0
+            and (metabolite.name or "").lower().startswith("l-")
+        ]
+
+        if len(uncharged) != 1:
+            raise ValueError(
+                f"Expected one uncharged tRNA for {charged.id}; found "
+                f"{[metabolite.id for metabolite in uncharged]}"
+            )
+        uncharged_metabolite = uncharged[0]
+        if uncharged_metabolite not in template.metabolites or not math.isclose(
+            abs(float(template.metabolites[charged])),
+            abs(float(template.metabolites[uncharged_metabolite])),
+            rel_tol=1e-9,
+            abs_tol=1e-12,
+        ):
+            raise ValueError(f"Template does not conserve tRNA carrier for {charged.id}")
+
+        if not amino_acids:
+            charged_coefficient = biomass.metabolites.get(charged, 0.0)
+            uncharged_coefficient = biomass.metabolites.get(uncharged_metabolite, 0.0)
+            if charged_coefficient < 0 and math.isclose(
+                abs(float(charged_coefficient)),
+                abs(float(uncharged_coefficient)),
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            ):
+                already_coupled += 1
+                continue
+            raise ValueError(f"No biomass amino-acid substrate found for {charged.id}")
+        if len(amino_acids) != 1:
+            raise ValueError(
+                f"Ambiguous biomass amino acid for {charged.id}: "
+                f"{[metabolite.id for metabolite in amino_acids]}"
+            )
+        amino_acid = amino_acids[0]
+        amount = -float(biomass.metabolites[amino_acid])
+        mappings.append((amino_acid, charged, uncharged_metabolite, charging, amount))
+
+    if already_coupled == 20 and not mappings:
+        return []
+    if already_coupled or len(mappings) != 20:
+        raise ValueError(
+            f"Refusing partial tRNA coupling: {len(mappings)} new, {already_coupled} existing"
+        )
+
+    audit: list[dict[str, str | float]] = []
+    for amino_acid, charged, uncharged, charging, amount in mappings:
+        biomass.add_metabolites(
+            {
+                amino_acid: amount,
+                charged: -amount,
+                uncharged: amount,
+            }
+        )
+        audit.append(
+            {
+                "amino_acid_id": amino_acid.id,
+                "charged_trna_id": charged.id,
+                "uncharged_trna_id": uncharged.id,
+                "charging_reaction_id": charging.id,
+                "coefficient": amount,
+            }
+        )
+    biomass.notes["essentiality_trna_coupling"] = (
+        "Free amino-acid biomass drains replaced by carrier-balanced charged-tRNA "
+        "consumption and uncharged-tRNA recycling."
+    )
+    return audit
+
+
+_SPLIT_TRNA_BIOMASS_MODE = "split_v1"
+_SPLIT_TRNA_REACTION_PREFIX = "TRNA_BIOMASS_"
+_SPLIT_TRNA_RESIDUE_PREFIX = "trna_biomass_residue_"
+
+
+def split_trna_charging_from_biomass(
+    model,
+    biomass_id: str = "biomass_C",
+    template_id: str = "R1387",
+) -> list[dict[str, str | float]]:
+    """Build the fully split, experimental B-group translation layer.
+
+    For each of the 20 cytosolic amino acids, this overlay replaces the free
+    amino-acid coefficient in ``biomass_id`` with a private protein-residue
+    intermediate and adds one carrier-conserving reaction::
+
+        AA-tRNA(i) -> tRNA(i) + protein_residue(i)
+
+    The biomass reaction consumes ``a_i protein_residue(i)``. Consequently the
+    corresponding aminoacyl-tRNA synthetase must carry ``a_i`` flux per unit of
+    biomass, while every tRNA carrier is returned one-for-one. The 20 separate
+    reactions make each amino-acid requirement independently auditable.
+
+    This is an experimental overlay, not an evidence-approved canonical patch.
+    It performs a complete preflight and refuses partial or mixed states.
+    """
+    from cobra import Metabolite, Reaction
+
+    try:
+        biomass = model.reactions.get_by_id(biomass_id)
+    except KeyError as exc:
+        raise ValueError(f"Split tRNA coupling requires reaction {biomass_id}") from exc
+
+    split_reactions = sorted(
+        (
+            reaction
+            for reaction in model.reactions
+            if reaction.id.startswith(_SPLIT_TRNA_REACTION_PREFIX)
+        ),
+        key=lambda reaction: reaction.id,
+    )
+    split_residues = sorted(
+        (
+            metabolite
+            for metabolite in model.metabolites
+            if metabolite.id.startswith(_SPLIT_TRNA_RESIDUE_PREFIX)
+        ),
+        key=lambda metabolite: metabolite.id,
+    )
+    mode = str(biomass.notes.get("experimental_trna_biomass_mode", ""))
+    if mode == _SPLIT_TRNA_BIOMASS_MODE:
+        if len(split_reactions) != 20 or len(split_residues) != 20:
+            raise ValueError(
+                "Partial B-group tRNA biomass state: expected 20 split reactions "
+                f"and residues, found {len(split_reactions)} and {len(split_residues)}"
+            )
+        for reaction in split_reactions:
+            residue_id = str(reaction.notes.get("protein_residue_id", ""))
+            charged_id = str(reaction.notes.get("charged_trna_id", ""))
+            uncharged_id = str(reaction.notes.get("uncharged_trna_id", ""))
+            amount = float(reaction.notes.get("biomass_coefficient", 0.0))
+            required_ids = (residue_id, charged_id, uncharged_id)
+            if not all(required_ids) or amount <= 0:
+                raise ValueError(
+                    f"Partial B-group metadata on split reaction {reaction.id}"
+                )
+            residue = model.metabolites.get_by_id(residue_id)
+            charged = model.metabolites.get_by_id(charged_id)
+            uncharged = model.metabolites.get_by_id(uncharged_id)
+            expected = {
+                charged: -1.0,
+                uncharged: 1.0,
+                residue: 1.0,
+            }
+            if dict(reaction.metabolites) != expected or not math.isclose(
+                float(biomass.metabolites.get(residue, 0.0)),
+                -amount,
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            ):
+                raise ValueError(
+                    f"Partial B-group stoichiometry on split reaction {reaction.id}"
+                )
+        return []
+    if mode or split_reactions or split_residues:
+        raise ValueError(
+            "Refusing partial or mixed B-group tRNA biomass state: "
+            f"mode={mode!r}, reactions={len(split_reactions)}, "
+            f"residues={len(split_residues)}"
+        )
+
+    # Reuse the direct-coupling preflight on a copy. It is the established
+    # complete 20-pair mapper, but no mutation is allowed to escape the probe.
+    probe = model.copy()
+    mapping = couple_trna_charging_to_biomass(
+        probe,
+        biomass_id=biomass_id,
+        template_id=template_id,
+    )
+    if len(mapping) != 20:
+        raise ValueError(
+            f"B-group tRNA biomass requires 20 complete pairs; found {len(mapping)}"
+        )
+
+    planned_ids: set[str] = set()
+    for row in mapping:
+        charging_id = str(row["charging_reaction_id"])
+        planned_ids.update(
+            {
+                f"{_SPLIT_TRNA_REACTION_PREFIX}{charging_id}",
+                f"{_SPLIT_TRNA_RESIDUE_PREFIX}{charging_id}",
+            }
+        )
+    existing_ids = {
+        item_id
+        for item_id in planned_ids
+        if item_id in model.reactions or item_id in model.metabolites
+    }
+    if existing_ids:
+        raise ValueError(
+            "Refusing B-group tRNA biomass ID collision: "
+            + ", ".join(sorted(existing_ids))
+        )
+
+    audit: list[dict[str, str | float]] = []
+    for row in mapping:
+        amino_acid = model.metabolites.get_by_id(str(row["amino_acid_id"]))
+        charged = model.metabolites.get_by_id(str(row["charged_trna_id"]))
+        uncharged = model.metabolites.get_by_id(str(row["uncharged_trna_id"]))
+        charging_id = str(row["charging_reaction_id"])
+        amount = float(row["coefficient"])
+        residue_id = f"{_SPLIT_TRNA_RESIDUE_PREFIX}{charging_id}"
+        reaction_id = f"{_SPLIT_TRNA_REACTION_PREFIX}{charging_id}"
+
+        residue = Metabolite(
+            residue_id,
+            name=(
+                f"Protein-incorporated {amino_acid.name or amino_acid.id} "
+                "requirement (experimental B split)"
+            ),
+            compartment=amino_acid.compartment,
+        )
+        residue.annotation = {"sbo": "SBO:0000247"}
+        residue.notes = {
+            "experimental_role": "split_trna_biomass_protein_residue",
+            "source_amino_acid_id": amino_acid.id,
+        }
+
+        translation = Reaction(reaction_id)
+        translation.name = (
+            f"Biomass incorporation of {amino_acid.name or amino_acid.id} "
+            "through charged tRNA"
+        )
+        translation.bounds = (0.0, 1000.0)
+        translation.subsystem = "Protein synthesis"
+        translation.annotation = {"sbo": "SBO:0000176"}
+        translation.notes = {
+            "experimental_trna_biomass_mode": _SPLIT_TRNA_BIOMASS_MODE,
+            "amino_acid_id": amino_acid.id,
+            "charged_trna_id": charged.id,
+            "uncharged_trna_id": uncharged.id,
+            "charging_reaction_id": charging_id,
+            "protein_residue_id": residue_id,
+            "biomass_coefficient": amount,
+            "carrier_conservation": "1 AA-tRNA consumed; 1 tRNA returned",
+        }
+        translation.add_metabolites(
+            {
+                charged: -1.0,
+                uncharged: 1.0,
+                residue: 1.0,
+            }
+        )
+        model.add_reactions([translation])
+        biomass.add_metabolites({amino_acid: amount, residue: -amount})
+        audit.append(
+            {
+                **row,
+                "split_reaction_id": reaction_id,
+                "protein_residue_id": residue_id,
+            }
+        )
+
+    biomass.notes["experimental_trna_biomass_mode"] = _SPLIT_TRNA_BIOMASS_MODE
+    biomass.notes["experimental_trna_biomass_template"] = template_id
+    biomass.notes["experimental_trna_biomass_design"] = (
+        "B group: 20 independent AA-tRNA -> tRNA + protein-residue reactions"
+    )
+    return audit
+
+
+def _validate_schema_v2_patch_gate(
+    model,
+    row,
+    repo_root: str,
+    essentiality_dir: str,
+    patch_id: str,
+) -> dict:
+    """Validate evidence, human approval and the live target fingerprint."""
+    import json
+    import os
+
+    from .essentiality_evidence import (
+        chemistry_fingerprint,
+        read_ledger,
+        require_valid_evidence_dossier,
+        sha256_file,
+        target_fingerprint,
+    )
+
+    required = (
+        "case_id",
+        "evidence_path",
+        "approved_by",
+        "approved_at",
+        "target_fingerprint",
+    )
+    missing = [field for field in required if not (row.get(field) or "").strip()]
+    if missing:
+        raise ValueError(
+            f"Essentiality patch {patch_id} lacks schema-v2 gate fields: {missing}"
+        )
+    if row["approved_by"].strip() != "human_user":
+        raise ValueError(
+            f"Essentiality patch {patch_id} approved_by must be human_user"
+        )
+
+    def resolve_essentiality_path(raw_path: str) -> str:
+        if os.path.isabs(raw_path):
+            return os.path.realpath(raw_path)
+        normalized = raw_path.replace("\\", "/")
+        legacy_prefix = "data/essentiality/"
+        if normalized.startswith(legacy_prefix):
+            return os.path.realpath(
+                os.path.join(
+                    essentiality_dir,
+                    normalized[len(legacy_prefix) :],
+                )
+            )
+        return os.path.realpath(os.path.join(repo_root, raw_path))
+
+    evidence_path = resolve_essentiality_path(row["evidence_path"].strip())
+    evidence_path = os.path.realpath(evidence_path)
+    evidence_root = os.path.realpath(os.path.join(essentiality_dir, "evidence"))
+    if os.path.commonpath([evidence_path, evidence_root]) != evidence_root:
+        raise ValueError(
+            f"Essentiality patch {patch_id} evidence must be inside data/essentiality/evidence"
+        )
+    if not os.path.exists(evidence_path):
+        raise ValueError(
+            f"Essentiality patch {patch_id} evidence dossier is missing: {evidence_path}"
+        )
+    with open(evidence_path, encoding="utf-8") as handle:
+        dossier = json.load(handle)
+    require_valid_evidence_dossier(dossier, require_human_approval=True)
+
+    case_id = row["case_id"].strip()
+    expected_fingerprint = row["target_fingerprint"].strip()
+    human = dossier["human_decision"]
+    proposal = dossier["proposed_operation"]
+    if dossier.get("case_id") != case_id:
+        raise ValueError(f"Essentiality patch {patch_id} case_id does not match dossier")
+    if dossier.get("target_fingerprint") != expected_fingerprint:
+        raise ValueError(
+            f"Essentiality patch {patch_id} target fingerprint does not match dossier"
+        )
+    if human.get("approved_by") != row["approved_by"].strip():
+        raise ValueError(f"Essentiality patch {patch_id} approver does not match dossier")
+    if human.get("approved_at") != row["approved_at"].strip():
+        raise ValueError(
+            f"Essentiality patch {patch_id} approval timestamp does not match dossier"
+        )
+    if proposal.get("operation") != row["operation"].strip():
+        raise ValueError(
+            f"Essentiality patch {patch_id} operation does not match evidence proposal"
+        )
+    if proposal.get("target_id") != row["target_id"].strip():
+        raise ValueError(
+            f"Essentiality patch {patch_id} target_id does not match evidence proposal"
+        )
+    operation = row["operation"].strip()
+    if operation in _ESSENTIALITY_VALUE_OPERATIONS:
+        value = row["value"].strip()
+        if not value:
+            raise ValueError(
+                f"Essentiality patch {patch_id} operation {operation} requires a value"
+            )
+        if proposal.get("value") != value:
+            raise ValueError(
+                f"Essentiality patch {patch_id} value does not match evidence proposal"
+            )
+
+    chemistry = dossier["chemistry_review"]
+    chemistry_audit_path = resolve_essentiality_path(
+        chemistry["audit_path"].strip()
+    )
+    if os.path.commonpath([chemistry_audit_path, evidence_root]) != evidence_root:
+        raise ValueError(
+            f"Essentiality patch {patch_id} chemistry audit must be inside "
+            "data/essentiality/evidence"
+        )
+    if not os.path.exists(chemistry_audit_path):
+        raise ValueError(
+            f"Essentiality patch {patch_id} chemistry audit is missing: "
+            f"{chemistry_audit_path}"
+        )
+    chemistry_audit_sha256 = sha256_file(chemistry_audit_path)
+    if chemistry_audit_sha256 != chemistry["audit_sha256"].strip():
+        raise ValueError(
+            f"Essentiality patch {patch_id} chemistry audit SHA does not match dossier"
+        )
+
+    ledger_path = os.path.join(essentiality_dir, "curation_cases.csv")
+    ledger_matches = [
+        item for item in read_ledger(ledger_path) if item["case_id"] == case_id
+    ]
+    if len(ledger_matches) != 1:
+        raise ValueError(
+            f"Essentiality patch {patch_id} requires one durable ledger row; "
+            f"found {len(ledger_matches)}"
+        )
+    ledger = ledger_matches[0]
+    if ledger["status"] not in {"accepted", "implemented", "regression_passed"}:
+        raise ValueError(
+            f"Essentiality patch {patch_id} ledger status is {ledger['status']!r}, "
+            "not accepted"
+        )
+    for field in ("target_fingerprint", "approved_by", "approved_at"):
+        if ledger.get(field, "") != row[field].strip():
+            raise ValueError(
+                f"Essentiality patch {patch_id} {field} does not match durable ledger"
+            )
+    expected_chemistry_fingerprint = dossier["chemistry_fingerprint"]
+    if ledger.get("chemistry_fingerprint", "") != expected_chemistry_fingerprint:
+        raise ValueError(
+            f"Essentiality patch {patch_id} chemistry fingerprint does not match "
+            "durable ledger"
+        )
+
+    reaction_ids = sorted(
+        {
+            str(context.get("reaction_id", "")).strip()
+            for context in dossier.get("model_context", {}).get("reactions", [])
+            if str(context.get("reaction_id", "")).strip()
+        }
+    )
+    if not reaction_ids:
+        reaction_ids = [row["target_id"].strip()]
+    live_contexts = []
+    for reaction_id in reaction_ids:
+        try:
+            reaction = model.reactions.get_by_id(reaction_id)
+        except KeyError as exc:
+            raise ValueError(
+                f"Essentiality patch {patch_id} evidence targets missing reaction {reaction_id}"
+            ) from exc
+        live_contexts.append(
+            {
+                "reaction_id": reaction.id,
+                "stoichiometry": {
+                    metabolite.id: float(coefficient)
+                    for metabolite, coefficient in sorted(
+                        reaction.metabolites.items(), key=lambda item: item[0].id
+                    )
+                },
+                "lower_bound": float(reaction.lower_bound),
+                "upper_bound": float(reaction.upper_bound),
+                "gpr": reaction.gene_reaction_rule,
+                "metabolite_chemistry": {
+                    metabolite.id: {
+                        "formula": metabolite.formula,
+                        "charge": metabolite.charge,
+                        "compartment": metabolite.compartment,
+                    }
+                    for metabolite in sorted(
+                        reaction.metabolites, key=lambda item: item.id
+                    )
+                },
+            }
+        )
+    live_fingerprint = target_fingerprint(live_contexts)
+    if live_fingerprint != expected_fingerprint:
+        raise ValueError(
+            f"Essentiality patch {patch_id} is stale: target fingerprint changed "
+            f"({expected_fingerprint} -> {live_fingerprint})"
+        )
+    live_chemistry_fingerprint = chemistry_fingerprint(live_contexts)
+    if live_chemistry_fingerprint != expected_chemistry_fingerprint:
+        raise ValueError(
+            f"Essentiality patch {patch_id} is stale: chemistry fingerprint changed "
+            f"({expected_chemistry_fingerprint} -> {live_chemistry_fingerprint})"
+        )
+    return {
+        "case_id": case_id,
+        "evidence_path": evidence_path,
+        "approved_by": row["approved_by"].strip(),
+        "approved_at": row["approved_at"].strip(),
+        "target_fingerprint": expected_fingerprint,
+        "chemistry_fingerprint": expected_chemistry_fingerprint,
+        "chemistry_audit_path": chemistry_audit_path,
+        "chemistry_audit_sha256": chemistry_audit_sha256,
+        "audited_reaction_ids": ";".join(chemistry["audited_reaction_ids"]),
+    }
+
+
+def _assert_schema_v2_post_patch_balance(
+    model, audited_reaction_ids: str, patch_id: str
+) -> None:
+    """Stop a schema-v2 build if an audited target is no longer balanced."""
+    failures: dict[str, object] = {}
+    for reaction_id in (
+        item.strip() for item in audited_reaction_ids.split(";") if item.strip()
+    ):
+        try:
+            reaction = model.reactions.get_by_id(reaction_id)
+        except KeyError:
+            failures[reaction_id] = "missing_after_patch"
+            continue
+        try:
+            residual = reaction.check_mass_balance()
+        except (TypeError, ValueError) as exc:
+            failures[reaction_id] = f"uncheckable: {exc}"
+            continue
+        if residual:
+            failures[reaction_id] = residual
+    if failures:
+        raise ValueError(
+            f"Essentiality patch {patch_id} failed the post-patch mass/charge "
+            f"gate: {failures}"
+        )
+
+
+def apply_curated_essentiality_patches(
+    model,
+    patches_csv: str | None = None,
+) -> list[dict[str, str]]:
+    """Apply reviewed essentiality patches from the audit table.
+
+    Only ``status=accepted`` rows are eligible. Schema-v2 rows must also match
+    a direct-evidence dossier, independent skeptic pass, durable human approval
+    and the current target fingerprint. ``EG-GPR-001`` is the sole legacy-v1
+    exception. Eligible rows may use one of five deliberately narrow operations:
+
+    - ``set_gpr``: replace a reaction's gene-reaction rule with ``value``;
+    - ``set_bounds``: set ``lower;upper`` bounds from ``value``;
+    - ``remove_reaction``: remove the target reaction without removing orphans;
+    - ``couple_trna_biomass``: use ``target_id`` as biomass and ``value`` as
+      the locked tRNA template reaction.
+    - ``partition_cpa_ura2``: replace the shared CPA1/CPA2/URA2 pool with a
+      channelled URA2 reaction and an arginine-specific CPA1 AND CPA2 reaction.
+
+    The function returns an audit list describing applied changes. Empty and
+    review-only tables are valid and leave the model unchanged.
+    """
+    import csv
+    import os
+
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    legacy_essentiality_dir = os.path.join(root, "data", "essentiality")
+    if patches_csv is None:
+        patches_csv = os.fspath(_ESSENTIALITY_PATCHES_CSV)
+        essentiality_dir = os.fspath(ESSENTIALITY_DIR)
+    else:
+        essentiality_dir = (
+            legacy_essentiality_dir
+            if os.path.isdir(legacy_essentiality_dir)
+            else os.path.dirname(os.path.abspath(patches_csv))
+        )
+    if not os.path.exists(patches_csv):
+        logger.warning("  Essentiality patch table not found: %s", patches_csv)
+        return []
+
+    required = {
+        "patch_id",
+        "status",
+        "operation",
+        "target_id",
+        "value",
+        "evidence_url",
+        "rationale",
+    }
+    applied: list[dict[str, str]] = []
+    accepted_rows: list[tuple[int, dict[str, str]]] = []
+    with open(patches_csv, newline="") as handle:
+        reader = csv.DictReader(handle)
+        missing = required - set(reader.fieldnames or [])
+        if missing:
+            raise ValueError(
+                f"Essentiality patch table missing columns: {sorted(missing)}"
+            )
+        for line_number, row in enumerate(reader, start=2):
+            if row["status"].strip().lower() != "accepted":
+                continue
+            accepted_rows.append((line_number, row))
+
+    # Validate every accepted row against its evidence dossier before applying
+    # any of them. This prevents a later stale or mismatched schema-v2 row from
+    # leaving the caller's model partially patched.
+    preflighted: list[dict[str, object]] = []
+    for line_number, row in accepted_rows:
+        patch_id = row["patch_id"].strip()
+        operation = row["operation"].strip()
+        target_id = row["target_id"].strip()
+        value = row["value"].strip()
+        evidence_url = row["evidence_url"].strip()
+        rationale = row["rationale"].strip()
+        schema_version_text = (row.get("schema_version") or "1").strip() or "1"
+        try:
+            schema_version = int(float(schema_version_text))
+        except ValueError as exc:
+            raise ValueError(
+                f"Essentiality patch {patch_id} has invalid schema_version "
+                f"{schema_version_text!r}"
+            ) from exc
+        if not patch_id or not target_id:
+            raise ValueError(f"Essentiality patch row {line_number} lacks ID/target")
+        if operation not in _ESSENTIALITY_OPERATIONS:
+            raise ValueError(
+                f"Essentiality patch {patch_id} has unsupported operation {operation!r}"
+            )
+        if not evidence_url.startswith(("https://", "http://")) or not rationale:
+            raise ValueError(
+                f"Essentiality patch {patch_id} requires evidence_url and rationale"
+            )
+        gate_audit: dict[str, str] = {}
+        if schema_version >= 2:
+            gate_audit = _validate_schema_v2_patch_gate(
+                model,
+                row,
+                root,
+                essentiality_dir,
+                patch_id,
+            )
+        else:
+            if patch_id != "EG-GPR-001":
+                raise ValueError(
+                    f"Essentiality patch {patch_id} cannot use the legacy "
+                    "schema-v1 gate"
+                )
+            logger.warning(
+                "  Essentiality patch %s uses legacy schema-v1 approval; "
+                "evidence backfill is still required",
+                patch_id,
+            )
+        try:
+            reaction = model.reactions.get_by_id(target_id)
+        except KeyError as exc:
+            raise ValueError(
+                f"Essentiality patch {patch_id} targets missing reaction {target_id}"
+            ) from exc
+
+        bounds: tuple[float, float] | None = None
+        if operation == "set_gpr" and not value:
+            raise ValueError(f"Essentiality patch {patch_id} has an empty GPR")
+        if operation == "set_bounds":
+            try:
+                lower_text, upper_text = value.split(";", 1)
+                bounds = (float(lower_text), float(upper_text))
+            except (ValueError, TypeError) as exc:
+                raise ValueError(
+                    f"Essentiality patch {patch_id} bounds must be 'lower;upper'"
+                ) from exc
+            if bounds[0] > bounds[1]:
+                raise ValueError(f"Essentiality patch {patch_id} has inverted bounds")
+
+        preflighted.append(
+            {
+                "patch_id": patch_id,
+                "operation": operation,
+                "target_id": target_id,
+                "value": value,
+                "evidence_url": evidence_url,
+                "rationale": rationale,
+                "schema_version": schema_version,
+                "gate_audit": gate_audit,
+                "reaction": reaction,
+                "bounds": bounds,
+            }
+        )
+
+    for patch in preflighted:
+        patch_id = str(patch["patch_id"])
+        operation = str(patch["operation"])
+        target_id = str(patch["target_id"])
+        value = str(patch["value"])
+        evidence_url = str(patch["evidence_url"])
+        rationale = str(patch["rationale"])
+        schema_version = int(patch["schema_version"])
+        gate_audit = patch["gate_audit"]
+        reaction = patch["reaction"]
+        before = ""
+        after = ""
+        if operation == "set_gpr":
+            before = reaction.gene_reaction_rule
+            reaction.gene_reaction_rule = value
+            after = reaction.gene_reaction_rule
+        elif operation == "set_bounds":
+            bounds = patch["bounds"]
+            before = f"{reaction.lower_bound};{reaction.upper_bound}"
+            reaction.bounds = bounds
+            after = f"{reaction.lower_bound};{reaction.upper_bound}"
+        elif operation == "remove_reaction":
+            before = reaction.reaction
+            model.remove_reactions([reaction], remove_orphans=False)
+            after = "removed"
+        elif operation == "couple_trna_biomass":
+            template_id = value or "R1387"
+            before = reaction.reaction
+            mapping = couple_trna_charging_to_biomass(
+                model,
+                biomass_id=target_id,
+                template_id=template_id,
+            )
+            after = reaction.reaction
+            if not mapping and before == after:
+                logger.info("  Essentiality patch %s already applied", patch_id)
+        else:
+            partition_audit = partition_cpa_ura2_pathways(model)
+            before = partition_audit["before"]
+            after = partition_audit["after"]
+
+        if schema_version >= 2 and operation != "remove_reaction":
+            _assert_schema_v2_post_patch_balance(
+                model,
+                str(gate_audit["audited_reaction_ids"]),
+                patch_id,
+            )
+
+        audit_row = {
+            "patch_id": patch_id,
+            "schema_version": str(schema_version),
+            "operation": operation,
+            "target_id": target_id,
+            "before": before,
+            "after": after,
+            "evidence_url": evidence_url,
+            "rationale": rationale,
+        }
+        audit_row.update(gate_audit)
+        applied.append(audit_row)
+    return applied
+
+
 # ── Patch 9: annotate the isozyme genes added by patch 8 ───────────────────
 
 # The genes added by add_isozyme_gprs enter the model with no annotation.
@@ -727,7 +1686,7 @@ def fill_neutral_formulas(model, fill_csv: str | None = None) -> int:
 
 # ── Lipid chain-menu extension: add C16:1 palmitoleoyl-CoA to acyl-CoA pools ──
 
-# Y. lipolytica W29 makes ~8% palmitoleate (C16:1) but the iYli21 acyl-CoA pools
+# Y. lipolytica W29 makes ~8% palmitoleate (C16:1) but the iYali26 acyl-CoA pools
 # omit it (Carsanba 2020, Table 3: C16:1 = 8.3% on glucose, day 2 —
 # https://pmc.ncbi.nlm.nih.gov/articles/PMC7409262/, verified 2026-06).
 # We add palmitoleoyl-CoA to the 3 acyl-CoA pools (xPOOL_AC_EM/LP/MM), giving it
@@ -900,7 +1859,7 @@ def apply_all_patches(model) -> dict:
     Apply all known model patches. Returns a dict with per-patch counts.
     Safe to call multiple times (idempotent — already-correct values are skipped).
     """
-    logger.info("Applying iYli21 known-bug patches …")
+    logger.info("Applying iYali26 known-bug patches …")
     # NOTE: fix_ec_code_format is intentionally NOT called here.  Reaction EC
     # codes are populated later in the pipeline (gene EC enrichment, EC
     # backfill, reaction xref backfill), so EC formatting must run after those
