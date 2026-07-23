@@ -1,9 +1,0 @@
-reaction_id,bound,met_name,met_id
-R1016,1000.0,ammonium_H3N,m1031[C_ex]
-R1030,1000.0,carbon dioxide_CO2,m1176[C_ex]
-R1070,10.0,D-glucose_C6H12O6,m511[C_ex]
-R1189,1000.0,iron_Fe,m1273[C_ex]
-R1287,1000.0,oxygen_O2,m1339[C_ex]
-R1296,1000.0,phosphate_H3O4P,m215[C_ex]
-R1333,1000.0,sulphate_H2O4S,m1113[C_ex]
-R1364,1000.0,H2O_H2O,m214[C_ex]

@@ -9,17 +9,21 @@ if [ -f .venv/bin/activate ]; then
 fi
 
 echo "=== Running gem_annotate ==="
-python -m scripts.gem_annotate
+RESEARCH_ARGS=()
+if [ -n "${IYALI26_RESEARCH_ROOT:-}" ]; then
+  RESEARCH_ARGS=(--research-root "$IYALI26_RESEARCH_ROOT")
+fi
+python -m scripts.gem_annotate "${RESEARCH_ARGS[@]}"
 
 # Sync the rebuilt model to the Genome-wide consumer repo (single source of truth
 # = here). set -e above guarantees a failed rebuild aborts before this copy.
-echo "=== Syncing model.xml to Genome-wide (consumer repo) ==="
-GW_MODEL="/Users/david/Desktop/Lab/Ian wheeldon/code/Genome-wide/model.xml"
-if [ -d "$(dirname "$GW_MODEL")" ]; then
-  cp model.xml "$GW_MODEL"
-  echo "  synced -> $GW_MODEL  (md5 $(md5 -q model.xml))"
+echo "=== Syncing model.xml to configured consumer ==="
+CONSUMER_MODEL="${IYALI26_CONSUMER_MODEL:-}"
+if [ -n "$CONSUMER_MODEL" ] && [ -d "$(dirname "$CONSUMER_MODEL")" ]; then
+  cp model.xml "$CONSUMER_MODEL"
+  echo "  synced -> $CONSUMER_MODEL  (md5 $(md5 -q model.xml))"
 else
-  echo "  Genome-wide dir not found — skipping sync"
+  echo "  IYALI26_CONSUMER_MODEL is unset or its directory is missing — skipping sync"
 fi
 
 echo "=== Running memote ==="
