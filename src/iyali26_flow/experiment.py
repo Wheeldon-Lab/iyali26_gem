@@ -33,6 +33,7 @@ from .provenance import (
     utc_now,
 )
 from .simulator import R4R1846CapacitySimulator
+from scripts.gem_annotate.run_registry import guard_duplicate_run, register_run
 
 
 MANIFEST_NAME = "run_manifest.json"
@@ -195,6 +196,9 @@ class ExperimentRunner:
         output_dir: Path,
         *,
         resume: bool = True,
+        research_root: Path | None = None,
+        force_rerun: bool = False,
+        reproduction_reason: str | None = None,
     ) -> None:
         self.config = config
         self.output_dir = Path(output_dir).resolve()
@@ -216,6 +220,20 @@ class ExperimentRunner:
                 "code_sources": self._code_sources,
             }
         )
+        self._research_root = Path(research_root).resolve() if research_root else None
+        self._previous_run = (
+            guard_duplicate_run(
+                self._research_root,
+                workflow="flow",
+                run_key=self._run_key,
+                output_dir=self.output_dir,
+                force_rerun=force_rerun,
+                reproduction_reason=reproduction_reason,
+            )
+            if self._research_root is not None
+            else None
+        )
+        self._reproduction_reason = reproduction_reason
         self._protected_before = _hash_paths(_protected_paths(config))
         self._manifest = self._prepare_manifest()
         self.simulator = R4R1846CapacitySimulator(config)
@@ -828,6 +846,24 @@ class ExperimentRunner:
         if status == "complete":
             self._manifest["completed_at"] = utc_now()
         self._write_manifest()
+        if status == "complete" and self._research_root is not None:
+            register_run(
+                self._research_root,
+                workflow="flow",
+                run_key=self._run_key,
+                output_dir=self.output_dir,
+                manifest_path=self.manifest_path,
+                inputs=self._verified_inputs,
+                code_sources=self._code_sources,
+                configuration={
+                    "experiment_id": self.config.experiment_id,
+                    "config_sha256": self.config.config_sha256,
+                    "package_version": __version__,
+                },
+                status="complete",
+                previous=self._previous_run,
+                reproduction_reason=self._reproduction_reason,
+            )
         if changed:
             raise RuntimeError(error)
         return ExperimentOutcome(status, self.output_dir, self.manifest_path, decision)

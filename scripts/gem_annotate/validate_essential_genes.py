@@ -58,6 +58,12 @@ from .isozyme_resolution import (
     build_isozyme_resolution_ledger,
     classify_isozyme_counterfactual,
 )
+from .run_registry import (
+    build_run_key,
+    guard_duplicate_run,
+    register_run,
+    utc_now as registry_utc_now,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -1466,6 +1472,8 @@ def build_run_manifest(
     assay_source_sha256s: Iterable[str] = (),
     repo_root: Path = REPO_ROOT,
     generated_at: str | None = None,
+    run_key: str | None = None,
+    code_sources: dict[str, str] | None = None,
 ) -> dict[str, object]:
     """Build a credential-free provenance manifest for one validation run."""
     inputs: dict[str, object] = {
@@ -1488,7 +1496,7 @@ def build_run_manifest(
             "sha256": sha256_file(Path(assay_fitness_path)),
             "source_workbook_sha256": sorted(set(assay_source_sha256s)),
         }
-    return {
+    manifest = {
         "schema_version": "1.0",
         "generated_at": generated_at
         or datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -1511,6 +1519,11 @@ def build_run_manifest(
             "credentials_included": False,
         },
     }
+    if run_key is not None:
+        manifest["run_key"] = run_key
+    if code_sources is not None:
+        manifest["code_sources"] = dict(code_sources)
+    return manifest
 
 
 def validate_essential_genes(
@@ -1531,6 +1544,8 @@ def validate_essential_genes(
     isozyme_capacity_scan_path: Path | None = None,
     assay_fitness_path: Path | None = None,
     case_category: str | None = None,
+    run_key: str | None = None,
+    code_sources: dict[str, str] | None = None,
 ) -> dict[str, object]:
     if batch_size <= 0:
         raise ValueError("batch_size must be positive")
@@ -1739,6 +1754,8 @@ def validate_essential_genes(
             if assay_fitness is not None
             else ()
         ),
+        run_key=run_key,
+        code_sources=code_sources,
     )
     manifest_path = output_dir / "run_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
@@ -1807,6 +1824,15 @@ def main() -> None:
     parser.add_argument("--model", "-m", type=Path, default=REPO_ROOT / "model.xml")
     parser.add_argument("--media", type=Path)
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument(
+        "--force-rerun",
+        action="store_true",
+        help="reproduce an identical successful run; requires --reproduction-reason",
+    )
+    parser.add_argument(
+        "--reproduction-reason",
+        help="why a matching successful result must be reproduced",
+    )
     parser.add_argument("--positive-only", action="store_true")
     parser.add_argument(
         "--assay-fitness",
@@ -1872,9 +1898,6 @@ def main() -> None:
         )
     if args.media is None:
         args.media = project_paths.media / "sd_leu.csv"
-    if args.output_dir is None:
-        args.output_dir = project_paths.results / "essentiality"
-
     for path, label in (
         (args.experimental, "experimental file"),
         (args.model, "model"),
@@ -1895,6 +1918,65 @@ def main() -> None:
     if args.assay_fitness is not None and not args.assay_fitness.exists():
         parser.error(f"assay fitness file not found: {args.assay_fitness}")
 
+    inputs: dict[str, dict[str, str]] = {
+        "model": {"path": str(args.model.resolve()), "sha256": sha256_file(args.model)},
+        "experimental": {
+            "path": str(args.experimental.resolve()),
+            "sha256": sha256_file(args.experimental),
+        },
+        "medium": {"path": str(args.media.resolve()), "sha256": sha256_file(args.media)},
+    }
+    if args.assay_fitness is not None:
+        inputs["assay_fitness"] = {
+            "path": str(args.assay_fitness.resolve()),
+            "sha256": sha256_file(args.assay_fitness),
+        }
+    code_sources = {
+        str(path.resolve()): sha256_file(path)
+        for path in (
+            Path(__file__),
+            Path(__file__).with_name("essentiality_evidence.py"),
+            Path(__file__).with_name("patches.py"),
+        )
+        if path.is_file()
+    }
+    configuration = {
+        "positive_only": bool(args.positive_only),
+        "primary_cutoff": float(args.primary_cutoff),
+        "growth_cutoffs": [float(value) for value in args.growth_cutoffs],
+        "solver": args.solver,
+        "diagnose": bool(args.diagnose),
+        "prepare_agent_cases": bool(args.prepare_agent_cases),
+        "case_category": args.case_category,
+    }
+    run_key = build_run_key(
+        "essentiality",
+        inputs=inputs,
+        code_sources=code_sources,
+        configuration=configuration,
+    )
+    if args.output_dir is None:
+        args.output_dir = (
+            project_paths.results
+            / "essentiality"
+            / f"{run_key[:12]}-{registry_utc_now().replace(':', '').replace('+00:00', 'Z')}"
+        )
+    if args.output_dir.exists():
+        parser.error(
+            "--output-dir already exists; use a new directory to preserve every prior result"
+        )
+    try:
+        previous_run = guard_duplicate_run(
+            project_paths.research_root,
+            workflow="essentiality",
+            run_key=run_key,
+            output_dir=args.output_dir,
+            force_rerun=args.force_rerun,
+            reproduction_reason=args.reproduction_reason,
+        )
+    except (ValueError, RuntimeError) as exc:
+        parser.error(str(exc))
+
     try:
         summary = validate_essential_genes(
             experimental_path=args.experimental,
@@ -1914,10 +1996,25 @@ def main() -> None:
             case_category=args.case_category,
             case_ledger_path=project_paths.essentiality / "curation_cases.csv",
             evidence_dir=project_paths.essentiality / "evidence",
+            run_key=run_key,
+            code_sources=code_sources,
         )
     except (ValueError, RuntimeError) as exc:
         logger.error("%s", exc)
         sys.exit(2)
+    register_run(
+        project_paths.research_root,
+        workflow="essentiality",
+        run_key=run_key,
+        output_dir=args.output_dir,
+        manifest_path=Path(str(summary["run_manifest"])),
+        inputs=inputs,
+        code_sources=code_sources,
+        configuration=configuration,
+        status="complete",
+        previous=previous_run,
+        reproduction_reason=args.reproduction_reason,
+    )
     print_summary(summary)
 
 

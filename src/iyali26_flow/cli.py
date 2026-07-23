@@ -16,6 +16,7 @@ from .experiment import (
     HardTimeoutExceeded,
 )
 from .fmpe import train_fmpe
+from scripts.gem_annotate.config import load_project_paths
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -38,6 +39,15 @@ def _parser() -> argparse.ArgumentParser:
                 "--no-resume",
                 action="store_true",
                 help="refuse an existing output instead of resuming it",
+            )
+            command.add_argument(
+                "--force-rerun",
+                action="store_true",
+                help="run despite a matching completed fingerprint; requires a reason",
+            )
+            command.add_argument(
+                "--reproduction-reason",
+                help="why a matching completed run must be reproduced",
             )
     return parser
 
@@ -70,6 +80,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             repo_root=Path.cwd(),
             research_root=args.research_root,
         )
+        project_paths = load_project_paths(args.research_root, required=True)
         previous_alarm = _install_alarm(config.hard_timeout_seconds)
         try:
             if args.command == "phase1":
@@ -77,12 +88,20 @@ def main(argv: Sequence[str] | None = None) -> int:
                     config,
                     args.output,
                     resume=not args.no_resume,
+                    research_root=project_paths.research_root,
+                    force_rerun=args.force_rerun,
+                    reproduction_reason=args.reproduction_reason,
                 )
                 outcome = runner.run_phase1()
                 payload = outcome.to_dict()
                 exit_code = 124 if outcome.status == "partial_timeout" else 0
             elif args.command == "analyze":
-                runner = ExperimentRunner(config, args.output, resume=True)
+                runner = ExperimentRunner(
+                    config,
+                    args.output,
+                    resume=True,
+                    research_root=project_paths.research_root,
+                )
                 outcome = runner.analyze_only()
                 payload = outcome.to_dict()
                 exit_code = 0
