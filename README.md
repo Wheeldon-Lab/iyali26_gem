@@ -48,6 +48,38 @@ in `config/research-workspace.example.toml`:
 verification workflow. `relocation_manifest.csv` maps every original path to its
 archived destination and SHA-256.
 
+## Model patches and research runs
+
+`scripts.gem_annotate` is the only canonical model build implementation.
+`scripts/update_model.py` remains solely as a compatibility forwarding entry
+point; its prior monolithic source is retained in the external archive.
+
+For an individual, curated patch, use the shared runner and always choose a
+new output path. It refuses both the canonical `model.xml` and an existing
+output file:
+
+```bash
+python -m scripts.gem_annotate.patch_runner \
+  --patch c161-pool-extension \
+  --input-model data/iyali26.xml \
+  --output-model /tmp/iyali26-c161-experiment.xml
+```
+
+The four historical patch scripts remain compatibility wrappers around this
+same runner. Their archived source remains available under the external
+research workspace's `archive/legacy_code/` directory.
+
+Research runs are recorded append-only in
+`$IYALI26_RESEARCH_ROOT/artifacts/run_registry.jsonl`. A matching successful
+fingerprint is rejected by default; use `--force-rerun --reproduction-reason
+"..."` only for an intentional reproduction. Existing manifests are immutable;
+to register historical runs and retained duplicate artifacts, run:
+
+```bash
+python -m scripts.gem_annotate.run_registry backfill \
+  --research-root "$IYALI26_RESEARCH_ROOT"
+```
+
 ## MetaNetX
 
 Place downloaded MetaNetX files under
