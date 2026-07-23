@@ -1,0 +1,22 @@
+schema_version = 1
+
+# Runtime configuration uses --research-root first, then this environment variable.
+environment_variable = "IYALI26_RESEARCH_ROOT"
+
+[layout]
+raw = "raw"
+reference = "reference"
+essentiality_state = "state/essentiality/repository"
+curation_data = "state/curation/data"
+media = "state/media"
+experiments = "experiments/repository"
+results = "artifacts/results"
+weekly_briefing = "artifacts/weekly_briefing"
+cache = "cache/data"
+snapshots = "snapshots"
+
+[safety]
+relocation_manifest = "relocation_manifest.csv"
+content_manifest = "manifest.json"
+overwrite_existing_files = false
+delete_source_content = false
