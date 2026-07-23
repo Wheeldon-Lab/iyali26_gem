@@ -51,3 +51,13 @@ def test_legacy_patch_entrypoints_only_delegate_to_shared_runner() -> None:
         assert "main_for_legacy" in text
         assert "write_sbml_model" not in text
         assert "model.xml\"" not in text
+
+
+def test_no_script_directly_writes_the_canonical_model() -> None:
+    root = Path(__file__).resolve().parents[1]
+    violations = []
+    for source in (root / "scripts").rglob("*.py"):
+        text = source.read_text(encoding="utf-8")
+        if "model.xml" in text and "write_sbml_model" in text:
+            violations.append(source.relative_to(root))
+    assert violations == []
