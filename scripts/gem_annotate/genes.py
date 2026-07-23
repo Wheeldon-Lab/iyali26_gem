@@ -2,11 +2,11 @@
 genes.py — gene annotation via UniProt REST API and NCBI E-utilities.
 """
 
+import csv
 import json
 import logging
 import re
-
-import requests
+from pathlib import Path
 
 from .http_utils import _request_with_retry
 from .config import (
@@ -18,6 +18,14 @@ from .config import (
     _TIER_B_LIMIT,
     _UNIPROT_SEARCH_URL,
     CACHE_DIR,
+    ESSENTIALITY_DIR,
+    load_project_paths,
+)
+from .locus_resolver import (
+    LocusCrosswalk,
+    canonical_locus_key,
+    load_default_locus_crosswalk,
+    locus_spelling_variants,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,26 +33,17 @@ logger = logging.getLogger(__name__)
 
 def _normalise_locus_tag(raw: str) -> set[str]:
     """
-    Return all four candidate forms for a Y. lipolytica locus tag so that
-    matching works regardless of strain (YALI0/YALI1) or underscore convention.
+    Return spelling variants without changing genome assembly.
 
     Examples
     --------
-    "YALI1C08548g"  →  {"YALI1C08548g", "YALI1_C08548g",
-                         "YALI0C08548g", "YALI0_C08548g"}
-    "YALI0_C08548g" →  same set
+    "YALI1C08548g"  →  {"YALI1C08548g", "YALI1_C08548g"}
+    "YALI0_C08548g" →  {"YALI0C08548g", "YALI0_C08548g"}
+
+    Cross-assembly aliases are resolved separately through the explicit
+    version-controlled YALI1/YALI0 crosswalk.
     """
-    # strip optional underscore after prefix, normalise to bare form
-    m = re.match(r"(YALI[01])_?([A-Za-z]\d+g)$", raw, re.IGNORECASE)
-    if not m:
-        return {raw}
-    suffix = m.group(2)
-    return {
-        f"YALI0{suffix}",
-        f"YALI0_{suffix}",
-        f"YALI1{suffix}",
-        f"YALI1_{suffix}",
-    }
+    return locus_spelling_variants(raw)
 
 
 def _merge_gene_annotation(gene, new_data: dict) -> None:
@@ -62,6 +61,126 @@ def _merge_gene_annotation(gene, new_data: dict) -> None:
             existing_list = existing if isinstance(existing, list) else [existing]
             merged[key] = list(dict.fromkeys(existing_list + new_vals))
     gene.annotation = merged
+
+
+_GENE_IDENTITY_KEYS = (
+    "uniprot",
+    "kegg.genes",
+    "ncbigene",
+    "refseq",
+    "ec-code",
+)
+_GENE_OVERRIDE_REQUIRED_FIELDS = {
+    "gene_id",
+    *_GENE_IDENTITY_KEYS,
+    "case_id",
+    "evidence_path",
+    "source_url",
+    "reason",
+}
+_DEFAULT_GENE_ANNOTATION_OVERRIDES = (
+    ESSENTIALITY_DIR / "curated_gene_annotation_overrides.csv"
+)
+
+
+def _split_annotation_values(raw: str) -> list[str]:
+    """Parse a semicolon-delimited curated annotation cell."""
+    return list(dict.fromkeys(value.strip() for value in raw.split(";") if value.strip()))
+
+
+def apply_curated_gene_annotation_overrides(
+    model, csv_path: str | Path | None = None
+) -> int:
+    """Replace identity-linked annotations using an evidence-backed curation table.
+
+    Automated YALI0/YALI1 matching is useful for broad annotation coverage, but the
+    numeric suffixes are not universally conserved between genome assemblies. This
+    late Tier-A override removes stale identity values rather than merging them, then
+    lets the downstream ID-mapping and EC-enrichment steps operate on the corrected
+    accessions. Non-identity annotations such as SBO terms are preserved.
+
+    Returns the number of genes whose annotations changed. The operation is
+    idempotent and never changes GPRs, reactions, bounds, or stoichiometry.
+    """
+    path = Path(csv_path) if csv_path is not None else _DEFAULT_GENE_ANNOTATION_OVERRIDES
+    if not path.exists():
+        logger.info("  Gene identity overrides: no table found at %s", path)
+        return 0
+
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        missing = _GENE_OVERRIDE_REQUIRED_FIELDS - set(reader.fieldnames or [])
+        if missing:
+            raise ValueError(
+                f"Gene annotation override table missing columns: {sorted(missing)}"
+            )
+        rows = list(reader)
+
+    seen: set[str] = set()
+    changed = 0
+    for line_number, row in enumerate(rows, start=2):
+        gene_id = row["gene_id"].strip()
+        if not gene_id:
+            raise ValueError(f"Gene annotation override row {line_number} has no gene_id")
+        if gene_id in seen:
+            raise ValueError(f"Duplicate gene annotation override for {gene_id}")
+        seen.add(gene_id)
+
+        try:
+            gene = model.genes.get_by_id(gene_id)
+        except KeyError as exc:
+            raise ValueError(
+                f"Gene annotation override target is absent from model: {gene_id}"
+            ) from exc
+
+        case_id = row["case_id"].strip()
+        evidence_path = Path(row["evidence_path"].strip())
+        if not evidence_path.is_absolute():
+            evidence_path = load_project_paths().resolve_legacy_path(evidence_path)
+        if not evidence_path.exists():
+            raise ValueError(
+                f"Gene annotation override evidence is missing for {gene_id}: "
+                f"{evidence_path}"
+            )
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        if evidence.get("case_id") != case_id:
+            raise ValueError(
+                f"Gene annotation override evidence case mismatch for {gene_id}: "
+                f"expected {case_id}, found {evidence.get('case_id')!r}"
+            )
+        if not row["source_url"].strip() or not row["reason"].strip():
+            raise ValueError(
+                f"Gene annotation override for {gene_id} lacks source_url or reason"
+            )
+
+        replacement: dict[str, list[str]] = {}
+        for key in _GENE_IDENTITY_KEYS:
+            values = _split_annotation_values(row[key])
+            if not values:
+                raise ValueError(
+                    f"Gene annotation override for {gene_id} has no value for {key}"
+                )
+            replacement[key] = values
+
+        current = dict(gene.annotation) if isinstance(gene.annotation, dict) else {}
+        updated = dict(current)
+        for key in _GENE_IDENTITY_KEYS:
+            updated.pop(key, None)
+        updated.update(replacement)
+        if updated == current:
+            continue
+
+        gene.annotation = updated
+        changed += 1
+        logger.info(
+            "  Gene identity override: %s -> UniProt %s, NCBI Gene %s (%s)",
+            gene_id,
+            ";".join(replacement["uniprot"]),
+            ";".join(replacement["ncbigene"]),
+            case_id,
+        )
+
+    return changed
 
 
 def _parse_uniprot_entry(entry: dict) -> tuple[set[str], dict]:
@@ -165,21 +284,20 @@ def _fetch_proteome(proteome_id: str) -> list[dict]:
     return results
 
 
-def _tier_a(gene_ids: list[str]) -> dict[str, dict]:
+def _tier_a(
+    gene_ids: list[str], resolver: LocusCrosswalk | None = None
+) -> dict[str, dict]:
     """
     Tier A: bulk proteome download.
 
     Downloads W29/CLIB89 proteome (UP000182444) first, then CLIB122 reference
-    proteome (UP000001300).  Matches entries to model gene IDs via normalised OLN lookup
-    (strip underscore, case-insensitive, YALI0↔YALI1 interchangeable).
+    proteome (UP000001300).  Matches entries to model gene IDs via exact
+    assembly-preserving spelling or an explicit one-to-one crosswalk alias.
 
     Returns {model_gene_id: annotation_dict}
     """
-    # Build a lookup: normalised_candidate → model_gene_id
-    candidate_to_model: dict[str, str] = {}
-    for gid in gene_ids:
-        for cand in _normalise_locus_tag(gid):
-            candidate_to_model[cand.lower()] = gid
+    resolver = resolver or load_default_locus_crosswalk()
+    candidate_to_model = resolver.build_lookup(gene_ids)
 
     mapping: dict[str, dict] = {}
 
@@ -190,30 +308,47 @@ def _tier_a(gene_ids: list[str]) -> dict[str, dict]:
             logger.debug(f"    [debug] entry {i} genes field: {gene_info}")
         for entry in entries:
             candidates, ann = _parse_uniprot_entry(entry)
-            for cand in candidates:
-                model_id = candidate_to_model.get(cand.lower())
-                if model_id and model_id not in mapping:
+            matched_model_ids = {
+                candidate_to_model[canonical_locus_key(candidate)]
+                for candidate in candidates
+                if canonical_locus_key(candidate) in candidate_to_model
+            }
+            if len(matched_model_ids) > 1:
+                logger.warning(
+                    "  Tier A: refusing UniProt entry %s because its locus names "
+                    "resolve to multiple model genes: %s",
+                    entry.get("primaryAccession", ""),
+                    sorted(matched_model_ids),
+                )
+                continue
+            if matched_model_ids:
+                model_id = next(iter(matched_model_ids))
+                if model_id not in mapping:
                     mapping[model_id] = ann
         logger.info(f"    Tier A running total after {proteome_id}: {len(mapping)} mapped")
 
     return mapping
 
 
-def _tier_b(unmapped: list[str]) -> dict[str, dict]:
+def _tier_b(
+    unmapped: list[str], resolver: LocusCrosswalk | None = None
+) -> dict[str, dict]:
     """
     Tier B: per-gene UniProt search for Tier A misses.
 
-    Queries  gene_exact:<id> AND organism_id:4952  for each unmapped gene,
-    trying all four normalised locus-tag forms.  Stops after _TIER_B_LIMIT
-    API calls to avoid rate-limit issues.
+    Queries ``gene_exact`` for exact spellings and explicit one-to-one
+    crosswalk aliases only.  Loose same-suffix or fuzzy gene searches are not
+    accepted.  Stops after _TIER_B_LIMIT API calls to avoid rate-limit issues.
 
-    Results are cached to data/cache/tier_b_results.json keyed by gene ID.
+    Results are cached under a crosswalk-fingerprinted filename keyed by gene ID.
     On subsequent runs, already-queried genes (hit or miss) are skipped entirely.
 
     Returns {model_gene_id: annotation_dict}
     """
+    resolver = resolver or load_default_locus_crosswalk()
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cache_file = CACHE_DIR / "tier_b_results.json"
+    resolver_token = resolver.fingerprint.removeprefix("sha256:")[:16]
+    cache_file = CACHE_DIR / f"tier_b_results_safe_{resolver_token}.json"
 
     # Load existing cache: {gene_id: ann_dict | null}
     # null means we queried before and found nothing (avoid re-querying misses)
@@ -222,8 +357,11 @@ def _tier_b(unmapped: list[str]) -> dict[str, dict]:
         with cache_file.open() as f:
             cache = json.load(f)
 
-    to_query = [gid for gid in unmapped if gid not in cache]
-    cached_hits = {gid: ann for gid, ann in cache.items() if ann is not None}
+    relevant_cache = {gid: cache[gid] for gid in unmapped if gid in cache}
+    to_query = [gid for gid in unmapped if gid not in relevant_cache]
+    cached_hits = {
+        gid: ann for gid, ann in relevant_cache.items() if ann is not None
+    }
     logger.info(
         f"  Tier B: {len(cached_hits)} hits from cache, "
         f"{len(to_query)}/{len(unmapped)} genes need querying"
@@ -241,34 +379,39 @@ def _tier_b(unmapped: list[str]) -> dict[str, dict]:
             )
             break
 
-        candidates = _normalise_locus_tag(gid)
+        candidates = resolver.query_spellings(gid)
+        target_lookup = resolver.build_lookup([gid])
         hit_ann: dict | None = None
 
-        # Try gene_exact first (all candidates), then fall back to gene: (loose)
-        query_templates = [
-            lambda c: f'gene_exact:"{c}" AND taxonomy_id:4952',
-            lambda c: f'gene:"{c}" AND taxonomy_id:4952',
-        ]
-        for make_query in query_templates:
-            if hit_ann:
-                break
-            for cand in sorted(candidates):   # deterministic order
-                query = make_query(cand)
-                try:
-                    resp = _request_with_retry(
-                        "GET", _UNIPROT_SEARCH_URL,
-                        params={"query": query, "format": "json", "size": 1},
-                        timeout=30,
-                    )
-                    calls += 1
-                    resp.raise_for_status()
-                    results = resp.json().get("results", [])
-                    if results:
-                        _, hit_ann = _parse_uniprot_entry(results[0])
-                        break
-                except Exception as e:
-                    logger.debug(f"Tier B query failed for {cand}: {e}")
-                    calls += 1
+        for cand in sorted(candidates):  # deterministic order
+            query = f'gene_exact:"{cand}" AND taxonomy_id:4952'
+            calls += 1
+            try:
+                resp = _request_with_retry(
+                    "GET", _UNIPROT_SEARCH_URL,
+                    params={"query": query, "format": "json", "size": 1},
+                    timeout=30,
+                )
+                resp.raise_for_status()
+                results = resp.json().get("results", [])
+                if not results:
+                    continue
+                result_candidates, candidate_ann = _parse_uniprot_entry(results[0])
+                matched_model_ids = {
+                    target_lookup[canonical_locus_key(candidate)]
+                    for candidate in result_candidates
+                    if canonical_locus_key(candidate) in target_lookup
+                }
+                if matched_model_ids == {gid}:
+                    hit_ann = candidate_ann
+                    break
+                logger.warning(
+                    "  Tier B: refusing unverified hit for %s from query %s",
+                    gid,
+                    cand,
+                )
+            except Exception as e:
+                logger.debug(f"Tier B query failed for {cand}: {e}")
 
         newly_cached[gid] = hit_ann  # store None for misses to skip next time
         if hit_ann:
@@ -285,7 +428,9 @@ def _tier_b(unmapped: list[str]) -> dict[str, dict]:
     return mapping
 
 
-def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
+def _tier_ncbi(
+    unmapped: list[str], resolver: LocusCrosswalk | None = None
+) -> dict[str, dict]:
     """
     Tier A-prime: bulk NCBI Gene lookup for genes missed by UniProt proteome download.
 
@@ -298,9 +443,9 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
                   returns the full list of NCBI Gene IDs for the organism.
     2. efetch   — fetch those IDs in batches of _NCBI_EFETCH_BATCH, XML format.
     3. Parse    — extract per-gene: Locus_tag, GeneID, RefSeq protein, UniProt.
-    4. Match    — normalise locus tags and look up in candidate_to_model.
+    4. Match    — use exact spelling or the explicit one-to-one crosswalk.
 
-    Results are cached to data/cache/ncbi_gene_mapping.json keyed by model gene ID.
+    Results are cached under a crosswalk-fingerprinted filename keyed by model gene ID.
     On subsequent runs the network is skipped entirely.
 
     Returns {model_gene_id: annotation_dict}
@@ -310,9 +455,12 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
     if not unmapped:
         return {}
 
+    resolver = resolver or load_default_locus_crosswalk()
+
     # ── Cache: {model_gene_id: ann_dict} — covers the full organism bulk ──
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cache_file = CACHE_DIR / "ncbi_gene_mapping.json"
+    resolver_token = resolver.fingerprint.removeprefix("sha256:")[:16]
+    cache_file = CACHE_DIR / f"ncbi_gene_mapping_safe_{resolver_token}.json"
 
     if cache_file.exists():
         with cache_file.open() as f:
@@ -325,10 +473,7 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
         return mapping
 
     # ── Build candidate lookup ────────────────────────────────────────────
-    candidate_to_model: dict[str, str] = {}
-    for gid in unmapped:
-        for cand in _normalise_locus_tag(gid):
-            candidate_to_model[cand.lower()] = gid
+    candidate_to_model = resolver.build_lookup(unmapped)
 
     # ── Step 1: esearch — get all NCBI Gene IDs for Y. lipolytica ─────────
     gene_ids_ncbi: list[str] = []
@@ -432,11 +577,9 @@ def _tier_ncbi(unmapped: list[str]) -> dict[str, dict]:
                     ann.setdefault("uniprot", []).append(tag_el.text.strip())
 
             # ── Match locus tag → model gene ─────────────────────────────
-            for cand in _normalise_locus_tag(locus_tag):
-                model_id = candidate_to_model.get(cand.lower())
-                if model_id and model_id not in mapping:
-                    mapping[model_id] = ann
-                    break
+            model_id = candidate_to_model.get(canonical_locus_key(locus_tag))
+            if model_id and model_id not in mapping:
+                mapping[model_id] = ann
 
         logger.info(
             f"  Tier A′: batch {batch_start}–{batch_start + len(batch) - 1} "
@@ -523,8 +666,8 @@ def annotate_genes(model) -> None:
     Map YALI1* locus IDs to UniProt accessions and cross-database identifiers.
 
     Tier A  — Bulk UniProt proteome download (W29/CLIB89: UP000182444,
-              CLIB122: UP000001300).  Matches via OLN (YALI0↔YALI1, underscore
-              optional).  Coverage limited by UniProt's incomplete W29 proteome.
+              CLIB122: UP000001300).  Matches exact OLNs plus explicit
+              one-to-one YALI0/YALI1 crosswalk aliases.
     Tier A′ — Bulk NCBI Gene download (txid4952, ~8 700 records).  NCBI has
               complete YALI1 locus-tag coverage; this tier is the main driver
               toward 80 %+ annotation rate.
@@ -537,11 +680,12 @@ def annotate_genes(model) -> None:
     extending (not overwriting) any values already present.
     """
     gene_ids = [g.id for g in model.genes]
+    resolver = load_default_locus_crosswalk()
     logger.info(f"Annotating {len(gene_ids)} genes …")
 
     # ── Tier A: UniProt proteome bulk download ────────────────────────────
     logger.info("=== Gene annotation Tier A: UniProt proteome download ===")
-    tier_a_map = _tier_a(gene_ids)
+    tier_a_map = _tier_a(gene_ids, resolver)
     logger.info(f"Tier A: {len(tier_a_map)}/{len(gene_ids)} mapped")
 
     unmapped_a = [gid for gid in gene_ids if gid not in tier_a_map]
@@ -550,7 +694,7 @@ def annotate_genes(model) -> None:
     tier_ap_map: dict[str, dict] = {}
     if unmapped_a:
         logger.info(f"=== Gene annotation Tier A′: NCBI Gene bulk ({len(unmapped_a)} remaining) ===")
-        tier_ap_map = _tier_ncbi(unmapped_a)
+        tier_ap_map = _tier_ncbi(unmapped_a, resolver)
 
     unmapped_ap = [gid for gid in unmapped_a if gid not in tier_ap_map]
 
@@ -558,7 +702,7 @@ def annotate_genes(model) -> None:
     tier_b_map: dict[str, dict] = {}
     if unmapped_ap:
         logger.info(f"=== Gene annotation Tier B: per-gene UniProt search ({len(unmapped_ap)} remaining) ===")
-        tier_b_map = _tier_b(unmapped_ap)
+        tier_b_map = _tier_b(unmapped_ap, resolver)
 
     # ── Apply all tiers to model ──────────────────────────────────────────
     annotated = 0

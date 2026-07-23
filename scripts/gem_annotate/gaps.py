@@ -10,10 +10,18 @@ from pathlib import Path
 
 import pandas as pd
 
+from .gap_fill_direction import load_gap_fill_direction_curation
+from .locus_resolver import (
+    LocusCrosswalk,
+    canonical_locus_key,
+    load_default_locus_crosswalk,
+    model_gene_fingerprint,
+)
+
 logger = logging.getLogger(__name__)
 
 # ── BiGG reaction-ID suffix → primary model compartment ──────────────────────
-# Derived from the existing annotated reactions in iYli21.
+# Derived from the existing annotated reactions in iYali26.
 # Used to choose a default compartment when an equation only has MNXD1.
 _BIGG_SUFFIX_TO_COMPARTMENT: dict[str, str] = {
     "m":  "C_mi",   # mitochondria
@@ -156,7 +164,6 @@ def find_gaps(model) -> dict:
 
 def report_gaps(gaps: dict) -> None:
     """Log a human-readable gap analysis summary."""
-    fva = gaps["fva_result"]
     blocked = gaps["blocked_reactions"]
     orphans = gaps["orphan_metabolites"]
     dead_ends = gaps["dead_end_metabolites"]
@@ -167,7 +174,7 @@ def report_gaps(gaps: dict) -> None:
     logger.info(f"  Dead-end metabolites (no consumer): {len(dead_ends)}")
 
     # Show worst blocked subsystems if reaction subsystem info available
-    # (iYli21 may not have subsystems — fall back to first 20 IDs)
+    # (iYali26 may not have subsystems — fall back to first 20 IDs)
     logger.info(f"  First 20 blocked: {blocked[:20]}")
     if orphans:
         logger.info(f"  Orphans (first 10): {orphans[:10]}")
@@ -504,41 +511,61 @@ def _load_mnxm_cache(cache_path: Path, mnx_xref_path: Path | None) -> dict[str, 
     return cache
 
 
-def _load_gene_cache(cache_path: Path, model) -> dict[str, str]:
+def _load_gene_cache(
+    cache_path: Path, model, resolver: LocusCrosswalk | None = None
+) -> dict[str, str]:
     """
-    Build and cache a gene_id → model gene ID lookup so that GPR rules
-    use the exact gene IDs present in the model.  The CSV uses YALI1* locus
-    tags; the model may use YALI0* variants.
+    Build and cache a safe locus tag → exact model gene ID lookup.
 
-    Returns locus_tag (normalised) → model_gene_id.
+    Keys are canonical lowercase spellings.  Same-assembly case/underscore
+    variants collapse to one key; cross-assembly keys are added only through
+    the explicit one-to-one crosswalk.  Legacy unversioned caches are ignored.
     """
+    resolver = resolver or load_default_locus_crosswalk()
+    gene_ids = [gene.id for gene in model.genes]
+    expected_meta = {
+        "schema": "safe-locus-cache-v1",
+        "crosswalk_fingerprint": resolver.fingerprint,
+        "model_gene_fingerprint": model_gene_fingerprint(gene_ids),
+    }
+
     if cache_path.exists():
-        with open(cache_path) as fh:
-            return json.load(fh)
+        try:
+            with cache_path.open(encoding="utf-8") as handle:
+                payload = json.load(handle)
+            if payload.get("_meta") == expected_meta and isinstance(
+                payload.get("lookup"), dict
+            ):
+                return {
+                    canonical_locus_key(key): value
+                    for key, value in payload["lookup"].items()
+                }
+            logger.info("Ignoring stale or legacy gene locus cache: %s", cache_path)
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            logger.warning("Ignoring unreadable gene locus cache: %s", cache_path)
 
     logger.info("Building gene locus-tag → model gene ID cache …")
-    _TAG = re.compile(r"(YALI[01])_?([A-Za-z]\d+g)$", re.IGNORECASE)
-    lookup: dict[str, str] = {}
-    for gene in model.genes:
-        m = _TAG.match(gene.id)
-        if not m:
-            lookup[gene.id.lower()] = gene.id
-            continue
-        suffix = m.group(2).lower()
-        # Index all four variant forms
-        for prefix in ("YALI0", "YALI0_", "YALI1", "YALI1_"):
-            lookup[f"{prefix}{suffix}"] = gene.id
+    lookup = resolver.build_lookup(gene_ids)
 
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(cache_path, "w") as fh:
-        json.dump(lookup, fh)
+    with cache_path.open("w", encoding="utf-8") as handle:
+        json.dump(
+            {"_meta": expected_meta, "lookup": lookup},
+            handle,
+            indent=2,
+            sort_keys=True,
+        )
     logger.info(f"  Cached {len(lookup):,} gene tag entries to {cache_path.name}")
     return lookup
 
 
-def add_gap_fill_reactions(model, csv_path: str | Path,
-                           mnx_dir: Path | None = None,
-                           cache_dir: Path | None = None) -> dict:
+def add_gap_fill_reactions(
+    model,
+    csv_path: str | Path,
+    mnx_dir: Path | None = None,
+    cache_dir: Path | None = None,
+    direction_curation_path: str | Path | None = None,
+) -> dict:
     """
     Read gap_fill_prioritized.csv and insert P0 reactions that are absent
     from the model.
@@ -549,13 +576,16 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
     csv_path  : path to gap_fill_prioritized.csv
     mnx_dir   : directory containing chem_xref.tsv (for MNXM→BiGG mapping)
     cache_dir : directory for persisted JSON caches (default: data/cache)
+    direction_curation_path : optional durable table of evidence-backed equation
+                              orientation and flux bounds
 
     Returns
     -------
     dict with keys: added (list of reaction IDs), skipped_duplicate,
-                    skipped_missing_mets, imbalanced
+                    skipped_missing_mets, skipped_unresolved_genes,
+                    direction_curated, uncurated_direction, imbalanced
     """
-    from cobra import Gene, Reaction
+    from cobra import Reaction
 
     csv_path = Path(csv_path)
     if cache_dir is None:
@@ -564,7 +594,7 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
     mnx_xref_path = (mnx_dir / "chem_xref.tsv") if mnx_dir else None
 
     # ── Load / build caches ───────────────────────────────────────────────────
-    mnxm_bigg_cache = _load_mnxm_cache(
+    _load_mnxm_cache(
         cache_dir / "mnxm_to_bigg_metabolite.json", mnx_xref_path
     )
     gene_cache = _load_gene_cache(cache_dir / "gene_locus_tag_map.json", model)
@@ -577,6 +607,24 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
     df = pd.read_csv(csv_path, dtype=str).fillna("")
     p0 = df[df["priority"] == "P0"].copy()
     logger.info(f"add_gap_fill_reactions: {len(p0)} P0 rows in {csv_path.name}")
+
+    direction_rows = {}
+    if direction_curation_path is not None:
+        direction_rows = load_gap_fill_direction_curation(direction_curation_path)
+        p0_pairs = {
+            (row.get("bigg_reaction", "").strip(), row.get("mnxr_id", "").strip())
+            for _, row in p0.iterrows()
+        }
+        stale_rows = sorted(
+            row.bigg_reaction
+            for row in direction_rows.values()
+            if (row.bigg_reaction, row.mnxr_id) not in p0_pairs
+        )
+        if stale_rows:
+            raise ValueError(
+                "active gap-fill direction curation does not match a P0 "
+                "reaction/MNXR pair: " + ", ".join(stale_rows)
+            )
 
     # Collect all genes per MNXR (for isozyme OR-GPR)
     mnxr_genes: dict[str, list[str]] = defaultdict(list)
@@ -596,6 +644,9 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
         "added": [],
         "skipped_duplicate": [],
         "skipped_missing_mets": [],
+        "skipped_unresolved_genes": [],
+        "direction_curated": [],
+        "uncurated_direction": [],
         "imbalanced": [],
     }
 
@@ -695,23 +746,68 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
         # ── Build GPR (isozymes → OR) ─────────────────────────────────────────
         raw_genes = mnxr_genes.get(mnxr, [])
         resolved_genes: list[str] = []
+        unresolved_genes: list[str] = []
         for g in raw_genes:
-            canon = gene_cache.get(g) or gene_cache.get(g.lower())
+            canon = gene_cache.get(canonical_locus_key(g))
             if canon:
-                resolved_genes.append(canon)
+                if canon not in resolved_genes:
+                    resolved_genes.append(canon)
             else:
-                # Gene not yet in model — add it
-                resolved_genes.append(g)
+                unresolved_genes.append(g)
+        if unresolved_genes:
+            logger.warning(
+                "  %s (%s): refusing gap-fill GPR because genes cannot be "
+                "resolved exactly or through the explicit crosswalk: %s",
+                bigg_id,
+                mnxr,
+                unresolved_genes,
+            )
+            stats["skipped_unresolved_genes"].append(bigg_id)
+            continue
         gpr = " or ".join(resolved_genes) if resolved_genes else ""
+
+        # ── Apply evidence-backed direction curation ─────────────────────────
+        direction_row = direction_rows.get(bigg_id)
+        direction_is_active = (
+            direction_row is not None and direction_row.status == "active"
+        )
+        if direction_is_active:
+            if direction_row.stoichiometry_action == "reverse":
+                stoich = {met: -coefficient for met, coefficient in stoich.items()}
+            lower_bound = direction_row.lower_bound
+            upper_bound = direction_row.upper_bound
+            stats["direction_curated"].append(bigg_id)
+        else:
+            # Backward-compatible only for legacy P0 reactions whose direction
+            # has not yet been reviewed.  Keep these visible in the build audit
+            # rather than silently treating reversibility as evidence.
+            lower_bound = -1000.0
+            upper_bound = 1000.0
+            stats["uncurated_direction"].append(bigg_id)
+            logger.warning(
+                "  %s (%s): no active direction curation; retaining legacy "
+                "reversible bounds",
+                bigg_id,
+                mnxr,
+            )
 
         # ── Create reaction ───────────────────────────────────────────────────
         rxn = Reaction(bigg_id)
         rxn.name = bigg_id
-        rxn.lower_bound = -1000.0
-        rxn.upper_bound =  1000.0
+        rxn.lower_bound = lower_bound
+        rxn.upper_bound = upper_bound
         rxn.add_metabolites(stoich)
         if gpr:
             rxn.gene_reaction_rule = gpr
+        if direction_is_active:
+            rxn.notes = {
+                "gap_fill_direction_status": "active",
+                "gap_fill_stoichiometry_action": direction_row.stoichiometry_action,
+                "gap_fill_direction_evidence": direction_row.evidence_url,
+                "gap_fill_direction_rationale": direction_row.rationale,
+            }
+        else:
+            rxn.notes = {"gap_fill_direction_status": "legacy_unreviewed"}
 
         # ── Annotations ──────────────────────────────────────────────────────
         ann: dict[str, object] = {
@@ -729,7 +825,15 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
         existing_ids.add(bigg_id)
         bigg_annotated.add(bigg_id)
         stats["added"].append(bigg_id)
-        logger.info(f"  Added {bigg_id} ({mnxr})  GPR='{gpr}'  mets={len(stoich)}")
+        logger.info(
+            "  Added %s (%s)  GPR='%s'  mets=%d bounds=(%g, %g)",
+            bigg_id,
+            mnxr,
+            gpr,
+            len(stoich),
+            lower_bound,
+            upper_bound,
+        )
 
         # ── Mass-balance check ────────────────────────────────────────────────
         imbalance = rxn.check_mass_balance()
@@ -744,6 +848,9 @@ def add_gap_fill_reactions(model, csv_path: str | Path,
         f"add_gap_fill_reactions: added={len(stats['added'])}, "
         f"skipped_duplicate={len(stats['skipped_duplicate'])}, "
         f"skipped_missing_mets={len(stats['skipped_missing_mets'])}, "
+        f"skipped_unresolved_genes={len(stats['skipped_unresolved_genes'])}, "
+        f"direction_curated={len(stats['direction_curated'])}, "
+        f"uncurated_direction={len(stats['uncurated_direction'])}, "
         f"imbalanced={len(stats['imbalanced'])}"
     )
     return stats
