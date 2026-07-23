@@ -380,6 +380,59 @@ def relocate(repo_root: Path, research_root: Path) -> Path:
     return manifest_path
 
 
+def append_relocation(
+    repo_root: Path,
+    research_root: Path,
+    source: Path,
+    destination: Path,
+    *,
+    compatibility_symlink: bool = False,
+) -> Path:
+    """Append one late-discovered source to an existing relocation manifest."""
+
+    repo_root = repo_root.resolve()
+    research_root = research_root.resolve()
+    source = source.resolve()
+    destination = destination.resolve()
+    assert_same_filesystem(repo_root, research_root)
+    try:
+        source.relative_to(repo_root)
+        destination.relative_to(research_root)
+    except ValueError as exc:
+        raise ValueError(
+            "Append relocation source must be inside the repository and "
+            "destination must be inside the research workspace."
+        ) from exc
+
+    manifest_path = research_root / "relocation_manifest.csv"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"Relocation manifest not found: {manifest_path}"
+        )
+
+    first_source_by_hash: dict[str, str] = {}
+    with manifest_path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if tuple(reader.fieldnames or ()) != MANIFEST_FIELDS:
+            raise ValueError(
+                f"Unexpected relocation manifest columns: {reader.fieldnames}"
+            )
+        for row in reader:
+            first_source_by_hash.setdefault(row["sha256"], row["source_path"])
+
+    with manifest_path.open("a", newline="", encoding="utf-8") as manifest_handle:
+        return move_one(
+            MoveSpec(
+                source=source,
+                destination=destination,
+                compatibility_symlink=compatibility_symlink,
+            ),
+            repo_root=repo_root,
+            manifest_handle=manifest_handle,
+            first_source_by_hash=first_source_by_hash,
+        )
+
+
 def verify_manifest(repo_root: Path, manifest_path: Path) -> int:
     failures: list[str] = []
     row_count = 0
@@ -467,6 +520,13 @@ def build_parser() -> argparse.ArgumentParser:
     relocate_parser.add_argument("--repo-root", type=Path, required=True)
     relocate_parser.add_argument("--research-root", type=Path, required=True)
 
+    append_parser = subparsers.add_parser("append")
+    append_parser.add_argument("--repo-root", type=Path, required=True)
+    append_parser.add_argument("--research-root", type=Path, required=True)
+    append_parser.add_argument("--source", type=Path, required=True)
+    append_parser.add_argument("--destination", type=Path, required=True)
+    append_parser.add_argument("--compatibility-symlink", action="store_true")
+
     plan_parser = subparsers.add_parser("plan")
     plan_parser.add_argument("--repo-root", type=Path, required=True)
     plan_parser.add_argument("--research-root", type=Path, required=True)
@@ -502,6 +562,16 @@ def main() -> int:
     if args.command == "relocate":
         manifest = relocate(args.repo_root, args.research_root)
         print(f"Relocation manifest: {manifest}")
+        return 0
+    if args.command == "append":
+        destination = append_relocation(
+            args.repo_root,
+            args.research_root,
+            args.source,
+            args.destination,
+            compatibility_symlink=args.compatibility_symlink,
+        )
+        print(f"Appended relocation: {args.source} -> {destination}")
         return 0
     if args.command == "manifest":
         output = write_content_manifest(args.research_root, args.output)

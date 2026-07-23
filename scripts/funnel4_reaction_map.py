@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Funnel stage 4: map the 1087 metabolic-but-not-in-model candidates to
-reactions and de-duplicate against reactions already in iYli21.
+reactions and de-duplicate against reactions already in iYali26.
 
 Read-only. No network. Inputs:
   - data/yali1_yali0_map/s2_metabolic_genes.csv  (verdict=metabolic, in_model=no)
