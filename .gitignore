@@ -1,11 +1,43 @@
-data/metanetx/
-data/cache
-scripts/__pycache__
-local/
-model_baseline.xml
-model_before.xml
+# Local credentials and machine-specific connector configuration
 .env
-results/
-explorer/
-docs/
+.mcp.json
+.codex/config.toml
+.claude/settings.local.json
 
+# Local environments and generated Python/tool caches
+.venv/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Operating-system and interactive-session files
+**/.DS_Store
+**/.Rhistory
+
+# Compatibility links into the external research workspace
+/data/*
+!/data/iyali26.xml
+/results
+/explorer
+/external_models
+/experiments
+/local
+/docs/weekly_briefing
+
+# Legacy/generated root artifacts now preserved in the research archive
+/model_baseline.xml
+/model_before.xml
+/model_ensembl.xml
+/model_with_esm_genes.xml
+/change_gene_diff.html
+/change_metabolite.html
+/change_reaction_diff.html
+/with_esm_gene.html
+/diagnosis.txt
+/*.pdf
+/*.xlsx
+
+# Research notebooks are stored outside the code repository
+*.ipynb
