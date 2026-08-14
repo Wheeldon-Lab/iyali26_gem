@@ -25,6 +25,10 @@
 /experiments
 /local
 /docs/weekly_briefing
+/outputs/
+/.tmp/
+/*.pptx
+/*.pptx.inspect.ndjson
 
 # Legacy/generated root artifacts now preserved in the research archive
 /model_baseline.xml
