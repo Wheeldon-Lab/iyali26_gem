@@ -52,7 +52,7 @@ def _fetch_ec_for_accessions(accessions: list[str]) -> dict[str, list[str]]:
     return result
 
 
-def enrich_genes_with_ec(model) -> None:
+def enrich_genes_with_ec(model, *, allow_network: bool = True) -> None:
     """
     For every model gene that has a 'uniprot' annotation, batch-fetch EC numbers
     from UniProt and write them into gene.annotation["ec-code"].
@@ -85,10 +85,12 @@ def enrich_genes_with_ec(model) -> None:
         logger.info("enrich_genes_with_ec: no genes have uniprot annotations — skipping")
         return
 
-    to_fetch = [a for a in acc_to_genes if a not in ec_cache]
+    uncached = [a for a in acc_to_genes if a not in ec_cache]
+    to_fetch = uncached if allow_network else []
     logger.info(
         f"enrich_genes_with_ec: {len(acc_to_genes)} unique accessions, "
-        f"{len(to_fetch)} need fetching ({len(ec_cache)} cached)"
+        f"{len(uncached)} uncached, {len(to_fetch)} scheduled for fetching "
+        f"({len(ec_cache)} cached; allow_network={allow_network})"
     )
 
     newly_fetched: dict[str, list[str]] = {}   # only accessions that have EC numbers

@@ -64,6 +64,12 @@ from .run_registry import (
     register_run,
     utc_now as registry_utc_now,
 )
+from .essentiality_simulation_context import (
+    apply_media,
+    load_effective_simulation_context,
+    load_media,
+)
+from .strain_overlay import load_strain_profile
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -75,6 +81,8 @@ DEFAULT_CUTOFFS = (0.01, 0.05, 0.10, 0.15)
 PRIMARY_CUTOFF = 0.10
 FLUX_EPS = 1e-9
 LEUCINE_EXCHANGE_ID = "R1219"
+IRON_EXCHANGE_ID = "R1189"
+URACIL_EXCHANGE_ID = "R1354"
 ASSAY_RATIO_METRIC_DECIMALS = 9
 ASSAY_NAMES = ("Cas9", "Cas12a")
 ASSAY_EXPECTED_ROWS = {"Cas9": 7_854, "Cas12a": 7_795}
@@ -500,43 +508,6 @@ def make_assay_fitness_summary(
     }
 
 
-def load_media(path: Path) -> pd.DataFrame:
-    media = pd.read_csv(path, dtype={"exchange": str})
-    required = {"exchange", "uptake"}
-    missing = required - set(media.columns)
-    if missing:
-        raise ValueError(f"Media file missing columns {sorted(missing)}: {path}")
-    media["exchange"] = media["exchange"].str.strip()
-    media["uptake"] = pd.to_numeric(media["uptake"], errors="raise")
-    if media["exchange"].duplicated().any():
-        repeated = sorted(media.loc[media["exchange"].duplicated(), "exchange"].unique())
-        raise ValueError(f"Duplicate exchanges in media file: {repeated}")
-    invalid = media[(media["uptake"] < 0) | (media["uptake"] > 1000)]
-    if not invalid.empty:
-        raise ValueError("Media uptake values must be between 0 and 1000")
-    return media
-
-
-def apply_media(model, media: pd.DataFrame) -> dict[str, float]:
-    """Replace the model medium with the exact listed uptake definition."""
-    model_reactions = {reaction.id for reaction in model.reactions}
-    missing = sorted(set(media["exchange"]) - model_reactions)
-    if missing:
-        raise ValueError(f"Media exchange reactions not found in model: {missing}")
-
-    allowed = {
-        row.exchange: float(row.uptake)
-        for row in media.itertuples(index=False)
-        if float(row.uptake) > 0
-    }
-    model.medium = allowed
-    if LEUCINE_EXCHANGE_ID in model.medium:
-        raise ValueError(
-            f"SD-Leu invariant violated: {LEUCINE_EXCHANGE_ID} is open for uptake"
-        )
-    return dict(model.medium)
-
-
 def _gene_id_from_deletion_row(index: object, row: pd.Series) -> str:
     ids = row.get("ids")
     if isinstance(ids, (set, frozenset)) and ids:
@@ -546,7 +517,11 @@ def _gene_id_from_deletion_row(index: object, row: pd.Series) -> str:
     return str(ids if ids is not None else index)
 
 
-def run_single_gene_deletions(model, solver: str) -> tuple[pd.DataFrame, float]:
+def run_single_gene_deletions(
+    model,
+    solver: str,
+    excluded_gene_ids: Iterable[str] = (),
+) -> tuple[pd.DataFrame, float]:
     model.solver = solver
     solution = model.optimize()
     if solution.status != "optimal" or solution.objective_value is None:
@@ -558,7 +533,14 @@ def run_single_gene_deletions(model, solver: str) -> tuple[pd.DataFrame, float]:
             "0.1-2.0 h^-1 range under the experimental medium"
         )
 
-    gene_ids = sorted(gene.id for gene in model.genes)
+    excluded = {str(gene_id) for gene_id in excluded_gene_ids}
+    missing_exclusions = excluded - {gene.id for gene in model.genes}
+    if missing_exclusions:
+        raise ValueError(
+            "Excluded runtime genes are absent from the model: "
+            f"{sorted(missing_exclusions)}"
+        )
+    gene_ids = sorted(gene.id for gene in model.genes if gene.id not in excluded)
     logger.info("Running deterministic single-gene deletion for %d model genes", len(gene_ids))
     deletion = single_gene_deletion(model, gene_list=gene_ids, processes=1)
     rows: list[dict[str, object]] = []
@@ -674,7 +656,7 @@ def make_summary(
 
     primary = next(item for item in curve if item["cutoff_fraction_of_wt"] == primary_cutoff)
     return {
-        "schema_version": "2.0",
+        "schema_version": "2.1",
         "model": {
             "id": model.id,
             "num_genes": len(model.genes),
@@ -699,6 +681,12 @@ def make_summary(
             "num_open_uptakes": len(active_medium),
             "leucine_exchange": LEUCINE_EXCHANGE_ID,
             "leucine_uptake_open": LEUCINE_EXCHANGE_ID in active_medium,
+            "iron_exchange": IRON_EXCHANGE_ID,
+            "iron_uptake_open": IRON_EXCHANGE_ID in active_medium,
+            "iron_uptake_bound": active_medium.get(IRON_EXCHANGE_ID, 0.0),
+            "uracil_exchange": URACIL_EXCHANGE_ID,
+            "uracil_uptake_open": URACIL_EXCHANGE_ID in active_medium,
+            "uracil_uptake_bound": active_medium.get(URACIL_EXCHANGE_ID, 0.0),
         },
         "wt_growth": wt_growth,
         "primary_cutoff_fraction_of_wt": primary_cutoff,
@@ -746,7 +734,11 @@ def _closed_reaction_growth(model, reactions: Iterable[object], wt_growth: float
         for reaction in reactions:
             reaction.bounds = (0.0, 0.0)
         value = model.slim_optimize()
-        growth = 0.0 if value is None else max(0.0, float(value))
+        growth = (
+            0.0
+            if value is None or not math.isfinite(float(value))
+            else max(0.0, float(value))
+        )
     return growth, growth / wt_growth
 
 
@@ -754,14 +746,19 @@ def _verify_bypass_candidates(
     model,
     gene,
     wt_fluxes: pd.Series,
+    wt_growth: float,
     lethal_growth: float,
     max_candidates: int,
 ) -> list[str]:
     """Verify high-flux-delta single-reaction bypasses with a combined KO.
 
     Candidate generation is heuristic because alternate optima can change the
-    chosen FBA vertex.  A reported bypass is nevertheless exact: blocking it
-    together with the gene must reduce growth below the primary threshold.
+    chosen FBA vertex.  A reported bypass must satisfy gene-specific epistasis:
+    blocking the reaction alone preserves at least the established 90% WT
+    survival floor, while blocking it together with the gene reduces growth
+    below the primary threshold.  This excludes severe shared capacity
+    dependencies (for example, mitochondrial ATP export) that are not
+    gene-specific alternate routes.
     """
     with model:
         gene.knock_out()
@@ -779,10 +776,27 @@ def _verify_bypass_candidates(
     verified: list[str] = []
     for reaction_id in candidate_ids:
         with model:
+            model.reactions.get_by_id(reaction_id).bounds = (0.0, 0.0)
+            wt_reaction_ko_growth = model.slim_optimize()
+            wt_reaction_ko_growth = (
+                0.0
+                if (
+                    wt_reaction_ko_growth is None
+                    or not math.isfinite(float(wt_reaction_ko_growth))
+                )
+                else max(0.0, float(wt_reaction_ko_growth))
+            )
+        if wt_reaction_ko_growth / wt_growth < ISOZYME_SURVIVAL_FLOOR:
+            continue
+        with model:
             gene.knock_out()
             model.reactions.get_by_id(reaction_id).bounds = (0.0, 0.0)
             growth = model.slim_optimize()
-            growth = 0.0 if growth is None else max(0.0, float(growth))
+            growth = (
+                0.0
+                if growth is None or not math.isfinite(float(growth))
+                else max(0.0, float(growth))
+            )
         if growth < lethal_growth:
             verified.append(reaction_id)
     return verified
@@ -834,6 +848,7 @@ def diagnose_false_negatives(
                 model,
                 gene,
                 wt_fluxes,
+                wt_growth,
                 lethal_growth,
                 max_bypass_candidates,
             )
@@ -1112,7 +1127,7 @@ def build_agent_cases(
                 label: bool(per_gene_row[label]) for label in cutoff_labels
             }
         packet: dict[str, Any] = {
-            "schema_version": "2.0",
+            "schema_version": "2.1",
             "case_id": case_id,
             "category": category,
             "priority": priority,
@@ -1141,6 +1156,29 @@ def build_agent_cases(
                 "verified_bypasses": bypass_contexts,
             },
         }
+        simulation_context = summary.get("simulation_context", {})
+        if not isinstance(simulation_context, dict):
+            raise ValueError("Essentiality summary is missing simulation_context")
+        required_context = (
+            "simulation_context_fingerprint_version",
+            "simulation_context_fingerprint",
+            "strain_overlay_enabled",
+            "strain_profile_id",
+            "strain_profile_sha256",
+            "strain_overlay_effect_fingerprint_version",
+            "strain_overlay_effect_sha256",
+        )
+        missing = [field for field in required_context if field not in simulation_context]
+        if missing:
+            raise ValueError(
+                "Essentiality summary has incomplete simulation_context: "
+                f"{missing}"
+            )
+        for field in required_context:
+            packet[field] = simulation_context[field]
+        overlay_context = dict(summary.get("strain_overlay", {"enabled": False}))
+        overlay_context.pop("profile_path", None)
+        packet["model_context"]["strain_overlay"] = overlay_context
         packet["case_packet_sha256"] = sha256_file_payload(packet)
         cases.append(packet)
     return sorted(cases, key=lambda case: (case["priority"], case["case_id"]))
@@ -1470,6 +1508,10 @@ def build_run_manifest(
     positive_only: bool,
     assay_fitness_path: Path | None = None,
     assay_source_sha256s: Iterable[str] = (),
+    strain_profile_path: Path | None = None,
+    strain_overlay_audit: dict[str, object] | None = None,
+    simulation_context_fingerprint: str | None = None,
+    simulation_context: dict[str, object] | None = None,
     repo_root: Path = REPO_ROOT,
     generated_at: str | None = None,
     run_key: str | None = None,
@@ -1496,8 +1538,13 @@ def build_run_manifest(
             "sha256": sha256_file(Path(assay_fitness_path)),
             "source_workbook_sha256": sorted(set(assay_source_sha256s)),
         }
+    if strain_profile_path is not None:
+        inputs["strain_profile"] = {
+            "path": str(Path(strain_profile_path).resolve()),
+            "sha256": sha256_file(Path(strain_profile_path)),
+        }
     manifest = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "generated_at": generated_at
         or datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "inputs": inputs,
@@ -1516,9 +1563,16 @@ def build_run_manifest(
         "configuration": {
             "positive_only": bool(positive_only),
             "assay_fitness_enabled": assay_fitness_path is not None,
+            "strain_overlay_enabled": strain_profile_path is not None,
             "credentials_included": False,
         },
     }
+    if strain_overlay_audit is not None:
+        manifest["strain_overlay"] = strain_overlay_audit
+    if simulation_context_fingerprint is not None:
+        manifest["simulation_context_fingerprint"] = simulation_context_fingerprint
+    if simulation_context is not None:
+        manifest["simulation_context"] = dict(simulation_context)
     if run_key is not None:
         manifest["run_key"] = run_key
     if code_sources is not None:
@@ -1543,6 +1597,7 @@ def validate_essential_genes(
     max_bypass_candidates: int = 25,
     isozyme_capacity_scan_path: Path | None = None,
     assay_fitness_path: Path | None = None,
+    strain_profile_path: Path | None = None,
     case_category: str | None = None,
     run_key: str | None = None,
     code_sources: dict[str, str] | None = None,
@@ -1572,13 +1627,20 @@ def validate_essential_genes(
         if assay_fitness_path is not None
         else None
     )
-    media = load_media(media_path)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        model = read_sbml_model(str(model_path))
-    active_medium = apply_media(model, media)
-    predictions, wt_growth = run_single_gene_deletions(model, solver)
+    simulation = load_effective_simulation_context(
+        model_path=model_path,
+        media_path=media_path,
+        strain_profile_path=strain_profile_path,
+    )
+    model = simulation.model
+    active_medium = simulation.active_medium
+    strain_overlay_audit = simulation.strain_overlay_audit
+    excluded_runtime_genes = set(simulation.excluded_runtime_genes)
+    predictions, wt_growth = run_single_gene_deletions(
+        model,
+        solver,
+        excluded_gene_ids=excluded_runtime_genes,
+    )
     per_gene = build_per_gene_table(experimental, predictions, growth_cutoffs, primary_cutoff)
     summary = make_summary(
         model,
@@ -1592,7 +1654,7 @@ def validate_essential_genes(
         active_medium,
         positive_only,
     )
-    model_sha256 = sha256_file(model_path)
+    model_sha256 = simulation.canonical_model_sha256
     summary["model"].update(
         {
             "path": str(model_path.resolve()),
@@ -1600,8 +1662,32 @@ def validate_essential_genes(
         }
     )
     summary["experimental"]["sha256"] = sha256_file(experimental_path)
-    media_sha256 = sha256_file(media_path)
+    media_sha256 = simulation.medium_sha256
     summary["medium"]["sha256"] = media_sha256
+    simulation_context = {
+        "canonical_model_sha256": model_sha256,
+        "medium_sha256": media_sha256,
+        "strain_profile_sha256": simulation.strain_profile_sha256,
+        "strain_overlay_effect_sha256": simulation.strain_overlay_effect_sha256,
+        **simulation.provenance(),
+    }
+    simulation_context_fingerprint = simulation.simulation_context_fingerprint
+    summary["simulation_context"] = {
+        **simulation_context,
+        "fingerprint": simulation_context_fingerprint,
+    }
+    summary["strain_overlay"] = (
+        {
+            "enabled": True,
+            "profile_path": str(simulation.strain_profile_path),
+            "profile_sha256": simulation.strain_profile_sha256,
+            "audit": strain_overlay_audit,
+        }
+        if simulation.strain_overlay_enabled
+        else {"enabled": False}
+    )
+    summary["screened_model_genes"] = len(predictions)
+    summary["excluded_runtime_genes"] = sorted(excluded_runtime_genes)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     per_gene_path = output_dir / "essentiality_per_gene.tsv"
@@ -1754,6 +1840,10 @@ def validate_essential_genes(
             if assay_fitness is not None
             else ()
         ),
+        strain_profile_path=strain_profile_path,
+        strain_overlay_audit=strain_overlay_audit,
+        simulation_context_fingerprint=simulation_context_fingerprint,
+        simulation_context=summary["simulation_context"],
         run_key=run_key,
         code_sources=code_sources,
     )
@@ -1823,6 +1913,15 @@ def main() -> None:
     parser.add_argument("--experimental", "-e", type=Path)
     parser.add_argument("--model", "-m", type=Path, default=REPO_ROOT / "model.xml")
     parser.add_argument("--media", type=Path)
+    parser.add_argument(
+        "--strain-profile",
+        type=Path,
+        help=(
+            "Runtime strain/assay overlay JSON. When the default PO1f "
+            "experimental list and SD-Leu medium are used, this defaults to "
+            "state/strain_profiles/po1f_sd_leu.json."
+        ),
+    )
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument(
         "--force-rerun",
@@ -1895,18 +1994,29 @@ def main() -> None:
         project_paths.require(project_paths.essentiality, project_paths.media)
     except (FileNotFoundError, RuntimeError) as exc:
         parser.error(str(exc))
-    if args.experimental is None:
+    default_experimental = args.experimental is None
+    default_media = args.media is None
+    if default_experimental:
         args.experimental = (
             project_paths.essentiality / "consensus_essential_genes.csv"
         )
-    if args.media is None:
+    if default_media:
         args.media = project_paths.media / "sd_leu.csv"
+    if (
+        args.strain_profile is None
+        and default_experimental
+        and default_media
+    ):
+        args.strain_profile = (
+            project_paths.strain_profiles / "po1f_sd_leu.json"
+        )
     for path, label in (
         (args.experimental, "experimental file"),
         (args.model, "model"),
         (args.media, "media file"),
+        (args.strain_profile, "strain profile"),
     ):
-        if not path.exists():
+        if path is not None and not path.exists():
             parser.error(f"{label} not found: {path}")
     if not (0 < args.primary_cutoff < 1):
         parser.error("--primary-cutoff must be strictly between 0 and 1")
@@ -1934,12 +2044,20 @@ def main() -> None:
             "path": str(args.assay_fitness.resolve()),
             "sha256": sha256_file(args.assay_fitness),
         }
+    strain_profile = None
+    if args.strain_profile is not None:
+        strain_profile = load_strain_profile(args.strain_profile)
+        inputs["strain_profile"] = {
+            "path": str(args.strain_profile.resolve()),
+            "sha256": sha256_file(args.strain_profile),
+        }
     code_sources = {
         str(path.resolve()): sha256_file(path)
         for path in (
             Path(__file__),
             Path(__file__).with_name("essentiality_evidence.py"),
             Path(__file__).with_name("patches.py"),
+            Path(__file__).with_name("strain_overlay.py"),
         )
         if path.is_file()
     }
@@ -1951,6 +2069,13 @@ def main() -> None:
         "diagnose": bool(args.diagnose),
         "prepare_agent_cases": bool(args.prepare_agent_cases),
         "case_category": args.case_category,
+        "batch_size": int(args.batch_size),
+        "max_bypass_candidates": int(args.max_bypass_candidates),
+        "strain_profile_id": (
+            str(strain_profile["profile_id"])
+            if strain_profile is not None
+            else None
+        ),
     }
     run_key = build_run_key(
         "essentiality",
@@ -1996,6 +2121,7 @@ def main() -> None:
             max_bypass_candidates=args.max_bypass_candidates,
             isozyme_capacity_scan_path=args.isozyme_capacity_scan,
             assay_fitness_path=args.assay_fitness,
+            strain_profile_path=args.strain_profile,
             case_category=args.case_category,
             case_ledger_path=project_paths.essentiality / "curation_cases.csv",
             evidence_dir=project_paths.essentiality / "evidence",

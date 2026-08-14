@@ -268,9 +268,9 @@ def test_global_component_audit_ranks_next_frontier_without_mutating_model():
 
     assert report["reference_equations_balanced"] is True
     assert report["unbalanced_proposal_reaction_ids"] == []
-    assert len(report["fixed_reaction_ids"]) == 168
-    assert len(report["regressed_reaction_ids"]) == 66
-    assert len(report["unresolved_reaction_ids"]) == 584
+    assert len(report["fixed_reaction_ids"]) == 171
+    assert len(report["regressed_reaction_ids"]) == 64
+    assert len(report["unresolved_reaction_ids"]) == 580
     newly_closed = {
         "R533",
         "R534",
@@ -304,7 +304,7 @@ def test_global_component_audit_ranks_next_frontier_without_mutating_model():
         for change in report["microspecies_bookkeeping_changes"]
     )
     assert {"R567"} <= set(report["frontier_regressed_reaction_ids"])
-    assert len(report["microspecies_bookkeeping_rejected"]) == 66
+    assert len(report["microspecies_bookkeeping_rejected"]) == 64
     assert report["ready_for_activation"] is False
     assert report["actionable_frontier_ranking"][0]["candidate_family"] == (
         "gmp"
@@ -319,6 +319,7 @@ def test_global_component_audit_ranks_next_frontier_without_mutating_model():
         "alpha_d_ribose_1_phosphate",
         "amp",
         "pyruvate",
+        "phosphoenolpyruvate",
         "oxaloacetate",
         "gdp",
         "nad",
@@ -447,7 +448,7 @@ def test_durable_audit_writer_records_model_and_input_provenance(tmp_path):
     payload = json.loads(paths[0].read_text(encoding="utf-8"))
     assert payload["case_id"] == "EGC-1fd6c310af7f"
     assert payload["model_sha256"] == (
-        "b3f60933aa9503ab63ab5d8bca58a9525b8c81534d3eac72cf66d2769ff44f48"
+        "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
     )
     assert payload["reaction_chemistry_table_sha256"]
     assert payload["microspecies_table_sha256"]
@@ -467,7 +468,7 @@ def test_guarded_audit_attachment_records_summary_without_promoting_balance(tmp_
             {
                 "case_id": "EGC-1fd6c310af7f",
                 "model_sha256": (
-                    "b3f60933aa9503ab63ab5d8bca58a9525b8c81534d3eac72cf66d2769ff44f48"
+                    "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
                 ),
                 "chemistry_review": {"status": "imbalanced"},
             }
@@ -499,7 +500,7 @@ def test_guarded_audit_attachment_rejects_stale_table_hash(tmp_path):
             {
                 "case_id": "EGC-1fd6c310af7f",
                 "model_sha256": (
-                    "b3f60933aa9503ab63ab5d8bca58a9525b8c81534d3eac72cf66d2769ff44f48"
+                    "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
                 ),
                 "chemistry_review": {},
             }

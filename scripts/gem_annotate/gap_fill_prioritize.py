@@ -8,7 +8,6 @@ Steps:
   4. Output gap_fill_prioritized.csv
 """
 
-import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -30,20 +29,6 @@ xref = pd.read_csv(
     METANETX / "chem_xref.tsv",
     sep="\t", comment="#", header=None,
     names=["xref_id", "mnx_id", "description"],
-)
-
-# Build MNXM → set of BiGG IDs (strip "bigg.metabolite:" prefix)
-bigg_xref = xref[xref["xref_id"].str.startswith("bigg.metabolite:", na=False)].copy()
-bigg_xref["bigg_id"] = bigg_xref["xref_id"].str.removeprefix("bigg.metabolite:")
-mnxm_to_bigg: dict[str, set[str]] = (
-    bigg_xref.groupby("mnx_id")["bigg_id"].apply(set).to_dict()
-)
-
-# Build MNXM → set of KEGG IDs (strip "kegg.compound:" prefix)
-kegg_xref = xref[xref["xref_id"].str.startswith("kegg.compound:", na=False)].copy()
-kegg_xref["kegg_id"] = kegg_xref["xref_id"].str.removeprefix("kegg.compound:")
-mnxm_to_kegg: dict[str, set[str]] = (
-    kegg_xref.groupby("mnx_id")["kegg_id"].apply(set).to_dict()
 )
 
 # Also build a direct MNXM alias map (some MNX IDs redirect to canonical IDs)
@@ -88,17 +73,6 @@ for model_elem in root.iter("{%s}model" % ns_sbml):
 
 df_model = pd.DataFrame(model_mets)
 
-# Build a set of "base names" (strip compartment suffix and formula suffix) for fuzzy matching
-# Model names have format: "compound name_FORMULA" (e.g. "H2O_H2O", "H+_p+1")
-# Extract the part before the last underscore as the compound key
-def base_name(full_name: str) -> str:
-    """Strip trailing _FORMULA or trailing underscore from model name."""
-    parts = full_name.rsplit("_", 1)
-    return parts[0].strip().lower() if len(parts) > 1 else full_name.strip().lower()
-
-df_model["base_name"] = df_model["name"].apply(base_name)
-model_base_names = set(df_model["base_name"])
-
 # Build formula → model metabolite set from chem_prop for cross-referencing
 model_formulas: dict[str, set[str]] = {}
 for _, row in df_model.iterrows():
@@ -113,13 +87,6 @@ for _, row in df_model.iterrows():
 #   c. MNXM1 / MNXM01 → proton H+ — model does have these
 #   d. For other MNXM IDs: check if any BiGG alias exists in model reactions
 #      (we don't have direct BiGG ↔ model mapping, so we use formula matching)
-
-# Build formula → canonical MNXM from prop
-formula_to_mnxm: dict[str, str] = {}
-for mnxm_id, row in prop.iterrows():
-    formula = str(row.get("formula", "") or "").strip()
-    if formula and formula != "nan" and mnxm_id not in formula_to_mnxm:
-        formula_to_mnxm[formula] = mnxm_id
 
 # Known special MNXM → model formula mappings
 SPECIAL_MNXM_IN_MODEL = {
@@ -213,6 +180,9 @@ def has_kegg(row) -> bool:
     return bool(row.get("kegg_reaction") and str(row["kegg_reaction"]).strip() not in ("", "nan"))
 
 def assign_priority(row) -> str:
+    if str(row.get("in_model", "")).strip().lower() == "yes":
+        return "EXISTING"
+
     n_miss = row["missing_count_fixed"]
     missing_lst = row["missing_fixed_list"] if isinstance(row["missing_fixed_list"], list) else []
 

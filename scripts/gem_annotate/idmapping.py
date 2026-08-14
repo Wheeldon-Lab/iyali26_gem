@@ -165,7 +165,7 @@ def _merge_str_annotation(gene, new_data: dict) -> None:
     gene.annotation = merged
 
 
-def _enrich_via_idmapping(model) -> None:
+def _enrich_via_idmapping(model, *, allow_network: bool = True) -> None:
     """
     Enrich model genes that have ncbigene but no uniprot annotation by querying
     the UniProt search API (xref:geneid-<id> → UniProtKB).
@@ -207,11 +207,14 @@ def _enrich_via_idmapping(model) -> None:
         with cache_file.open() as f:
             cache = json.load(f)
 
-    to_query = [nid for nid in targets if nid not in cache]
+    uncached = [nid for nid in targets if nid not in cache]
+    to_query = uncached if allow_network else []
     cached_hits = {nid: ann for nid, ann in cache.items() if ann is not None and nid in targets}
     logger.info(
         f"  ID-mapping: {len(cached_hits)} hits from cache, "
-        f"{len(to_query)}/{len(targets)} IDs need querying"
+        f"{len(uncached)}/{len(targets)} IDs uncached, "
+        f"{len(to_query)} scheduled for querying "
+        f"(allow_network={allow_network})"
     )
 
     # ── 3. Batch-query UniProt search API ─────────────────────────────────

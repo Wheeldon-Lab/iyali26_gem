@@ -28,7 +28,7 @@ from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
 from .microspecies import apply_curated_microspecies, normalize_hydroxide_reactions
-from .patches import add_isozyme_gprs, annotate_isozyme_genes, apply_all_patches, apply_curated_essentiality_patches, clean_ec_overload, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec, remove_misannotated_gprs, remove_spurious_transport_reactions, split_trna_charging_from_biomass
+from .patches import add_direct_enzyme_like_gprs, add_isozyme_gprs, add_r612_ura3_gpr, annotate_isozyme_genes, apply_all_patches, apply_curated_essentiality_patches, clean_ec_overload, correct_external_ndh2_gpr_and_remove_duplicate, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec, remove_misannotated_gprs, remove_spurious_quinone_branches, remove_spurious_transport_reactions, remove_stale_adp_atp_transporter_ec_codes, replace_coq6_route_with_coq9, split_trna_charging_from_biomass
 from .provisional_capacity import apply_provisional_isozyme_capacities
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 from .sbml import write_deterministic_sbml_model
@@ -49,6 +49,7 @@ def main(
     provisional_capacity_path: Path | None = None,
     trna_biomass_mode: str | None = None,
     output_model_path: Path = OUTPUT_MODEL_PATH,
+    allow_network: bool = True,
 ):
     output_model_path = Path(output_model_path)
     if provisional_capacity_path is not None:
@@ -173,7 +174,7 @@ def main(
 
     # Priority 4b — network required, skip if offline
     logger.info("=== Priority 4b: gene annotation via UniProt ===")
-    annotate_genes(model)
+    annotate_genes(model, allow_network=allow_network)
 
     # Curated assembly-identity corrections run after broad automatic matching
     # but before ID-mapping and EC enrichment, so stale accessions cannot seed
@@ -187,11 +188,11 @@ def main(
 
     # Priority 4c — ncbigene → UniProt ID-mapping for genes still missing uniprot
     logger.info("=== Priority 4c: UniProt ID-mapping (ncbigene → UniProtKB) ===")
-    _enrich_via_idmapping(model)
+    _enrich_via_idmapping(model, allow_network=allow_network)
 
     # Priority 4d — enrich genes with EC numbers via UniProt stream API
     logger.info("=== Priority 4d: gene EC number enrichment via UniProt ===")
-    enrich_genes_with_ec(model)
+    enrich_genes_with_ec(model, allow_network=allow_network)
 
     # Priority 4e — extended reaction annotation (exchange / transport / EC→MNXR)
     # Runs after 4d so gene EC numbers are already populated.
@@ -233,6 +234,13 @@ def main(
     # Catches reactions skipped in the first pass for missing formula.
     logger.info("=== Priority 2b (second pass): H+/H2O balance after annotation ===")
     fix_proton_water_balance(model)
+
+    # Replace the inherited C30/CoQ6 identities before FVA, so every downstream
+    # diagnostic uses the balanced C45/CoQ9 main chain.  This identity patch adds
+    # no sink, demand, biomass coefficient, bound or GPR.
+    logger.info("=== Curated quinone chemistry: balanced CoQ9 main chain ===")
+    n_coq9_changes = replace_coq6_route_with_coq9(model)
+    logger.info("  CoQ9 identity/chemistry changes: %d object(s)", n_coq9_changes)
 
     # Priority 5: gap analysis — FVA before gap-fill
     logger.info("=== Priority 5: gap analysis (FVA, post-medium) ===")
@@ -386,6 +394,14 @@ def main(
     n_ec_cleaned = clean_ec_overload(model)
     logger.info(f"  EC overload cleanup: removed polluting EC from {n_ec_cleaned} reaction(s)")
 
+    # R815/R816 are transporters; their inherited EC 2.7.4.6 is a kinase code.
+    # This must follow all generic EC backfills.
+    n_adp_atp_ec_cleaned = remove_stale_adp_atp_transporter_ec_codes(model)
+    logger.info(
+        "  ADP/ATP transporter EC cleanup: corrected %d reaction(s)",
+        n_adp_atp_ec_cleaned,
+    )
+
     # Isozyme GPR additions: add curated CLIB89 isozyme genes to existing
     # reactions' GPR via 'or' (safe subset only; see patches.add_isozyme_gprs).
     n_gpr_added = add_isozyme_gprs(model)
@@ -396,6 +412,34 @@ def main(
     # true partner retained -> 0 growth impact. See patches.remove_misannotated_gprs.
     n_gpr_removed = remove_misannotated_gprs(model)
     logger.info(f"  Mis-annotation GPR removals: {n_gpr_removed} (reaction, gene) pair(s) removed")
+
+    # Directly reviewed GPR corrections are deliberately separate from the
+    # automated isozyme expansion: R612 receives the verified URA3 gene, while
+    # R570 is corrected to external NDH2 and duplicate R2063 is removed. R1889
+    # remains GPR-less pending a complex-I subunit requiredness review.
+    n_r612_gpr = add_r612_ura3_gpr(model)
+    logger.info("  Reviewed R612 URA3 GPR correction: %d reaction(s) changed", n_r612_gpr)
+    n_ndh2_changes = correct_external_ndh2_gpr_and_remove_duplicate(model)
+    logger.info("  Reviewed external-NDH2 correction: %d change(s)", n_ndh2_changes)
+
+    # Three direct enzyme-like assignments: LIP2 on extracellular triolein
+    # hydrolysis and the existing EC 2.7.1.35 gene on the two remaining B6
+    # vitamer kinase reactions.  See patches.add_direct_enzyme_like_gprs.
+    n_direct_enzyme_like_gprs = add_direct_enzyme_like_gprs(model)
+    logger.info(
+        "  Direct enzyme-like GPR corrections: %d reaction(s) changed",
+        n_direct_enzyme_like_gprs,
+    )
+
+    # Remove two dead, mis-annotated quinone alternatives while preserving the
+    # mitochondrial R407/COQ2 route. This is a topology/identity cleanup, not
+    # an essentiality-recall patch; CoQ9 chain length and synthome GPR
+    # decomposition remain explicitly deferred.
+    n_quinone_removed = remove_spurious_quinone_branches(model)
+    logger.info(
+        "  Spurious quinone branch cleanup: %d reaction(s) removed",
+        n_quinone_removed,
+    )
 
     # Remove spurious carrier-free CoA-thioester transport (R1172: HMG-CoA crossing
     # the inner mito membrane with no carrier — impossible; both pools synthesized
@@ -466,7 +510,7 @@ def main(
             ),
         )
 
-    # Optional experimental build profile. Apply it after every canonical
+    # Optional experimental capacity profile. Apply it after every canonical
     # structural and chemistry operation so later pipeline steps cannot make a
     # copied backup branch diverge from its parent. This remains separate from
     # the evidence-gated patch table and can never target canonical model.xml.
@@ -483,13 +527,27 @@ def main(
             len(capacity_audit),
         )
 
-    if trna_biomass_mode == "split":
+    # The B-group AA-tRNA translation representation is now part of the
+    # canonical model.  The legacy explicit mode remains available only to
+    # create a separately named experimental copy from an unsplit source.
+    canonical_build = output_model_path.resolve() == OUTPUT_MODEL_PATH.resolve()
+    if canonical_build or trna_biomass_mode == "split":
         trna_audit = split_trna_charging_from_biomass(model)
-        logger.warning(
-            "  Applied %d fully split tRNA-biomass coupling reactions; "
-            "experimental B-group overlay only",
-            len(trna_audit),
-        )
+        if canonical_build:
+            model.reactions.get_by_id("biomass_C").notes[
+                "canonical_trna_biomass_mode"
+            ] = "split_v1"
+            logger.info(
+                "  Applied %d fully split tRNA-biomass coupling reactions; "
+                "canonical B-group representation",
+                len(trna_audit),
+            )
+        else:
+            logger.warning(
+                "  Applied %d fully split tRNA-biomass coupling reactions; "
+                "experimental B-group overlay only",
+                len(trna_audit),
+            )
 
     ec_check2 = sum(1 for r in model.reactions if isinstance(r.annotation, dict) and 'ec-code' in r.annotation)
     logger.info(f"  DEBUG: reactions with ec-code AFTER normalize: {ec_check2}")

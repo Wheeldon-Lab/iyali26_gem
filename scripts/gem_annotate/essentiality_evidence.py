@@ -73,6 +73,15 @@ LEDGER_FIELDS = (
     "model_sha256",
     "experimental_sha256",
     "media_sha256",
+    "evidence_schema_version",
+    "simulation_context_fingerprint_version",
+    "simulation_context_fingerprint",
+    "strain_overlay_enabled",
+    "strain_profile_id",
+    "strain_profile_sha256",
+    "strain_overlay_effect_fingerprint_version",
+    "strain_overlay_effect_sha256",
+    "case_packet_sha256",
     "target_fingerprint",
     "chemistry_fingerprint",
     "evidence_path",
@@ -85,7 +94,28 @@ LEDGER_FIELDS = (
     "approved_at",
 )
 
-_LEGACY_OPTIONAL_LEDGER_FIELDS = {"chemistry_fingerprint"}
+_LEGACY_OPTIONAL_LEDGER_FIELDS = {
+    "chemistry_fingerprint",
+    "evidence_schema_version",
+    "simulation_context_fingerprint_version",
+    "simulation_context_fingerprint",
+    "strain_overlay_enabled",
+    "strain_profile_id",
+    "strain_profile_sha256",
+    "strain_overlay_effect_fingerprint_version",
+    "strain_overlay_effect_sha256",
+    "case_packet_sha256",
+}
+
+SIMULATION_CONTEXT_FIELDS = (
+    "simulation_context_fingerprint_version",
+    "simulation_context_fingerprint",
+    "strain_overlay_enabled",
+    "strain_profile_id",
+    "strain_profile_sha256",
+    "strain_overlay_effect_fingerprint_version",
+    "strain_overlay_effect_sha256",
+)
 
 SEARCH_AUDIT_FIELDS = {
     "searched_at",
@@ -365,6 +395,7 @@ def transition_case_status(
     *,
     ledger_path: str | Path = DEFAULT_LEDGER,
     evidence_dir: str | Path = DEFAULT_EVIDENCE_DIR,
+    artifact_manifest: str | Path | None = None,
 ) -> dict[str, str]:
     """Advance a case without allowing the human-acceptance gate to be bypassed."""
     if target_status == "accepted":
@@ -378,19 +409,39 @@ def transition_case_status(
     row = matches[0]
     assert_transition(row["status"], target_status)
 
+    artifact: dict[str, Any] | None = None
+    if target_status in {"implemented", "regression_passed"}:
+        if artifact_manifest is None:
+            raise ValueError(
+                f"Cannot mark {target_status} without an --artifact-manifest"
+            )
+        manifest_path = Path(artifact_manifest)
+        artifact = load_json_document(manifest_path)
+        if not isinstance(artifact, dict):
+            raise ValueError("Artifact manifest must be a JSON object")
+        for field in (
+            "case_id",
+            *_record_provenance_fields(row),
+            "target_fingerprint",
+            "chemistry_fingerprint",
+        ):
+            expected = case_id if field == "case_id" else row.get(field, "")
+            if str(artifact.get(field, "")) != str(expected):
+                raise ValueError(
+                    f"Artifact manifest {field} does not match the current case"
+                )
+        if target_status == "regression_passed" and artifact.get("regression_passed") is not True:
+            raise ValueError("Regression manifest must set regression_passed=true")
+
     dossier_path = Path(evidence_dir) / f"{case_id}.json"
     if target_status in {"reviewed", "awaiting_human"}:
         if not dossier_path.exists():
             raise ValueError(f"Evidence dossier does not exist: {dossier_path}")
         dossier = json.loads(dossier_path.read_text(encoding="utf-8"))
-        for field, label in (
-            ("model_sha256", "model"),
-            ("experimental_sha256", "experimental"),
-            ("media_sha256", "media"),
-        ):
+        for field in _record_provenance_fields(row):
             if dossier.get(field) != row.get(field):
                 raise ValueError(
-                    f"Evidence {label} SHA does not match the current ledger"
+                    f"Evidence provenance {field} does not match the current ledger"
                 )
         if dossier.get("target_fingerprint") != row.get("target_fingerprint"):
             raise ValueError(
@@ -420,6 +471,13 @@ def transition_case_status(
         dossier = json.loads(dossier_path.read_text(encoding="utf-8"))
         dossier["workflow_status"] = target_status
         dossier["workflow_updated_at"] = now
+        if artifact is not None and artifact_manifest is not None:
+            key = "implementation_manifest" if target_status == "implemented" else "regression_manifest"
+            dossier[key] = {
+                "path": str(Path(artifact_manifest).resolve()),
+                "sha256": sha256_file(artifact_manifest),
+                "recorded_at": now,
+            }
         payloads[dossier_path] = _json_text(dossier)
     payloads[Path(ledger_path)] = _ledger_text(rows)
     _atomic_write_bundle(payloads)
@@ -429,6 +487,20 @@ def transition_case_status(
 def _nonempty(source: dict[str, Any], field: str) -> bool:
     value = source.get(field)
     return value is not None and str(value).strip() != ""
+
+
+def _requires_simulation_context(record: dict[str, Any]) -> bool:
+    """Schema-2.1 records are bound to an effective-model context."""
+    return str(record.get("schema_version", "2.0")).strip() >= "2.1"
+
+
+def _provenance_fields(record: dict[str, Any]) -> tuple[str, ...]:
+    fields = (
+        "model_sha256",
+        "experimental_sha256",
+        "media_sha256",
+    )
+    return fields + (SIMULATION_CONTEXT_FIELDS if _requires_simulation_context(record) else ())
 
 
 def _nonempty_string_list(value: Any) -> bool:
@@ -713,6 +785,25 @@ def validate_evidence_dossier(
     missing = sorted(required_fields - set(dossier))
     if missing:
         errors.append(f"missing dossier fields: {missing}")
+    if _requires_simulation_context(dossier):
+        context_missing = [
+            field
+            for field in SIMULATION_CONTEXT_FIELDS
+            if field not in dossier
+        ]
+        if context_missing:
+            errors.append(f"missing simulation-context fields: {context_missing}")
+        elif bool(dossier.get("strain_overlay_enabled")):
+            for field in (
+                "simulation_context_fingerprint_version",
+                "simulation_context_fingerprint",
+                "strain_profile_id",
+                "strain_profile_sha256",
+                "strain_overlay_effect_fingerprint_version",
+                "strain_overlay_effect_sha256",
+            ):
+                if not _nonempty(dossier, field):
+                    errors.append(f"overlay dossier has empty {field}")
 
     verdict = str(dossier.get("verdict", ""))
     if verdict not in VERDICTS:
@@ -1095,14 +1186,15 @@ def write_ledger(
 
 def dossier_skeleton(case: dict[str, Any]) -> dict[str, Any]:
     """Create the durable, unreviewed evidence record for a generated case."""
-    return {
-        "schema_version": "2.0",
+    dossier = {
+        "schema_version": str(case.get("schema_version", "2.0")),
         "case_id": case["case_id"],
         "model_sha256": case["model_sha256"],
         "experimental_sha256": case["experimental_sha256"],
         "media_sha256": case["media_sha256"],
         "target_fingerprint": case["target_fingerprint"],
         "chemistry_fingerprint": case["chemistry_fingerprint"],
+        "case_packet_sha256": case["case_packet_sha256"],
         "claim_under_review": case["claim_under_review"],
         "model_context": case["model_context"],
         "primary_sources": [],
@@ -1122,74 +1214,9 @@ def dossier_skeleton(case: dict[str, Any]) -> dict[str, Any]:
             "approved_at": "",
         },
     }
-
-
-def ensure_case_dossier(
-    case: dict[str, Any], evidence_dir: str | Path = DEFAULT_EVIDENCE_DIR
-) -> Path:
-    """Create a dossier or archive stale evidence before replacing its skeleton."""
-    evidence_dir = Path(evidence_dir)
-    evidence_dir.mkdir(parents=True, exist_ok=True)
-    path = evidence_dir / f"{case['case_id']}.json"
-    if path.exists():
-        existing = json.loads(path.read_text(encoding="utf-8"))
-        if (
-            existing.get("target_fingerprint") == case.get("target_fingerprint")
-            and existing.get("chemistry_fingerprint")
-            == case.get("chemistry_fingerprint")
-        ):
-            provenance_changed = any(
-                existing.get(field) != case.get(field)
-                for field in (
-                    "model_sha256",
-                    "experimental_sha256",
-                    "media_sha256",
-                )
-            )
-            if provenance_changed:
-                refreshed = dossier_skeleton(case)
-                # Direct literature and identity work may be reused when the
-                # biological target is unchanged. Simulation context, verdict,
-                # skeptic pass and any prior human decision must be recomputed.
-                for field in (
-                    "primary_sources",
-                    "identity_crosschecks",
-                    "contradictions",
-                ):
-                    if isinstance(existing.get(field), list):
-                        refreshed[field] = existing[field]
-                if isinstance(existing.get("literature_review"), dict):
-                    refreshed["literature_review"] = existing["literature_review"]
-                refreshed["reused_literature_provenance"] = {
-                    "previous_model_sha256": existing.get("model_sha256", ""),
-                    "previous_experimental_sha256": existing.get(
-                        "experimental_sha256", ""
-                    ),
-                    "previous_media_sha256": existing.get("media_sha256", ""),
-                    "refreshed_at": utc_now(),
-                }
-                _atomic_write_bundle({path: _json_text(refreshed)})
-            return path
-        archive_dir = evidence_dir / "archive"
-        archive_dir.mkdir(parents=True, exist_ok=True)
-        old_fingerprint = str(existing.get("target_fingerprint", "unknown")).replace(
-            ":", "-"
-        )
-        old_chemistry_fingerprint = str(
-            existing.get("chemistry_fingerprint", "unknown")
-        ).replace(":", "-")
-        archive = archive_dir / (
-            f"{case['case_id']}.{old_fingerprint}.{old_chemistry_fingerprint}.json"
-        )
-        payloads: dict[str | Path, str] = {
-            path: _json_text(dossier_skeleton(case))
-        }
-        if not archive.exists():
-            payloads[archive] = _json_text(existing)
-        _atomic_write_bundle(payloads)
-        return path
-    _atomic_write_bundle({path: _json_text(dossier_skeleton(case))})
-    return path
+    if _requires_simulation_context(case):
+        dossier.update({field: case.get(field) for field in SIMULATION_CONTEXT_FIELDS})
+    return dossier
 
 
 def _display_path(path: Path) -> str:
@@ -1255,6 +1282,29 @@ def _fresh_case_context_index(case: dict[str, Any]) -> dict[str, dict[str, Any]]
     missing = [field for field in _FRESH_CASE_REQUIRED_FIELDS if not _nonempty(case, field)]
     if missing:
         raise ValueError(f"{case_id}: fresh case has empty fields: {sorted(missing)}")
+    if _requires_simulation_context(case):
+        missing_context = [
+            field
+            for field in SIMULATION_CONTEXT_FIELDS
+            if field not in case
+            or (
+                field not in {"strain_profile_id", "strain_profile_sha256", "strain_overlay_effect_fingerprint_version", "strain_overlay_effect_sha256"}
+                and not _nonempty(case, field)
+            )
+        ]
+        if missing_context:
+            raise ValueError(
+                f"{case_id}: fresh case has incomplete simulation context: {missing_context}"
+            )
+        if bool(case.get("strain_overlay_enabled")):
+            for field in (
+                "strain_profile_id",
+                "strain_profile_sha256",
+                "strain_overlay_effect_fingerprint_version",
+                "strain_overlay_effect_sha256",
+            ):
+                if not _nonempty(case, field):
+                    raise ValueError(f"{case_id}: overlay case has empty {field}")
 
     contexts = _case_reaction_contexts(case)
     indexed = _contexts_by_reaction_id(contexts, case_id=case_id)
@@ -1316,13 +1366,7 @@ def _same_nonempty_provenance(
     return all(
         _nonempty(source, field)
         and str(source.get(field)) == str(case.get(field))
-        for field in (
-            "case_id",
-            "model_sha256",
-            "experimental_sha256",
-            "media_sha256",
-            "target_fingerprint",
-        )
+        for field in ("case_id", *_provenance_fields(case), "target_fingerprint")
     )
 
 
@@ -1404,9 +1448,11 @@ def _archive_path_for_dossier(
     old_chemistry = str(
         dossier.get("chemistry_fingerprint", "unknown") or "unknown"
     )
+    old_context = str(dossier.get("simulation_context_fingerprint", "baseline") or "baseline")
+    old_packet = str(dossier.get("case_packet_sha256", "unknown") or "unknown")
     return evidence_dir / "archive" / (
         f"{case_id}.{old_target.replace(':', '-')}."
-        f"{old_chemistry.replace(':', '-')}.json"
+        f"{old_chemistry.replace(':', '-')}.{old_context}.{old_packet}.json"
     )
 
 
@@ -1418,6 +1464,15 @@ def merge_detected_cases(
     """Merge fresh cases with one failure-safe dossier/archive/ledger commit."""
     now = utc_now()
     fresh_cases = list(cases)
+    for case in fresh_cases:
+        supplied_packet_sha = str(case.get("case_packet_sha256", "")).strip()
+        if not supplied_packet_sha:
+            case["case_packet_sha256"] = case_packet_sha256(case)
+        elif supplied_packet_sha != case_packet_sha256(case):
+            raise ValueError(
+                f"{case.get('case_id', '<unknown>')}: supplied case_packet_sha256 "
+                "does not match packet contents"
+            )
     fresh_contexts_by_case: dict[str, dict[str, dict[str, Any]]] = {}
     for case in fresh_cases:
         case_id = str(case.get("case_id", "")).strip()
@@ -1475,11 +1530,7 @@ def merge_detected_cases(
             if current_contexts_match:
                 provenance_changed = any(
                     existing_dossier.get(field) != case.get(field)
-                    for field in (
-                        "model_sha256",
-                        "experimental_sha256",
-                        "media_sha256",
-                    )
+                    for field in (*_provenance_fields(case), "case_packet_sha256")
                 )
                 if provenance_changed:
                     refreshed = dossier_skeleton(case)
@@ -1501,8 +1552,9 @@ def merge_detected_cases(
                         "previous_experimental_sha256": existing_dossier.get(
                             "experimental_sha256", ""
                         ),
-                        "previous_media_sha256": existing_dossier.get(
-                            "media_sha256", ""
+                        "previous_media_sha256": existing_dossier.get("media_sha256", ""),
+                        "previous_simulation_context_fingerprint": existing_dossier.get(
+                            "simulation_context_fingerprint", ""
                         ),
                         "refreshed_at": now,
                     }
@@ -1549,10 +1601,14 @@ def merge_detected_cases(
             existing
             and existing.get("model_sha256") == case.get("model_sha256")
             and existing.get("experimental_sha256") == case.get("experimental_sha256")
-            and existing.get("media_sha256") == case.get("media_sha256")
+            and all(
+                existing.get(field) == str(case.get(field, ""))
+                for field in _provenance_fields(case)
+            )
             and existing.get("target_fingerprint") == case.get("target_fingerprint")
             and existing.get("chemistry_fingerprint")
             == case.get("chemistry_fingerprint")
+            and existing.get("case_packet_sha256") == case.get("case_packet_sha256")
         )
         if existing and hashes_match and dossier_state == "current":
             existing.update(
@@ -1570,11 +1626,10 @@ def merge_detected_cases(
         stale_reasons: list[str] = []
         if existing:
             for field in (
-                "model_sha256",
-                "experimental_sha256",
-                "media_sha256",
+                *_provenance_fields(case),
                 "target_fingerprint",
                 "chemistry_fingerprint",
+                "case_packet_sha256",
             ):
                 if existing.get(field) != str(case.get(field, "")):
                     stale_reasons.append(field)
@@ -1589,6 +1644,9 @@ def merge_detected_cases(
             "model_sha256": str(case["model_sha256"]),
             "experimental_sha256": str(case["experimental_sha256"]),
             "media_sha256": str(case["media_sha256"]),
+            "evidence_schema_version": str(case.get("schema_version", "2.0")),
+            **{field: str(case.get(field, "") or "") for field in SIMULATION_CONTEXT_FIELDS},
+            "case_packet_sha256": str(case["case_packet_sha256"]),
             "target_fingerprint": str(case["target_fingerprint"]),
             "chemistry_fingerprint": str(case["chemistry_fingerprint"]),
             "evidence_path": _display_path(dossier_path),
@@ -1614,9 +1672,61 @@ _CASE_PACKET_PROVENANCE_FIELDS = (
     "chemistry_fingerprint",
 )
 
+_CASE_PACKET_BINDING_FIELDS = (*_CASE_PACKET_PROVENANCE_FIELDS, "case_packet_sha256")
+
+
+def _packet_provenance_fields(packet: dict[str, Any]) -> tuple[str, ...]:
+    return _CASE_PACKET_PROVENANCE_FIELDS + (
+        SIMULATION_CONTEXT_FIELDS if _requires_simulation_context(packet) else ()
+    )
+
+
+def _packet_binding_fields(packet: dict[str, Any]) -> tuple[str, ...]:
+    return (*_packet_provenance_fields(packet), "case_packet_sha256")
+
+
+def _record_provenance_fields(record: dict[str, Any]) -> tuple[str, ...]:
+    return _CASE_PACKET_PROVENANCE_FIELDS + (
+        SIMULATION_CONTEXT_FIELDS
+        if str(record.get("evidence_schema_version", record.get("schema_version", "2.0"))) >= "2.1"
+        else ()
+    )
+
+
+def case_packet_sha256(packet: dict[str, Any]) -> str:
+    """Return the deterministic digest of a packet without its own digest."""
+
+    payload = {
+        key: value for key, value in packet.items() if key != "case_packet_sha256"
+    }
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def reviewer_result_sha256(result: dict[str, Any]) -> str:
+    """Return the deterministic digest of a reviewer result without its own digest."""
+
+    payload = {
+        key: value for key, value in result.items() if key != "reviewer_result_sha256"
+    }
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def case_packet_batch_sha256(case_packets: Iterable[dict[str, Any]]) -> str:
+    """Fingerprint the exact ordered packet set supplied to a skeptic."""
+
+    payload = [
+        {
+            "case_id": str(packet.get("case_id", "")),
+            "case_packet_sha256": str(packet.get("case_packet_sha256", "")),
+        }
+        for packet in case_packets
+    ]
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+
 _REVIEWER_RESULT_FIELDS = {
     "case_id",
     "claim_under_review",
+    *_CASE_PACKET_BINDING_FIELDS,
     "search_audit",
     "primary_sources",
     "identity_crosschecks",
@@ -1626,10 +1736,13 @@ _REVIEWER_RESULT_FIELDS = {
     "confidence",
     "reasoning",
     "unresolved_questions",
+    "reviewer_result_sha256",
 }
 
 _SKEPTIC_CASE_FIELDS = {
     "case_id",
+    "case_packet_sha256",
+    "reviewer_result_sha256",
     "status",
     "verdict",
     "findings",
@@ -1663,15 +1776,15 @@ def validate_case_batch(
     if not packets:
         raise ValueError("Research batch is empty")
 
-    required = {
-        "case_id",
-        "claim_under_review",
-        *_CASE_PACKET_PROVENANCE_FIELDS,
-    }
     case_ids: list[str] = []
     for index, packet in enumerate(packets):
         if not isinstance(packet, dict):
             raise ValueError(f"Case packet {index} must be an object")
+        required = {
+            "case_id",
+            "claim_under_review",
+            *_packet_binding_fields(packet),
+        }
         missing = sorted(required - set(packet))
         if missing:
             raise ValueError(f"Case packet {index} missing fields: {missing}")
@@ -1679,9 +1792,11 @@ def validate_case_batch(
         if not case_id:
             raise ValueError(f"Case packet {index} has an empty case_id")
         case_ids.append(case_id)
-        for field in _CASE_PACKET_PROVENANCE_FIELDS:
+        for field in _packet_binding_fields(packet):
             if not str(packet.get(field, "")).strip():
                 raise ValueError(f"Case packet {case_id} has an empty {field}")
+        if str(packet["case_packet_sha256"]) != case_packet_sha256(packet):
+            raise ValueError(f"Case packet {case_id} SHA does not match its contents")
     duplicates = sorted(
         {case_id for case_id in case_ids if case_ids.count(case_id) > 1}
     )
@@ -1694,7 +1809,7 @@ def _assert_packet_matches_row(
     packet: dict[str, Any], row: dict[str, str]
 ) -> None:
     case_id = str(packet["case_id"])
-    for field in _CASE_PACKET_PROVENANCE_FIELDS:
+    for field in _packet_provenance_fields(packet):
         if str(packet.get(field, "")) != row.get(field, ""):
             raise ValueError(
                 f"Selected packet {case_id} {field} does not match the durable ledger"
@@ -1714,7 +1829,7 @@ def _load_current_dossier(
         raise ValueError(f"Evidence dossier must be an object: {dossier_path}")
     if dossier.get("case_id") != case_id:
         raise ValueError(f"Evidence dossier case_id does not match {case_id}")
-    for field in _CASE_PACKET_PROVENANCE_FIELDS:
+    for field in _record_provenance_fields(row):
         if dossier.get(field) != row.get(field):
             raise ValueError(
                 f"Evidence dossier {case_id} {field} does not match the durable ledger"
@@ -1757,6 +1872,12 @@ def transition_selected_batch_to_researching(
             raise ValueError(
                 f"Evidence dossier {case_id} claim does not match the selected packet"
             )
+        if dossier_record[1].get("case_packet_sha256") != packet.get(
+            "case_packet_sha256"
+        ):
+            raise ValueError(
+                f"Evidence dossier {case_id} case-packet SHA does not match the selected packet"
+            )
         dossier_records.append(dossier_record)
         selected_rows.append(row)
 
@@ -1793,12 +1914,25 @@ def validate_reviewer_results(
         )
 
     for case_id, result in result_by_id.items():
-        missing = sorted(_REVIEWER_RESULT_FIELDS - set(result))
+        packet = packet_by_id[case_id]
+        required_result_fields = _REVIEWER_RESULT_FIELDS | set(
+            _packet_provenance_fields(packet)
+        )
+        missing = sorted(required_result_fields - set(result))
         if missing:
             raise ValueError(f"Reviewer result {case_id} missing fields: {missing}")
         if result["claim_under_review"] != packet_by_id[case_id]["claim_under_review"]:
             raise ValueError(
                 f"Reviewer result {case_id} claim does not match the selected packet"
+            )
+        for field in _packet_binding_fields(packet):
+            if str(result.get(field, "")) != str(packet[field]):
+                raise ValueError(
+                    f"Reviewer result {case_id} {field} does not match the selected packet"
+                )
+        if str(result["reviewer_result_sha256"]) != reviewer_result_sha256(result):
+            raise ValueError(
+                f"Reviewer result {case_id} SHA does not match its contents"
             )
         if result["verdict"] not in VERDICTS:
             raise ValueError(
@@ -1899,12 +2033,21 @@ def validate_reviewer_results(
 def validate_skeptic_batch_result(
     skeptic_batch_result: dict[str, Any],
     case_packets: Iterable[dict[str, Any]],
+    reviewer_results: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     """Validate one skeptic document that exactly covers the selected batch."""
     if not isinstance(skeptic_batch_result, dict):
         raise ValueError("Skeptic batch result must be one object")
-    if not {"batch_case_ids", "results"}.issubset(skeptic_batch_result):
-        raise ValueError("Skeptic batch result requires batch_case_ids and results")
+    if not {
+        "batch_case_ids",
+        "case_packet_batch_sha256",
+        "reviewer_result_sha256_by_case",
+        "results",
+    }.issubset(skeptic_batch_result):
+        raise ValueError(
+            "Skeptic batch result requires batch_case_ids, case_packet_batch_sha256, "
+            "reviewer_result_sha256_by_case and results"
+        )
     expected_ids = [str(packet["case_id"]) for packet in case_packets]
     declared_ids = skeptic_batch_result["batch_case_ids"]
     results = skeptic_batch_result["results"]
@@ -1919,6 +2062,23 @@ def validate_skeptic_batch_result(
             "Skeptic document does not exactly cover the selected batch: "
             f"expected={sorted(expected_ids)}, found={sorted(declared_ids)}"
         )
+    if str(skeptic_batch_result["case_packet_batch_sha256"]) != case_packet_batch_sha256(
+        case_packets
+    ):
+        raise ValueError("Skeptic batch case-packet SHA does not match selected packets")
+    reviewer_hashes = skeptic_batch_result["reviewer_result_sha256_by_case"]
+    if not isinstance(reviewer_hashes, dict) or set(reviewer_hashes) != set(expected_ids):
+        raise ValueError(
+            "Skeptic reviewer-result SHA map does not exactly cover selected cases"
+        )
+    for case_id in expected_ids:
+        if case_id not in reviewer_results:
+            raise ValueError(f"Skeptic result references unknown reviewer case {case_id}")
+        expected_hash = reviewer_results[case_id]["reviewer_result_sha256"]
+        if str(reviewer_hashes[case_id]) != str(expected_hash):
+            raise ValueError(
+                f"Skeptic reviewer-result SHA for {case_id} does not match reviewer output"
+            )
     if not isinstance(results, list) or any(
         not isinstance(result, dict) for result in results
     ):
@@ -1933,6 +2093,17 @@ def validate_skeptic_batch_result(
         missing = sorted(_SKEPTIC_CASE_FIELDS - set(result))
         if missing:
             raise ValueError(f"Skeptic result {case_id} missing fields: {missing}")
+        packet = next(packet for packet in case_packets if packet["case_id"] == case_id)
+        if str(result["case_packet_sha256"]) != str(packet["case_packet_sha256"]):
+            raise ValueError(
+                f"Skeptic result {case_id} case-packet SHA does not match selected packet"
+            )
+        if str(result["reviewer_result_sha256"]) != str(
+            reviewer_results[case_id]["reviewer_result_sha256"]
+        ):
+            raise ValueError(
+                f"Skeptic result {case_id} reviewer-result SHA does not match reviewer output"
+            )
         if str(result["status"]).strip().lower() != "complete":
             raise ValueError(f"Skeptic result {case_id} is not complete")
         verdict = str(result["verdict"]).strip().lower()
@@ -1979,7 +2150,9 @@ def import_research_batch_results(
         case_packets, expected_batch_size=expected_batch_size
     )
     reviewer_by_id = validate_reviewer_results(reviewer_results, packets)
-    skeptic_by_id = validate_skeptic_batch_result(skeptic_batch_result, packets)
+    skeptic_by_id = validate_skeptic_batch_result(
+        skeptic_batch_result, packets, reviewer_by_id
+    )
     rows = read_ledger(ledger_path)
     rows_by_id = {row["case_id"]: row for row in rows}
     if len(rows_by_id) != len(rows):
@@ -2000,6 +2173,10 @@ def import_research_batch_results(
         if dossier.get("claim_under_review") != packet.get("claim_under_review"):
             raise ValueError(
                 f"Evidence dossier {case_id} claim does not match the selected packet"
+            )
+        if dossier.get("case_packet_sha256") != packet.get("case_packet_sha256"):
+            raise ValueError(
+                f"Evidence dossier {case_id} case-packet SHA does not match the selected packet"
             )
         reviewer = reviewer_by_id[case_id]
         skeptic = skeptic_by_id[case_id]
@@ -2078,6 +2255,173 @@ def import_research_batch_results(
     }
 
 
+def _load_current_case_for_review(
+    case_id: str,
+    *,
+    ledger_path: str | Path,
+    evidence_dir: str | Path,
+) -> tuple[list[dict[str, str]], dict[str, str], Path, dict[str, Any]]:
+    """Load one current case while rejecting stale or duplicate durable state."""
+
+    rows = read_ledger(ledger_path)
+    matches = [row for row in rows if row["case_id"] == case_id]
+    if len(matches) != 1:
+        raise ValueError(f"Expected exactly one ledger row for {case_id}; found {len(matches)}")
+    row = matches[0]
+    dossier_path, dossier = _load_current_dossier(case_id, row, evidence_dir)
+    return rows, row, dossier_path, dossier
+
+
+def _require_review_provenance(review: dict[str, Any], dossier: dict[str, Any]) -> None:
+    for field in (*_provenance_fields(dossier), "case_id"):
+        if str(review.get(field, "")) != str(dossier.get(field, "")):
+            raise ValueError(f"Review {field} does not match the current evidence dossier")
+
+
+def _required_case_identity_gene_ids(dossier: dict[str, Any]) -> set[str]:
+    required = {
+        str(gene_id).strip()
+        for gene_id in dossier.get("model_context", {}).get("genes", [])
+        if isinstance(gene_id, dict) and str(gene_id.get("gene_id", "")).strip()
+    }
+    required.update(
+        str(gene_id).strip()
+        for gene_id in dossier.get("gene_ids", [])
+        if str(gene_id).strip()
+    )
+    for reaction in dossier.get("model_context", {}).get("reactions", []):
+        if not isinstance(reaction, dict):
+            continue
+        required.update(
+            str(gene_id).strip()
+            for gene_id in reaction.get("gpr_gene_ids", [])
+            if str(gene_id).strip()
+        )
+    return required
+
+
+def import_identity_review(
+    case_id: str,
+    review: dict[str, Any],
+    *,
+    ledger_path: str | Path = DEFAULT_LEDGER,
+    evidence_dir: str | Path = DEFAULT_EVIDENCE_DIR,
+) -> dict[str, str]:
+    """Atomically attach a current-SHA identity review to one durable dossier."""
+
+    if not isinstance(review, dict):
+        raise ValueError("Identity review must be a JSON object")
+    rows, row, dossier_path, dossier = _load_current_case_for_review(
+        case_id, ledger_path=ledger_path, evidence_dir=evidence_dir
+    )
+    _require_review_provenance(review, dossier)
+    identity = review.get("identity_review", review)
+    if not isinstance(identity, dict):
+        raise ValueError("identity_review must be an object")
+    if str(identity.get("model_sha256", "")) != str(dossier["model_sha256"]):
+        raise ValueError("Identity review model SHA does not match the current dossier")
+    status = str(identity.get("status", "")).strip()
+    if not status:
+        raise ValueError("Identity review status is required")
+    if status == "verified":
+        required_gene_ids = _required_case_identity_gene_ids(dossier)
+        reviewed = {
+            str(gene_id).strip()
+            for gene_id in identity.get("reviewed_gene_ids", [])
+            if str(gene_id).strip()
+        }
+        if not required_gene_ids <= reviewed:
+            raise ValueError(
+                "Verified identity review does not cover target/GPR genes: "
+                f"{sorted(required_gene_ids - reviewed)}"
+            )
+        genes = identity.get("genes")
+        if not isinstance(genes, list):
+            raise ValueError("Verified identity review requires a genes list")
+        by_id = {
+            str(entry.get("gene_id", "")).strip(): entry
+            for entry in genes
+            if isinstance(entry, dict) and str(entry.get("gene_id", "")).strip()
+        }
+        for gene_id in required_gene_ids:
+            entry = by_id.get(gene_id, {})
+            if (
+                str(entry.get("identity_status", "")).strip() != "verified"
+                or str(entry.get("function_status", "")).strip() != "verified"
+                or not _nonempty(entry, "functional_role")
+                or not _nonempty_string_list(entry.get("evidence_refs"))
+            ):
+                raise ValueError(f"Verified identity review is incomplete for {gene_id}")
+    dossier["identity_review"] = identity
+    dossier["identity_review_imported_at"] = utc_now()
+    row["updated_at"] = dossier["identity_review_imported_at"]
+    _atomic_write_bundle({dossier_path: _json_text(dossier), Path(ledger_path): _ledger_text(rows)})
+    return row
+
+
+def _resolve_chemistry_audit_path(value: str, evidence_dir: str | Path) -> Path:
+    raw = Path(value)
+    candidate = raw if raw.is_absolute() else (REPO_ROOT / raw)
+    candidate = candidate.resolve()
+    root = Path(evidence_dir).resolve()
+    if root not in (candidate, *candidate.parents):
+        raise ValueError("Chemistry audit must be stored under the evidence directory")
+    return candidate
+
+
+def import_chemistry_review(
+    case_id: str,
+    review: dict[str, Any],
+    *,
+    ledger_path: str | Path = DEFAULT_LEDGER,
+    evidence_dir: str | Path = DEFAULT_EVIDENCE_DIR,
+) -> dict[str, str]:
+    """Atomically attach a hash-verified current chemistry review to one dossier."""
+
+    if not isinstance(review, dict):
+        raise ValueError("Chemistry review must be a JSON object")
+    rows, row, dossier_path, dossier = _load_current_case_for_review(
+        case_id, ledger_path=ledger_path, evidence_dir=evidence_dir
+    )
+    _require_review_provenance(review, dossier)
+    chemistry = review.get("chemistry_review", review)
+    if not isinstance(chemistry, dict):
+        raise ValueError("chemistry_review must be an object")
+    required = {
+        "status", "model_sha256", "chemistry_fingerprint", "audit_path", "audit_sha256"
+    }
+    missing = sorted(field for field in required if not _nonempty(chemistry, field))
+    if missing:
+        raise ValueError(f"Chemistry review missing fields: {missing}")
+    if str(chemistry["model_sha256"]) != str(dossier["model_sha256"]):
+        raise ValueError("Chemistry review model SHA does not match the current dossier")
+    if str(chemistry["chemistry_fingerprint"]) != str(dossier["chemistry_fingerprint"]):
+        raise ValueError("Chemistry review fingerprint does not match the current dossier")
+    audit_path = _resolve_chemistry_audit_path(str(chemistry["audit_path"]), evidence_dir)
+    if not audit_path.is_file() or sha256_file(audit_path) != str(chemistry["audit_sha256"]):
+        raise ValueError("Chemistry audit path or SHA does not match the supplied review")
+    if str(chemistry["status"]) == "verified_balanced":
+        target_ids = _target_reaction_ids(dossier, dossier.get("proposed_operation", {}))
+        audited = {
+            str(reaction_id).strip()
+            for reaction_id in chemistry.get("audited_reaction_ids", [])
+            if str(reaction_id).strip()
+        }
+        residuals = chemistry.get("residuals_by_reaction")
+        if (
+            chemistry.get("ready_for_activation") is not True
+            or not target_ids <= audited
+            or not isinstance(residuals, dict)
+            or any(residuals.get(reaction_id) not in ({}, [], None, "") for reaction_id in target_ids)
+        ):
+            raise ValueError("Verified chemistry review lacks balanced target audit evidence")
+    dossier["chemistry_review"] = chemistry
+    dossier["chemistry_review_imported_at"] = utc_now()
+    row["updated_at"] = dossier["chemistry_review_imported_at"]
+    _atomic_write_bundle({dossier_path: _json_text(dossier), Path(ledger_path): _ledger_text(rows)})
+    return row
+
+
 def verify_live_acceptance_inputs(
     case_id: str,
     row: dict[str, str],
@@ -2086,8 +2430,11 @@ def verify_live_acceptance_inputs(
     model_path: str | Path = DEFAULT_MODEL,
     experimental_path: str | Path = DEFAULT_EXPERIMENTAL,
     media_path: str | Path = DEFAULT_MEDIA,
+    strain_profile_path: str | Path | None = None,
 ) -> dict[str, str]:
     """Recompute every simulation provenance gate immediately before acceptance."""
+    from .essentiality_simulation_context import load_effective_simulation_context
+
     paths = {
         "model_sha256": Path(model_path),
         "experimental_sha256": Path(experimental_path),
@@ -2106,6 +2453,35 @@ def verify_live_acceptance_inputs(
             raise ValueError(
                 f"Current {field} does not match the evidence dossier for {case_id}"
             )
+
+    overlay_expected = bool(dossier.get("strain_overlay_enabled", False))
+    if overlay_expected and strain_profile_path is None:
+        raise ValueError("Overlay dossier acceptance requires --strain-profile")
+    if not overlay_expected and strain_profile_path is not None:
+        raise ValueError("Baseline dossier acceptance must not receive a strain profile")
+    simulation = load_effective_simulation_context(
+        model_path=model_path,
+        media_path=media_path,
+        strain_profile_path=strain_profile_path,
+    )
+    if _requires_simulation_context(dossier):
+        for field, expected in simulation.provenance().items():
+            row_value = row.get(field, "")
+            dossier_value = dossier.get(field)
+            if field == "strain_overlay_enabled":
+                row_matches = str(row_value).strip().lower() == str(bool(expected)).lower()
+            elif expected is None:
+                row_matches = str(row_value).strip() == ""
+            else:
+                row_matches = str(row_value) == str(expected)
+            if not row_matches:
+                raise ValueError(
+                    f"Current {field} does not match the durable ledger for {case_id}"
+                )
+            if dossier_value != expected:
+                raise ValueError(
+                    f"Current {field} does not match the evidence dossier for {case_id}"
+                )
 
     if dossier.get("case_id") != case_id:
         raise ValueError(f"Evidence dossier case_id does not match {case_id}")
@@ -2127,9 +2503,7 @@ def verify_live_acceptance_inputs(
     if not reaction_ids:
         raise ValueError(f"No live target reactions are recorded for {case_id}")
 
-    from cobra.io import read_sbml_model
-
-    model = read_sbml_model(str(paths["model_sha256"]))
+    model = simulation.model
     live_contexts: list[dict[str, Any]] = []
     for reaction_id in reaction_ids:
         try:
@@ -2199,6 +2573,7 @@ def verify_live_acceptance_inputs(
         "media_sha256": row["media_sha256"],
         "target_fingerprint": live_fingerprint,
         "chemistry_fingerprint": live_chemistry_fingerprint,
+        **simulation.provenance(),
     }
 
 
@@ -2211,6 +2586,7 @@ def record_human_decision(
     model_path: str | Path = DEFAULT_MODEL,
     experimental_path: str | Path = DEFAULT_EXPERIMENTAL,
     media_path: str | Path = DEFAULT_MEDIA,
+    strain_profile_path: str | Path | None = None,
 ) -> dict[str, str]:
     """Record one explicit accept/reject/defer decision in ledger and dossier."""
     normalized = decision.strip().lower()
@@ -2251,6 +2627,11 @@ def record_human_decision(
     ):
         if dossier.get(field) != row.get(field):
             raise ValueError(f"Evidence {label} SHA does not match the current ledger")
+    for field in _record_provenance_fields(row):
+        if dossier.get(field) != row.get(field):
+            raise ValueError(
+                f"Evidence provenance {field} does not match the current ledger"
+            )
 
     if target_status == "accepted":
         if row["status"] != "awaiting_human":
@@ -2265,6 +2646,7 @@ def record_human_decision(
             model_path=model_path,
             experimental_path=experimental_path,
             media_path=media_path,
+            strain_profile_path=strain_profile_path,
         )
     elif row["status"] not in {"reviewed", "awaiting_human", "needs_more_evidence"}:
         raise ValueError(f"Cannot decide {case_id} from state {row['status']}")
@@ -2328,6 +2710,8 @@ def main() -> None:
             "regression_passed",
             "start-batch",
             "import-batch-review",
+            "import-chemistry-review",
+            "import-identity-review",
         ),
     )
     parser.add_argument("case_id", nargs="?")
@@ -2336,10 +2720,17 @@ def main() -> None:
     parser.add_argument("--batch-file", type=Path)
     parser.add_argument("--reviewer-results", type=Path)
     parser.add_argument("--skeptic-result", type=Path)
+    parser.add_argument("--review-file", type=Path)
+    parser.add_argument("--artifact-manifest", type=Path)
     parser.add_argument("--expected-batch-size", type=int, default=3)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
     parser.add_argument("--experimental", type=Path, default=DEFAULT_EXPERIMENTAL)
     parser.add_argument("--media", type=Path, default=DEFAULT_MEDIA)
+    parser.add_argument(
+        "--strain-profile",
+        type=Path,
+        help="Exact runtime strain profile required to replay an overlay-bound case",
+    )
     args = parser.parse_args()
     try:
         if args.action == "start-batch":
@@ -2393,6 +2784,24 @@ def main() -> None:
                 evidence_dir=args.evidence_dir,
                 expected_batch_size=args.expected_batch_size,
             )
+        elif args.action in {"import-chemistry-review", "import-identity-review"}:
+            if args.case_id is None or args.review_file is None:
+                parser.error(f"{args.action} requires case_id and --review-file")
+            review_document = load_json_document(args.review_file)
+            if args.action == "import-chemistry-review":
+                updated = import_chemistry_review(
+                    args.case_id,
+                    review_document,
+                    ledger_path=args.ledger,
+                    evidence_dir=args.evidence_dir,
+                )
+            else:
+                updated = import_identity_review(
+                    args.case_id,
+                    review_document,
+                    ledger_path=args.ledger,
+                    evidence_dir=args.evidence_dir,
+                )
         else:
             if args.case_id is None:
                 parser.error(f"{args.action} requires case_id")
@@ -2405,6 +2814,7 @@ def main() -> None:
                     model_path=args.model,
                     experimental_path=args.experimental,
                     media_path=args.media,
+                    strain_profile_path=args.strain_profile,
                 )
             else:
                 updated = transition_case_status(
@@ -2412,6 +2822,7 @@ def main() -> None:
                     args.action,
                     ledger_path=args.ledger,
                     evidence_dir=args.evidence_dir,
+                    artifact_manifest=args.artifact_manifest,
                 )
     except ValueError as exc:
         parser.error(str(exc))

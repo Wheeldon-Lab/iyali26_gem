@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from cobra import Metabolite, Model
+from cobra import Metabolite, Model, Reaction
 from cobra.io import read_sbml_model
 from memote.support import consistency
 
@@ -80,6 +80,42 @@ def test_uncurated_legacy_direction_is_reported(tmp_path: Path) -> None:
     assert reaction.notes["gap_fill_direction_status"] == "legacy_unreviewed"
     assert stats["direction_curated"] == []
     assert stats["uncurated_direction"] == ["TEST_c"]
+
+
+def test_curated_existing_reaction_prevents_sphpl_reinsertion(tmp_path: Path) -> None:
+    model = Model("curated-existing-reaction-test")
+    model.add_reactions([Reaction("R730")])
+    candidates = tmp_path / "gap_fill_prioritized.csv"
+    candidates.write_text(
+        "priority,mnxr_id,bigg_reaction,gene_id,equation,ec_number,kegg_reaction\n"
+        "P0,MNXR188844,SPHPL,YALI1E33285g,"
+        '"1 MNXM1103529@MNXD1 = 1 MNXM187@MNXD1 + 1 MNXM528@MNXD1",4.1.2.27,R02464\n',
+        encoding="utf-8",
+    )
+
+    stats = add_gap_fill_reactions(model, candidates, cache_dir=tmp_path / "cache")
+
+    assert "SPHPL" not in model.reactions
+    assert stats["skipped_curated_existing"] == ["SPHPL"]
+
+
+def test_curated_existing_reaction_fails_closed_when_target_is_absent(
+    tmp_path: Path,
+) -> None:
+    candidates = tmp_path / "gap_fill_prioritized.csv"
+    candidates.write_text(
+        "priority,mnxr_id,bigg_reaction,gene_id,equation,ec_number,kegg_reaction\n"
+        "P0,MNXR188844,SPHPL,YALI1E33285g,"
+        '"1 MNXM1103529@MNXD1 = 1 MNXM187@MNXD1 + 1 MNXM528@MNXD1",4.1.2.27,R02464\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="curated existing-reaction target is absent"):
+        add_gap_fill_reactions(
+            Model("missing-curated-target-test"),
+            candidates,
+            cache_dir=tmp_path / "cache",
+        )
 
 
 def test_stale_direction_row_is_rejected(tmp_path: Path) -> None:

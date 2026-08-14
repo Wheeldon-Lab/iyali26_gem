@@ -28,6 +28,7 @@ from .microspecies import (
     DEFAULT_MICROSPECIES_TABLE,
     MicrospeciesRow,
     _fully_balanced_internal,
+    _is_allowed_current_pair,
     _metabolite_pair,
     _reaction_balance_record,
     _resolve_pinned_targets,
@@ -251,7 +252,7 @@ def audit_reference_reaction_chemistry(
         targets_by_family[row.family_id] = targets
         for metabolite in targets:
             current = _metabolite_pair(metabolite)
-            if current not in row.allowed_current_pairs:
+            if not _is_allowed_current_pair(row, metabolite):
                 raise ValueError(
                     f"{row.family_id}: {metabolite.id} has unexpected current pair "
                     f"{current!r}"
@@ -505,7 +506,7 @@ def audit_global_reference_component(
         targets_by_family[row.family_id] = targets
         for metabolite in targets:
             current = _metabolite_pair(metabolite)
-            if current not in row.allowed_current_pairs:
+            if not _is_allowed_current_pair(row, metabolite):
                 raise ValueError(
                     f"{row.family_id}: {metabolite.id} has unexpected current pair "
                     f"{current!r}"

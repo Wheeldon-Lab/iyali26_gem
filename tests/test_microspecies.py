@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
 from cobra import Metabolite, Model, Reaction
-from cobra.io import read_sbml_model
+from cobra.io import read_sbml_model, write_sbml_model
 
+from scripts.gem_annotate import microspecies as microspecies_module
+from scripts.gem_annotate.metabolites import _apply_mnxm
 from scripts.gem_annotate.microspecies import (
     DEFAULT_MICROSPECIES_TABLE,
     REFERENCE_PH,
@@ -15,6 +18,7 @@ from scripts.gem_annotate.microspecies import (
     balance_protons_and_water,
     load_curated_microspecies,
     normalize_hydroxide_reactions,
+    write_component_migration_audit,
 )
 
 
@@ -270,6 +274,41 @@ def test_component_migration_audit_is_read_only_and_deterministic(
     assert model.reactions.R_COMPONENT.check_mass_balance() == before_balance
 
 
+def test_deferred_component_accepts_only_audited_conflict_preserved_pair(
+    tmp_path: Path,
+) -> None:
+    model = Model("audited_conflict")
+    metabolite = _met("a_c", "A", "H", 0)
+    model.add_metabolites([metabolite])
+    _, status = _apply_mnxm(
+        metabolite,
+        "MNXM_A",
+        {},
+        {
+            "MNXM_A": {
+                "formula": "C",
+                "charge": "0",
+                "inchi": "",
+                "inchikey": "",
+            }
+        },
+    )
+    assert status == "conflict"
+    table = _multi_row_table(
+        tmp_path,
+        [
+            "1,component_review,family_a,base_name,A,C,0,7.3,CHEBI:1,,"
+            "https://example.org/a,1,a_c,C|0,test",
+        ],
+    )
+
+    report = audit_component_migration(model, ["family_a"], table_path=table)
+
+    assert report["changed_metabolite_ids"] == ["a_c"]
+    assert report["ready_for_activation"] is True
+    assert (metabolite.formula, metabolite.charge) == ("H", 0)
+
+
 def test_incomplete_component_migration_reports_regression_and_frontier(
     tmp_path: Path,
 ) -> None:
@@ -294,6 +333,44 @@ def test_incomplete_component_migration_reports_regression_and_frontier(
         "H",
         0,
     )
+
+
+def test_component_migration_audit_write_is_atomic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = _component_pair_model()
+    model_path = tmp_path / "model.xml"
+    table = _component_pair_table(tmp_path)
+    output = tmp_path / "component_audit.json"
+    write_sbml_model(model, str(model_path))
+
+    write_component_migration_audit(
+        model_path,
+        output,
+        ["family_a", "family_b"],
+        table_path=table,
+    )
+    first_bytes = output.read_bytes()
+    payload = json.loads(first_bytes)
+    assert payload["audit"]["ready_for_activation"] is True
+    assert payload["provenance"]["model_sha256"] == hashlib.sha256(
+        model_path.read_bytes()
+    ).hexdigest()
+
+    def fail_replace(source: Path, target: Path) -> None:
+        raise OSError("injected replace failure")
+
+    monkeypatch.setattr(microspecies_module.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="injected replace failure"):
+        write_component_migration_audit(
+            model_path,
+            output,
+            ["family_a", "family_b"],
+            table_path=table,
+        )
+
+    assert output.read_bytes() == first_bytes
+    assert list(tmp_path.glob(".component_audit.json.*.tmp")) == []
 
 
 def test_component_migration_refuses_unknown_or_nondeferred_family(
@@ -391,7 +468,7 @@ def test_real_model_active_subset_is_safe_and_r540_deferred() -> None:
 
     report = apply_curated_microspecies(model)
     assert report["balanced_reaction_regressions"] == []
-    assert report["active_families"] == 7
+    assert report["active_families"] == 8
     balance_report = balance_protons_and_water(model, reaction_ids=["R540"])
     assert model.reactions.get_by_id("R540").reaction == r540_before
     assert balance_report["changed_reactions"] == 0
@@ -399,6 +476,9 @@ def test_real_model_active_subset_is_safe_and_r540_deferred() -> None:
     assert model.metabolites.get_by_id("m1099[C_ex]").formula == "K"
     assert model.metabolites.get_by_id("m1108[C_ex]").charge == 1
     assert model.metabolites.get_by_id("m1893[C_cy]").charge == 2
+    assert model.metabolites.get_by_id("m884[C_cy]").formula == "C3H4O7P"
+    assert model.metabolites.get_by_id("m884[C_cy]").charge == -3
+    assert model.reactions.get_by_id("R643").check_mass_balance() == {}
     assert model.metabolites.get_by_id("m38[C_cy]").formula == "H3N"
     assert any(
         row["family_id"] == "gtp" and row["would_change"] for row in report["deferred"]

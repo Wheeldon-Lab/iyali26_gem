@@ -220,7 +220,7 @@ def _resolution(
         "regression_passed",
     }:
         return "resolved_no_patch", "", "Adversarially reviewed no-patch outcome."
-    if chemistry_status != "balanced":
+    if chemistry_status not in {"balanced", "verified_balanced"}:
         return (
             "open",
             f"reaction chemistry is {chemistry_status}",

@@ -5,27 +5,19 @@
 
 echo "Parse memote.ini for values."
 deployment=$(awk -F '=' '{if (! ($0 ~ /^;/) && $0 ~ /deployment/) print $2}' memote.ini | tr -d ' ')
-location=$(awk -F '=' '{if (! ($0 ~ /^;/) && $0 ~ /location/) print $2}' memote.ini | tr -d ' ')
 
 git config --global user.email "github-actions[bot]"
 git config --global user.name "41898282+github-actions[bot]@users.noreply.github.com"
 
-if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-    echo "Untracked build."
-    memote run --ignore-git
-		echo "Skip deploy."
-    exit 0
-else
-		# Always need the deployment branch available locally for storing results.
-		echo "Checking  if deployment branch ${deployment} is available"
-		git checkout "${deployment}"
-		echo "Back to base ${HEAD_REF}"
-		git checkout ${HEAD_REF}
-		echo "Tracked build."
-		mkdir -p results
-		memote run
-		echo "Start deploy to ${deployment}..."
-fi
+# Always need the deployment branch available locally for storing results.
+echo "Checking if deployment branch ${deployment} is available"
+git checkout "${deployment}"
+echo "Back to base ${HEAD_REF}"
+git checkout "${HEAD_REF}"
+echo "Tracked build."
+mkdir -p results
+memote run
+echo "Start deploy to ${deployment}..."
 
 # Generate the history report on the deployment branch.
 output="index.html"

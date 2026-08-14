@@ -33,6 +33,7 @@ Currently applied patches:
 
 from __future__ import annotations
 
+import copy
 import logging
 import math
 import re
@@ -162,35 +163,6 @@ def fix_ceramide_formulas(model) -> int:
     return fixed
 
 
-# ── Patch 3: free CoA charge fix ──────────────────────────────────────────
-
-# iYali26 stores free coenzyme A (KEGG C00010) with charge 0, but the correct
-# physiological charge is -4.  Only the 9 free-CoA copies are affected; the
-# acyl-CoA species (tetracosanoyl-CoA, acetyl-CoA, …) already carry charge -4.
-# Identified by: name starts with "coenzyme A", formula == C21H36N7O16P3S, charge == 0.
-_COA_FREE_FORMULA   = "C21H36N7O16P3S"
-_COA_CORRECT_CHARGE = -4
-
-
-def fix_coa_charge(model) -> int:
-    """
-    Fix the free-CoA charge bug (KEGG C00010: charge should be -4, not 0).
-
-    Patches only free coenzyme A; acyl-CoA species are left untouched because
-    they already carry the correct charge.  Returns the number patched.
-    """
-    fixed = 0
-    for met in model.metabolites:
-        name = met.name or ""
-        if not name.startswith("coenzyme A"):
-            continue
-        if met.formula == _COA_FREE_FORMULA and met.charge == 0:
-            met.charge = _COA_CORRECT_CHARGE
-            fixed += 1
-            logger.debug(f"  CoA patch: {met.id} charge → {_COA_CORRECT_CHARGE}")
-    return fixed
-
-
 # ── Patch 6: cation formula/charge self-consistency ───────────────────────
 
 # A set of protonated amines/cations carry a NEUTRAL formula but a positive
@@ -269,6 +241,74 @@ def fix_activex_names(model) -> int:
                 fixed += 1
                 logger.debug(f"  ActiveX name patch: {met.id} → {cleaned!r}")
     return fixed
+
+
+# ── Patch 0b: D-arabinokinase direction and proton bookkeeping ──────────
+
+# R2041 was inherited as a reversible ATP:D-arabinose 5-phosphotransferase.
+# The verified EC 2.7.1.54 equation is:
+#
+#   ATP + D-arabinose -> ADP + D-arabinose 5-phosphate + H+
+#
+# ENZYME: https://enzyme.expasy.org/EC/2.7.1.54
+#
+# Allowing the reverse direction lets the D-arabinose-phosphate isomerase /
+# phosphatase loop synthesize ATP.  Directionality and the missing product
+# proton are reaction-level facts and can be corrected independently of the
+# deferred ATP/ADP connected-component microspecies migration.  With the
+# current legacy neutral-H nucleotide formulas the corrected reaction retains
+# an H=-1 formula residual; it becomes fully balanced only when ATP and ADP are
+# migrated atomically to the curated pH-7.3 microspecies.
+_D_ARABINOKINASE_REACTION_ID = "R2041"
+_D_ARABINOKINASE_PROTON_ID = "m10[C_cy]"
+_D_ARABINOKINASE_SOURCE = "https://enzyme.expasy.org/EC/2.7.1.54"
+
+
+def fix_d_arabinokinase_direction_and_proton(model) -> int:
+    """Make R2041 forward-only and add its verified product proton.
+
+    The patch is idempotent and fails closed if R2041 already contains an
+    unexpected proton coefficient.  It returns one when the reaction changed
+    and zero when it was already canonical.
+    """
+
+    try:
+        reaction = model.reactions.get_by_id(_D_ARABINOKINASE_REACTION_ID)
+        proton = model.metabolites.get_by_id(_D_ARABINOKINASE_PROTON_ID)
+    except KeyError:
+        return 0
+
+    proton_coefficient = float(reaction.metabolites.get(proton, 0.0))
+    if proton_coefficient not in {0.0, 1.0}:
+        raise ValueError(
+            f"{_D_ARABINOKINASE_REACTION_ID} has unexpected product-proton "
+            f"coefficient {proton_coefficient}"
+        )
+
+    changed = False
+    if reaction.bounds != (0.0, 1000.0):
+        reaction.bounds = (0.0, 1000.0)
+        changed = True
+    if proton_coefficient == 0.0:
+        reaction.add_metabolites({proton: 1.0})
+        changed = True
+
+    notes = dict(reaction.notes or {})
+    expected_note = {
+        "source": _D_ARABINOKINASE_SOURCE,
+        "equation": (
+            "ATP + D-arabinose -> ADP + D-arabinose 5-phosphate + H+"
+        ),
+        "status": "active",
+        "remaining_gate": "ATP/ADP connected-component microspecies migration",
+        "lock_proton_water_stoichiometry": True,
+    }
+    if notes.get("curated_reaction_correction") != expected_note:
+        notes["curated_reaction_correction"] = expected_note
+        reaction.notes = notes
+        changed = True
+
+    return int(changed)
 
 
 # ── Patch 5: move misfiled TCDB numbers out of ec-code ────────────────────
@@ -442,6 +482,65 @@ def clean_ec_overload(model, audit_csv: str | None = None) -> int:
     return cleaned
 
 
+# ── Curated EC cleanup: ADP/ATP transporters ────────────────────────────────
+
+# R815 is the mitochondrial adenine-nucleotide antiporter and R816 is a
+# peroxisomal adenine-nucleotide transporter. Both inherited EC 2.7.4.6 from
+# a broad MetaNetX/xref annotation. That EC describes a nucleoside-diphosphate
+# kinase, not either transporter. Do not replace it with a guessed transport
+# EC: current Y. lipolytica evidence supports carrier identity but not a
+# reaction-specific EC assignment. This patch is metadata only: equation,
+# bounds, GPR and non-EC cross-references are preserved.
+#
+# It runs after generic EC backfills, preventing a later annotation stage from
+# silently reintroducing the demonstrated stale value.
+_ADP_ATP_TRANSPORT_REACTION_IDS = ("R815", "R816")
+_STALE_ADP_ATP_TRANSPORT_EC = "2.7.4.6"
+
+
+def remove_stale_adp_atp_transporter_ec_codes(model) -> int:
+    """Remove EC 2.7.4.6 from the two curated ADP/ATP transporters.
+
+    Returns the number of reactions whose annotation changed. The operation is
+    idempotent and removes only the demonstrated stale EC; an independently
+    curated future transport EC would be retained.
+    """
+
+    changed = 0
+    for reaction_id in _ADP_ATP_TRANSPORT_REACTION_IDS:
+        try:
+            reaction = model.reactions.get_by_id(reaction_id)
+        except KeyError:
+            logger.warning(
+                "  ADP/ATP transporter EC cleanup: %s not in model — skipping",
+                reaction_id,
+            )
+            continue
+        annotation = reaction.annotation if isinstance(reaction.annotation, dict) else {}
+        raw_ec_codes = annotation.get("ec-code", [])
+        ec_codes = [raw_ec_codes] if isinstance(raw_ec_codes, str) else list(raw_ec_codes)
+        retained = [
+            str(ec_code).strip()
+            for ec_code in ec_codes
+            if str(ec_code).strip()
+            and str(ec_code).strip() != _STALE_ADP_ATP_TRANSPORT_EC
+        ]
+        if len(retained) == len(ec_codes):
+            continue
+        if retained:
+            annotation["ec-code"] = sorted(set(retained))
+        else:
+            annotation.pop("ec-code", None)
+        reaction.annotation = annotation
+        changed += 1
+        logger.info(
+            "  ADP/ATP transporter EC cleanup: %s removed stale EC %s",
+            reaction_id,
+            _STALE_ADP_ATP_TRANSPORT_EC,
+        )
+    return changed
+
+
 # ── Patch 8: isozyme GPR additions ────────────────────────────────────────
 
 # CLIB89 expansion funnel (S2 Table -> KEGG metabolic relevance -> MetaNetX
@@ -554,6 +653,1034 @@ def remove_misannotated_gprs(model) -> int:
         removed += 1
         logger.info(f"  GPR removal (mis-annotation): {rid} -= {gene} -> '{rxn.gene_reaction_rule}'")
     return removed
+
+
+# ── Patch 8c: reviewed R612 / external-NDH2 GPR corrections ─────────────
+#
+# These corrections have direct, reaction-specific evidence and are deliberately
+# separate from the automated isozyme-expansion table above:
+#
+# * R612: YALI1E31685g / URA3 encodes orotidine-5'-phosphate decarboxylase.
+#   The PO1f ura3-302 phenotype remains represented by the runtime strain
+#   overlay, which disables R612 only in that strain context.
+# * R570: YALI1F32476g / NDH2 is the external alternative NADH dehydrogenase.
+#   R2063 is an exact, same-bounds duplicate of R570 and is removed.  The
+#   mitochondrial complex-I reaction R1889 is intentionally *not* assigned an
+#   AND GPR here; its subunit inventory is retained in
+#   docs/curation/complex_i_gpr_evidence.csv pending identity/requiredness review.
+
+_R612_URA3_GENE = "YALI1E31685g"
+_R570_NDH2_GENE = "YALI1F32476g"
+
+
+def _upsert_gene_annotation(gene, *, name: str, annotation: dict) -> None:
+    """Set curated identity fields without discarding prior identifier mapping."""
+    gene.name = name
+    current = dict(gene.annotation) if isinstance(gene.annotation, dict) else {}
+    current.update(annotation)
+    gene.annotation = current
+
+
+def add_r612_ura3_gpr(model) -> int:
+    """Assign the experimentally supported URA3 GPR to R612.
+
+    Returns one when the GPR changes and zero when it was already correct.
+    Refuses an unexpected pre-existing rule so a future source-model change
+    cannot be silently overwritten.
+    """
+    try:
+        reaction = model.reactions.get_by_id("R612")
+    except KeyError as exc:
+        raise ValueError("R612 is required for the curated URA3 GPR correction") from exc
+
+    target_rule = _R612_URA3_GENE
+    old_rule = reaction.gene_reaction_rule.strip()
+    if old_rule not in {"", target_rule}:
+        raise ValueError(
+            "R612 has an unexpected GPR; refusing to replace it: "
+            f"{old_rule!r}"
+        )
+
+    changed = int(old_rule != target_rule)
+    reaction.gene_reaction_rule = target_rule
+    gene = model.genes.get_by_id(_R612_URA3_GENE)
+    _upsert_gene_annotation(
+        gene,
+        name="URA3",
+        annotation={
+            "sbo": "SBO:0000243",
+            "uniprot": "A0A1H6PUU4",
+            "ec-code": "4.1.1.23",
+        },
+    )
+    notes = dict(reaction.notes) if isinstance(reaction.notes, dict) else {}
+    notes["curated_gpr_correction"] = (
+        "YALI1E31685g (URA3), orotidine-5'-phosphate decarboxylase; "
+        "direct Yarrowia lipolytica ura3 genetic evidence: "
+        "https://onlinelibrary.wiley.com/doi/full/10.1002/yea.3673"
+    )
+    notes["strain_context"] = (
+        "PO1f ura3-302 is represented by the runtime PO1f overlay, which "
+        "sets R612 bounds to zero without changing the reference-model GPR."
+    )
+    notes["chemistry_status"] = (
+        "UMP microspecies remains component_review pending a family-wide "
+        "pyrimidine/nucleotide balance repair."
+    )
+    reaction.notes = notes
+    if changed:
+        logger.info("  Reviewed GPR correction: R612 = %s (URA3)", target_rule)
+    return changed
+
+
+def _stoichiometry_by_metabolite_id(reaction) -> dict[str, float]:
+    return {met.id: float(coefficient) for met, coefficient in reaction.metabolites.items()}
+
+
+def correct_external_ndh2_gpr_and_remove_duplicate(model) -> int:
+    """Correct R570 to the verified external NDH2 and remove duplicate R2063.
+
+    The function verifies reaction identity and bounds before deleting R2063.
+    R1889 (complex I) is intentionally untouched because a structurally present
+    subunit is not automatically a required Boolean GPR component.
+    """
+    try:
+        r570 = model.reactions.get_by_id("R570")
+    except KeyError as exc:
+        raise ValueError("R570 is required for the external-NDH2 correction") from exc
+
+    target_rule = _R570_NDH2_GENE
+    old_rule = r570.gene_reaction_rule.strip()
+    if old_rule not in {"", target_rule}:
+        legacy_tokens = set(re.findall(r"[A-Za-z0-9_]+", old_rule))
+        required_legacy_markers = {
+            "YALI1A21711g",
+            "YALI1F32476g",
+            "YALIfMp29",
+        }
+        if not required_legacy_markers <= legacy_tokens:
+            raise ValueError(
+                "R570 has an unexpected GPR; refusing to replace it: "
+                f"{old_rule!r}"
+            )
+    if old_rule != target_rule:
+        r570.gene_reaction_rule = target_rule
+        gpr_changed = 1
+        logger.info("  Reviewed GPR correction: R570 = %s (NDH2)", target_rule)
+    else:
+        gpr_changed = 0
+
+    gene = model.genes.get_by_id(_R570_NDH2_GENE)
+    _upsert_gene_annotation(
+        gene,
+        name="NDH2",
+        annotation={
+            "sbo": "SBO:0000243",
+            "uniprot": "F2Z699",
+            "ec-code": "1.6.5.9",
+        },
+    )
+    notes = dict(r570.notes) if isinstance(r570.notes, dict) else {}
+    notes["curated_gpr_correction"] = (
+        "YALI1F32476g (NDH2), external alternative NADH:ubiquinone "
+        "oxidoreductase; experimentally verified in Yarrowia lipolytica: "
+        "https://pubmed.ncbi.nlm.nih.gov/11719558/"
+    )
+    notes["complex_i_scope"] = (
+        "R1889 has no GPR by design in this patch; see "
+        "docs/curation/complex_i_gpr_evidence.csv before assigning a complex-I AND rule."
+    )
+    r570.notes = notes
+
+    try:
+        r2063 = model.reactions.get_by_id("R2063")
+    except KeyError:
+        return gpr_changed
+    if _stoichiometry_by_metabolite_id(r570) != _stoichiometry_by_metabolite_id(r2063):
+        raise ValueError("R2063 is not stoichiometrically identical to R570; refusing removal")
+    if r570.bounds != r2063.bounds:
+        raise ValueError("R2063 bounds differ from R570; refusing duplicate removal")
+    model.remove_reactions([r2063], remove_orphans=False)
+    logger.info("  Reviewed duplicate removal: R2063 duplicates R570 external NDH2")
+    return gpr_changed + 1
+
+
+# ── Patch 8d: direct enzyme-like GPR assignments ─────────────────────────
+#
+# These are reaction-specific assignments that are supported either by direct
+# Yarrowia experiments (LIP2) or by a shared, already-modelled enzyme activity
+# with the same EC and substrate family (the three vitamin-B6 kinases).  They
+# are intentionally not placed in the broad automatic isozyme-expansion table.
+#
+# * R2274: YALI1A21372g / LIP2 is the secreted extracellular lipase.  lip2Δ
+#   eliminates extracellular lipase activity, and Lip2 has direct activity on
+#   long-chain triacylglycerols including triolein.
+# * R1302/R1303: YALI1A08512g has curated pyridoxal-kinase EC 2.7.1.35
+#   annotation and already catalyses the pyridoxine congener reaction R1306.
+#   EC 2.7.1.35 covers pyridoxal, pyridoxamine and pyridoxine substrate forms.
+#   This is a curated annotation assignment, not direct knockout evidence.
+
+_DIRECT_ENZYME_LIKE_GPRS = {
+    "R2274": "YALI1A21372g",
+    "R1302": "YALI1A08512g",
+    "R1303": "YALI1A08512g",
+}
+
+
+def add_direct_enzyme_like_gprs(model) -> int:
+    """Assign three reviewed direct enzyme-like GPRs.
+
+    The source rules must be empty (or already equal to the curated rule), so
+    a future source-model change cannot be silently replaced.  Returns the
+    number of reaction GPRs changed and is idempotent.
+    """
+    changed = 0
+    for reaction_id, target_rule in _DIRECT_ENZYME_LIKE_GPRS.items():
+        try:
+            reaction = model.reactions.get_by_id(reaction_id)
+        except KeyError as exc:
+            raise ValueError(
+                f"{reaction_id} is required for the direct enzyme-like GPR correction"
+            ) from exc
+        old_rule = reaction.gene_reaction_rule.strip()
+        if old_rule not in {"", target_rule}:
+            raise ValueError(
+                f"{reaction_id} has an unexpected GPR; refusing to replace it: "
+                f"{old_rule!r}"
+            )
+        if old_rule != target_rule:
+            reaction.gene_reaction_rule = target_rule
+            changed += 1
+            logger.info(
+                "  Direct enzyme-like GPR correction: %s = %s",
+                reaction_id,
+                target_rule,
+            )
+
+        notes = dict(reaction.notes) if isinstance(reaction.notes, dict) else {}
+        if reaction_id == "R2274":
+            notes["curated_gpr_correction"] = (
+                "YALI1A21372g (LIP2), secreted extracellular triacylglycerol "
+                "lipase; direct Yarrowia lipolytica lip2Δ and Lip2 triolein "
+                "activity evidence: https://pmc.ncbi.nlm.nih.gov/articles/PMC101989/"
+            )
+            notes["gpr_evidence_status"] = "experimentally_verified"
+        else:
+            notes["curated_gpr_correction"] = (
+                "YALI1A08512g, pyridoxal kinase EC 2.7.1.35; curated UniProt "
+                "automatic annotation, with the same gene already assigned to "
+                "the pyridoxine-congener reaction R1306. EC 2.7.1.35 covers "
+                "pyridoxal, pyridoxamine and pyridoxine."
+            )
+            notes["gpr_evidence_status"] = "curated_annotation"
+        reaction.notes = notes
+
+    lip2 = model.genes.get_by_id("YALI1A21372g")
+    _upsert_gene_annotation(
+        lip2,
+        name="LIP2",
+        annotation={"sbo": "SBO:0000243", "ec-code": "3.1.1.3"},
+    )
+    pyridoxal_kinase = model.genes.get_by_id("YALI1A08512g")
+    current = (
+        dict(pyridoxal_kinase.annotation)
+        if isinstance(pyridoxal_kinase.annotation, dict)
+        else {}
+    )
+    current.update(
+        {
+            "sbo": "SBO:0000243",
+            "uniprot": "A0A1D8N468",
+            "ec-code": "2.7.1.35",
+        }
+    )
+    pyridoxal_kinase.annotation = current
+    return changed
+
+
+# ── Patch 8e: remove the spurious cytosolic/nuclear quinone branches ────
+#
+# The source model contains two disconnected alternatives to the mitochondrial
+# CoQ pathway:
+#
+# * R189 has 4-hydroxybenzoate/nonaprenyl-diphosphate chemistry, but is named
+#   CAAX farnesyltransferase and assigned the RAM1/RAM2-like protein
+#   farnesyltransferase subunits. Its branch-specific substrate and product are
+#   degree-one endpoints, so steady state forces its flux to zero.
+# * R2250 -> R2247 -> R2248 -> R2249 -> R2242 is a bacterial-style
+#   octaprenyl/2-polyprenyl-6-hydroxyphenol fragment split between cytosol and
+#   nucleus. R2250 joins an octaprenyl-labelled substrate to a chemically
+#   hexaprenyl product, while R2242 is assigned DIM1 (EC 2.1.1.183), an 18S-rRNA
+#   dimethyltransferase. Eukaryotic COQ3 instead performs mitochondrial
+#   O-methylations on different, carboxylated CoQ intermediates.
+#
+# A separate mitochondrial COQ2 reaction, R407, already represents the retained
+# pathway. Removing these six reactions therefore deletes an inert duplicate/
+# mis-annotation; it does not open a pathway, add a demand, or tune essentiality
+# recall. Native Y. lipolytica CoQ9 chain-length repair and decomposition of the
+# broad COQ-synthome GPR remain separate work.
+_SPURIOUS_QUINONE_REACTION_GPRS = {
+    "R189": "YALI1D17983g and YALI1B21088g",
+    "R2242": "YALI1E01159g",
+    "R2247": "YALI1E07601g",
+    "R2248": "",
+    "R2249": "",
+    "R2250": (
+        "(YALI1E11415g and YALI1B21088g) or "
+        "(YALI1E16694g and YALI1E33302g) or YALI1D21543g or "
+        "(YALI1D17983g and YALI1B21088g)"
+    ),
+}
+
+# Exact reviewed signatures prevent this cleanup from deleting a future,
+# legitimately reconstructed CoQ9 reaction that happens to reuse a legacy ID.
+# R189 has two explicitly accepted forms: the raw source contains two product
+# protons, while the charge-aware pipeline removes them. The other five
+# reactions are identical in the raw and pre-cleanup canonical models.
+_REVIEWED_QUINONE_REACTION_VARIANTS = {
+    "R189": (
+        {
+            "stoichiometry": {
+                "m203[C_cy]": 1.0,
+                "m366[C_cy]": -1.0,
+                "m367[C_cy]": -1.0,
+                "m368[C_cy]": 1.0,
+            },
+            "bounds": (-1000.0, 1000.0),
+            "compartments": frozenset({"C_cy"}),
+            "reversible": True,
+        },
+        {
+            "stoichiometry": {
+                "m10[C_cy]": 2.0,
+                "m203[C_cy]": 1.0,
+                "m366[C_cy]": -1.0,
+                "m367[C_cy]": -1.0,
+                "m368[C_cy]": 1.0,
+            },
+            "bounds": (-1000.0, 1000.0),
+            "compartments": frozenset({"C_cy"}),
+            "reversible": True,
+        },
+    ),
+    "R2242": (
+        {
+            "stoichiometry": {
+                "m1923[C_nu]": -1.0,
+                "m1924[C_nu]": 1.0,
+                "m1925[C_nu]": -1.0,
+                "m1926[C_nu]": 1.0,
+                "m627[C_nu]": 1.0,
+            },
+            "bounds": (0.0, 1000.0),
+            "compartments": frozenset({"C_nu"}),
+            "reversible": False,
+        },
+    ),
+    "R2247": (
+        {
+            "stoichiometry": {
+                "m10[C_cy]": -1.0,
+                "m1928[C_cy]": 1.0,
+                "m1929[C_cy]": -1.0,
+                "m82[C_cy]": 1.0,
+            },
+            "bounds": (0.0, 1000.0),
+            "compartments": frozenset({"C_cy"}),
+            "reversible": False,
+        },
+    ),
+    "R2248": (
+        {
+            "stoichiometry": {
+                "m109[C_cy]": -0.5,
+                "m1927[C_cy]": 1.0,
+                "m1928[C_cy]": -1.0,
+            },
+            "bounds": (0.0, 1000.0),
+            "compartments": frozenset({"C_cy"}),
+            "reversible": False,
+        },
+    ),
+    "R2249": (
+        {
+            "stoichiometry": {
+                "m1923[C_nu]": 1.0,
+                "m1927[C_cy]": -1.0,
+            },
+            "bounds": (-1000.0, 1000.0),
+            "compartments": frozenset({"C_cy", "C_nu"}),
+            "reversible": True,
+        },
+    ),
+    "R2250": (
+        {
+            "stoichiometry": {
+                "m1929[C_cy]": 1.0,
+                "m1930[C_cy]": -1.0,
+                "m203[C_cy]": 1.0,
+                "m366[C_cy]": -1.0,
+            },
+            "bounds": (0.0, 1000.0),
+            "compartments": frozenset({"C_cy"}),
+            "reversible": False,
+        },
+    ),
+}
+
+_RETAINED_COQ2_REACTION = "R407"
+_RETAINED_COQ2_GENE = "YALI1F08349g"
+_RETAINED_COQ3_GENE = "YALI1B20835g"
+_REJECTED_QUINONE_ORPHAN_METABOLITES = {
+    "m367[C_cy]",
+    "m368[C_cy]",
+    "m1923[C_nu]",
+    "m1924[C_nu]",
+    "m1927[C_cy]",
+    "m1928[C_cy]",
+    "m1929[C_cy]",
+    "m1930[C_cy]",
+}
+
+
+def remove_spurious_quinone_branches(model) -> int:
+    """Remove six inert, mis-annotated quinone reactions as one atomic patch.
+
+    The patch fails closed on a partially removed branch, an unexpected GPR,
+    changed reaction signature, or loss/change of the retained mitochondrial
+    COQ2 reaction. Branch-only metabolites are removed, but orphan genes are
+    deliberately retained: five are in the positive-only essentiality
+    reference and must remain visible as unresolved FNs rather than silently
+    leaving the evaluation denominator. The operation is idempotent and
+    returns the number of reactions removed.
+    """
+
+    present = {
+        reaction_id
+        for reaction_id in _SPURIOUS_QUINONE_REACTION_GPRS
+        if reaction_id in model.reactions
+    }
+    expected = set(_SPURIOUS_QUINONE_REACTION_GPRS)
+    if present and present != expected:
+        missing = sorted(expected - present)
+        raise ValueError(
+            "Spurious quinone branch is only partially present; refusing an "
+            f"atomic cleanup (missing {missing})"
+        )
+
+    try:
+        retained_coq2 = model.reactions.get_by_id(_RETAINED_COQ2_REACTION)
+    except KeyError as exc:
+        raise ValueError(
+            f"{_RETAINED_COQ2_REACTION} is required before removing quinone duplicates"
+        ) from exc
+    if retained_coq2.gene_reaction_rule.strip() != _RETAINED_COQ2_GENE:
+        raise ValueError(
+            f"{_RETAINED_COQ2_REACTION} has unexpected GPR "
+            f"{retained_coq2.gene_reaction_rule!r}"
+        )
+    retained_metabolites = {met.id for met in retained_coq2.metabolites}
+    retained_markers = {
+        "m138[C_mi]",
+        "m640[C_mi]",
+        "m641[C_mi]",
+        "m204[C_mi]",
+    }
+    if not retained_markers <= retained_metabolites:
+        raise ValueError(
+            f"{_RETAINED_COQ2_REACTION} no longer matches the mitochondrial COQ2 reaction"
+        )
+
+    # Preserve the two real mitochondrial candidates and make their evidence
+    # status explicit. These are curated annotations, not direct Yarrowia
+    # knockout/biochemical validation of the current model reactions.
+    coq2 = model.genes.get_by_id(_RETAINED_COQ2_GENE)
+    _upsert_gene_annotation(
+        coq2,
+        name="COQ2",
+        annotation={
+            "sbo": "SBO:0000243",
+            "uniprot": ["A0A1H6PM88", "Q6C2S2"],
+            "ncbigene": "2907969",
+            "kegg.genes": "yli:2907969",
+            "refseq": "XP_505040.1",
+            "ec-code": "2.5.1.39",
+        },
+    )
+    coq3 = model.genes.get_by_id(_RETAINED_COQ3_GENE)
+    _upsert_gene_annotation(
+        coq3,
+        name="COQ3",
+        annotation={
+            "sbo": "SBO:0000243",
+            "uniprot": ["A0A1D8N802", "Q6CEG2"],
+            "ncbigene": "2907025",
+            "kegg.genes": "yli:2907025",
+            "refseq": "XP_500950.3",
+            "ec-code": ["2.1.1.64", "2.1.1.114"],
+        },
+    )
+    retained_notes = (
+        dict(retained_coq2.notes)
+        if isinstance(retained_coq2.notes, dict)
+        else {}
+    )
+    retained_notes["curated_quinone_branch_cleanup"] = (
+        "Retained mitochondrial COQ2 reaction. Removed inert/mis-annotated "
+        "R189 and R2242/R2247/R2248/R2249/R2250 branches; see "
+        "docs/curation/quinone_branch_cleanup.md."
+    )
+    retained_notes["gpr_evidence_status"] = "curated_annotation"
+    if model.metabolites.get_by_id("m640[C_mi]").formula == "C45H76O7P2":
+        retained_notes.pop("remaining_chain_length_gate", None)
+        retained_notes["coq9_chain_status"] = (
+            "The formal pipeline has replaced the legacy CoQ6 identities with "
+            "the curated, mass-balanced CoQ9 main-chain representation."
+        )
+    else:
+        retained_notes["remaining_chain_length_gate"] = (
+            "The legacy main route uses hexaprenyl/CoQ6 intermediates; native "
+            "Yarrowia CoQ9 chemistry is not claimed repaired by this patch."
+        )
+    retained_coq2.notes = retained_notes
+
+    if not present:
+        return 0
+
+    reactions = []
+    for reaction_id, expected_gpr in _SPURIOUS_QUINONE_REACTION_GPRS.items():
+        reaction = model.reactions.get_by_id(reaction_id)
+        if reaction.gene_reaction_rule.strip() != expected_gpr:
+            raise ValueError(
+                f"{reaction_id} has unexpected GPR; refusing quinone cleanup: "
+                f"{reaction.gene_reaction_rule!r}"
+            )
+        actual_signature = {
+            "stoichiometry": _stoichiometry_by_metabolite_id(reaction),
+            "bounds": tuple(float(value) for value in reaction.bounds),
+            "compartments": frozenset(
+                metabolite.compartment for metabolite in reaction.metabolites
+            ),
+            "reversible": bool(reaction.reversibility),
+        }
+        reviewed_variants = _REVIEWED_QUINONE_REACTION_VARIANTS[reaction_id]
+        if actual_signature not in reviewed_variants:
+            raise ValueError(
+                f"{reaction_id} no longer matches a reviewed quinone "
+                "stoichiometry/bounds/compartment variant"
+            )
+        reactions.append(reaction)
+
+    model.remove_reactions(reactions, remove_orphans=False)
+
+    branch_metabolites = []
+    for metabolite_id in sorted(_REJECTED_QUINONE_ORPHAN_METABOLITES):
+        try:
+            metabolite = model.metabolites.get_by_id(metabolite_id)
+        except KeyError as exc:
+            raise ValueError(
+                f"Reviewed quinone branch metabolite {metabolite_id} disappeared "
+                "before explicit orphan cleanup"
+            ) from exc
+        if metabolite.reactions:
+            connected = sorted(reaction.id for reaction in metabolite.reactions)
+            raise ValueError(
+                f"Reviewed quinone branch metabolite {metabolite_id} remains "
+                f"connected after reaction cleanup: {connected}"
+            )
+        branch_metabolites.append(metabolite)
+    model.remove_metabolites(branch_metabolites, destructive=False)
+    logger.info(
+        "  Spurious quinone cleanup: removed %s; retained orphan genes for "
+        "honest essentiality accounting",
+        ", ".join(sorted(expected)),
+    )
+    return len(reactions)
+
+
+# ── Patch 8f: replace the legacy CoQ6 main chain with balanced CoQ9 ──
+
+_COQ9_ROUTE_IDS = (
+    "R763",
+    "R407",
+    "R969",
+    "R39",
+    "R808",
+    "R715",
+    "R40",
+    "R19",
+    "R18",
+    "R695",
+    "R385",
+)
+
+_COQ9_CONNECTED_REACTIONS = {
+    *_COQ9_ROUTE_IDS,
+    "R1889",
+    "R1977",
+    "R2062",
+    "R262",
+    "R305",
+    "R570",
+    "R573",
+    "R740",
+}
+
+# R2063 is still present at the pre-FVA pipeline stage and is removed later as
+# the reviewed duplicate of R570.  Supporting exactly that optional member lets
+# FVA operate on Q9 without weakening the connected-component precondition.
+_COQ9_OPTIONAL_CONNECTED_REACTION = "R2063"
+
+# name, legacy Q6 formula, Q9 formula, charge, exact Q9 annotations
+_COQ9_METABOLITES = {
+    "m640[C_mi]": (
+        "nonaprenyl diphosphate_C45H76O7P2",
+        "C30H52O7P2",
+        "C45H76O7P2",
+        0,
+        {"chebi": "CHEBI:53044", "metanetx.chemical": "MNXM1372137"},
+    ),
+    "m641[C_mi]": (
+        "nonaprenyl 4-hydroxybenzoate_C52H78O3",
+        "C37H54O3",
+        "C52H78O3",
+        0,
+        {"chebi": "CHEBI:18162", "metanetx.chemical": "MNXM733461"},
+    ),
+    "m108[C_cy]": (
+        "nonaprenyl 4-hydroxybenzoate_C52H78O3",
+        "C37H54O3",
+        "C52H78O3",
+        0,
+        {"chebi": "CHEBI:18162", "metanetx.chemical": "MNXM733461"},
+    ),
+    "m110[C_cy]": (
+        "3-nonaprenyl-4,5-dihydroxybenzoate_C52H77O4",
+        "C37H53O4",
+        "C52H77O4",
+        -1,
+        {
+            "chebi": "CHEBI:62789",
+            "metanetx.chemical": "MNXM10069",
+            "metacyc.compound": "CPD-9896",
+            "seed.compound": "cpd25895",
+        },
+    ),
+    "m939[C_mi]": (
+        "3-nonaprenyl-4,5-dihydroxybenzoate_C52H77O4",
+        "C37H53O4",
+        "C52H77O4",
+        -1,
+        {
+            "chebi": "CHEBI:62789",
+            "metanetx.chemical": "MNXM10069",
+            "metacyc.compound": "CPD-9896",
+            "seed.compound": "cpd25895",
+        },
+    ),
+    "m111[C_mi]": (
+        "3-nonaprenyl-4-hydroxy-5-methoxybenzoate_C53H79O4",
+        "C38H55O4",
+        "C53H79O4",
+        -1,
+        {
+            "chebi": "CHEBI:62791",
+            "metanetx.chemical": "MNXM10070",
+            "metacyc.compound": "CPD-9898",
+            "seed.compound": "cpd25897",
+        },
+    ),
+    "m63[C_mi]": (
+        "2-methoxy-6-(all-trans-nonaprenyl)phenol_C52H80O2",
+        "C37H56O2",
+        "C52H80O2",
+        0,
+        {
+            "chebi": "CHEBI:84522",
+            "metanetx.chemical": "MNXM8068",
+            "metacyc.compound": "CPD-9866",
+            "seed.compound": "cpd25882",
+        },
+    ),
+    "m59[C_mi]": (
+        "2-nonaprenyl-6-methoxy-1,4-benzoquinone_C52H78O3",
+        "C37H54O3",
+        "C52H78O3",
+        0,
+        {
+            "chebi": "CHEBI:203861",
+            "metanetx.chemical": "MNXM9872",
+            "metacyc.compound": "CPD-11661",
+            "seed.compound": "cpd16766",
+        },
+    ),
+    "m61[C_mi]": (
+        "2-nonaprenyl-3-methyl-6-methoxy-1,4-benzoquinone_C53H80O3",
+        "C38H56O3",
+        "C53H80O3",
+        0,
+        {
+            "chebi": "CHEBI:183116",
+            "metanetx.chemical": "MNXM9870",
+            "metacyc.compound": "CPD-11662",
+            "seed.compound": "cpd16764",
+        },
+    ),
+    "m611[C_mi]": (
+        "3-demethylubiquinone-9_C53H80O4",
+        "C38H56O4",
+        "C53H80O4",
+        0,
+        {
+            "chebi": "CHEBI:18238",
+            "kegg.compound": "C03226",
+            "metanetx.chemical": "MNXM1370748",
+        },
+    ),
+    "m468[C_mi]": (
+        "ubiquinone-9_C54H82O4",
+        "C39H58O4",
+        "C54H82O4",
+        0,
+        {
+            "bigg.metabolite": "q9",
+            "chebi": "CHEBI:18160",
+            "kegg.compound": "C01967",
+            "lipidmaps": "LMPR02010004",
+            "metacyc.compound": "UBIQUINONE-9",
+            "metanetx.chemical": "MNXM1363635",
+            "seed.compound": "cpd01351",
+        },
+    ),
+    "m471[C_mi]": (
+        "ubiquinol-9_C54H84O4",
+        "C39H60O4",
+        "C54H84O4",
+        0,
+        {
+            "bigg.metabolite": "q9h2",
+            "chebi": "CHEBI:84424",
+            "metacyc.compound": "CPD-9957",
+            "metanetx.chemical": "MNXM1094084",
+            "seed.compound": "cpd25914",
+        },
+    ),
+}
+
+_COQ9_REACTION_NAMES = {
+    "R763": "all-trans-nonaprenyl-diphosphate synthase (four-IPP lump)",
+    "R407": "4-hydroxybenzoate nonaprenyltransferase",
+    "R969": "nonaprenyl 4-hydroxybenzoate transport",
+    "R39": "nonaprenyl 4-hydroxybenzoate hydroxylase",
+    "R808": "3-nonaprenyl-4,5-dihydroxybenzoate transport",
+    "R715": "SAM:3-nonaprenyl-4,5-dihydroxybenzoate O-methyltransferase",
+    "R40": "3-nonaprenyl-4-hydroxy-5-methoxybenzoate decarboxylase",
+    "R19": "2-methoxy-6-(all-trans-nonaprenyl)phenol monooxygenase",
+    "R18": "2-nonaprenyl-6-methoxy-1,4-benzoquinone methyltransferase",
+    "R695": "2-nonaprenyl-3-methyl-6-methoxy-1,4-benzoquinone hydroxylase",
+    "R385": "3-demethylubiquinone-9 3-O-methyltransferase",
+}
+
+_COQ9_LEGACY_R763 = {
+    "m984[C_mi]": -1.0,
+    "m985[C_mi]": -1.0,
+    "m204[C_mi]": 1.0,
+    "m640[C_mi]": 1.0,
+}
+_COQ9_TARGET_R763 = {
+    "m984[C_mi]": -4.0,
+    "m985[C_mi]": -1.0,
+    "m204[C_mi]": 4.0,
+    "m640[C_mi]": 1.0,
+}
+_COQ9_LEGACY_R385 = {
+    "m28[C_mi]": -1.0,
+    "m60[C_mi]": -1.0,
+    "m611[C_mi]": -1.0,
+    "m471[C_mi]": 1.0,
+    "m62[C_mi]": 1.0,
+}
+_COQ9_TARGET_R385 = {
+    "m60[C_mi]": -1.0,
+    "m611[C_mi]": -1.0,
+    "m468[C_mi]": 1.0,
+    "m62[C_mi]": 1.0,
+}
+
+
+def _replace_reaction_stoichiometry(model, reaction, target: dict[str, float]) -> None:
+    reaction.add_metabolites(
+        {metabolite: -coefficient for metabolite, coefficient in reaction.metabolites.items()}
+    )
+    reaction.add_metabolites(
+        {
+            model.metabolites.get_by_id(metabolite_id): coefficient
+            for metabolite_id, coefficient in target.items()
+        }
+    )
+
+
+def _coq_balance(reaction) -> dict[str, float]:
+    return {
+        key: float(value)
+        for key, value in reaction.check_mass_balance().items()
+        if not math.isclose(float(value), 0.0, abs_tol=1e-9)
+    }
+
+
+def _coq9_reaction_annotation(reaction, **overrides) -> dict:
+    current = reaction.annotation if isinstance(reaction.annotation, dict) else {}
+    annotation = {
+        "sbo": current.get(
+            "sbo",
+            "SBO:0000185"
+            if len({met.compartment for met in reaction.metabolites}) > 1
+            else "SBO:0000176",
+        )
+    }
+    if "ec-code" in current:
+        annotation["ec-code"] = copy.deepcopy(current["ec-code"])
+    annotation.update(overrides)
+    return annotation
+
+
+def replace_coq6_route_with_coq9(model) -> int:
+    """Atomically replace the legacy CoQ6 identities with a balanced CoQ9 route.
+
+    This patch changes chain chemistry only.  It preserves every GPR, bound,
+    compartment, biomass coefficient and boundary reaction; no CoQ demand or
+    sink is introduced.  The Q9 intermediate identities are homolog-series
+    curation, while the oxidized R385 endpoint is an explicit model convention.
+    """
+
+    try:
+        metabolites = {
+            metabolite_id: model.metabolites.get_by_id(metabolite_id)
+            for metabolite_id in _COQ9_METABOLITES
+        }
+        route = {
+            reaction_id: model.reactions.get_by_id(reaction_id)
+            for reaction_id in _COQ9_ROUTE_IDS
+        }
+    except KeyError as exc:
+        raise ValueError(f"CoQ9 route requires {exc.args[0]}") from exc
+
+    connected = {
+        reaction.id
+        for metabolite in metabolites.values()
+        for reaction in metabolite.reactions
+    }
+    allowed_connected = (
+        _COQ9_CONNECTED_REACTIONS,
+        _COQ9_CONNECTED_REACTIONS | {_COQ9_OPTIONAL_CONNECTED_REACTION},
+    )
+    if connected not in allowed_connected:
+        raise ValueError(
+            "CoQ9 connected component changed; refusing identity replacement: "
+            f"{sorted(connected)}"
+        )
+
+    states = set()
+    for metabolite_id, (_, legacy_formula, target_formula, charge, _) in _COQ9_METABOLITES.items():
+        metabolite = metabolites[metabolite_id]
+        pair = (metabolite.formula, metabolite.charge)
+        if pair == (legacy_formula, charge):
+            states.add("legacy")
+        elif pair == (target_formula, charge):
+            states.add("coq9")
+        else:
+            raise ValueError(
+                f"{metabolite_id} has unexpected formula/charge {pair!r}; "
+                "refusing a partial CoQ9 identity replacement"
+            )
+    if len(states) != 1:
+        raise ValueError("CoQ6/CoQ9 metabolite identities are only partially migrated")
+    state = states.pop()
+
+    expected_r763 = _COQ9_LEGACY_R763 if state == "legacy" else _COQ9_TARGET_R763
+    expected_r385 = _COQ9_LEGACY_R385 if state == "legacy" else _COQ9_TARGET_R385
+    if _stoichiometry_by_metabolite_id(route["R763"]) != expected_r763:
+        raise ValueError("R763 no longer matches the reviewed CoQ chain-length signature")
+    if _stoichiometry_by_metabolite_id(route["R385"]) != expected_r385:
+        raise ValueError("R385 no longer matches the reviewed terminal signature")
+    if any(
+        not metabolite.formula or metabolite.charge is None
+        for reaction in route.values()
+        for metabolite in reaction.metabolites
+    ):
+        raise ValueError("CoQ9 route must be fully formula/charge annotated before replacement")
+
+    impacted_reactions = {
+        reaction_id: model.reactions.get_by_id(reaction_id)
+        for reaction_id in connected
+    }
+    counts_before = (len(model.reactions), len(model.metabolites), len(model.genes))
+    demands_before = {reaction.id for reaction in model.demands}
+    sinks_before = {reaction.id for reaction in model.sinks}
+    balance_before = {
+        reaction_id: _coq_balance(reaction)
+        for reaction_id, reaction in impacted_reactions.items()
+    }
+    gpr_bounds_before = {
+        reaction_id: (reaction.gene_reaction_rule, tuple(reaction.bounds))
+        for reaction_id, reaction in impacted_reactions.items()
+    }
+    metabolite_before = {
+        metabolite_id: (
+            metabolite.name,
+            metabolite.formula,
+            metabolite.charge,
+            copy.deepcopy(metabolite.annotation),
+            copy.deepcopy(metabolite.notes),
+        )
+        for metabolite_id, metabolite in metabolites.items()
+    }
+    reaction_before = {
+        reaction_id: (
+            reaction.name,
+            _stoichiometry_by_metabolite_id(reaction),
+            copy.deepcopy(reaction.annotation),
+            copy.deepcopy(reaction.notes),
+        )
+        for reaction_id, reaction in impacted_reactions.items()
+    }
+
+    try:
+        for metabolite_id, (name, _, formula, charge, annotation) in _COQ9_METABOLITES.items():
+            metabolite = metabolites[metabolite_id]
+            metabolite.name = name
+            metabolite.formula = formula
+            metabolite.charge = charge
+            metabolite.annotation = {"sbo": "SBO:0000247", **annotation}
+            notes = dict(metabolite.notes) if isinstance(metabolite.notes, dict) else {}
+            notes["curated_coq9_identity"] = (
+                "Q9 chain identity supported in Yarrowia; exact intermediate "
+                "formula assigned by the homologous +C15H24 series."
+            )
+            metabolite.notes = notes
+
+        _replace_reaction_stoichiometry(model, route["R763"], _COQ9_TARGET_R763)
+        _replace_reaction_stoichiometry(model, route["R385"], _COQ9_TARGET_R385)
+
+        for reaction_id, reaction in route.items():
+            reaction.name = _COQ9_REACTION_NAMES[reaction_id]
+            overrides = {}
+            if reaction_id == "R763":
+                overrides = {"ec-code": "2.5.1.85"}
+            elif reaction_id == "R407":
+                overrides = {"ec-code": "2.5.1.39", "kegg.reaction": "R07273"}
+            elif reaction_id == "R385":
+                overrides = {
+                    "ec-code": "2.1.1.64",
+                    "kegg.reaction": "R08781",
+                }
+            reaction.annotation = _coq9_reaction_annotation(reaction, **overrides)
+            notes = dict(reaction.notes) if isinstance(reaction.notes, dict) else {}
+            notes.pop("remaining_chain_length_gate", None)
+            notes["curated_coq9_chemistry"] = (
+                "Legacy C30/CoQ6 identities replaced with the balanced C45/CoQ9 "
+                "main chain; GPRs, bounds, compartments and demand are unchanged."
+            )
+            if reaction_id == "R763":
+                notes["coq9_stoichiometry_scope"] = (
+                    "The four-IPP lump is balanced model bookkeeping; direct "
+                    "Yarrowia evidence supports Q9 chain length, not this exact lump."
+                )
+            elif reaction_id == "R385":
+                notes["terminal_redox_convention"] = (
+                    "Balanced oxidized convention: SAM + 3-demethylubiquinone-9 "
+                    "-> SAH + ubiquinone-9. Native Yarrowia terminal redox form "
+                    "is unresolved; KEGG R08781 is the closest neutral convention."
+                )
+            reaction.notes = notes
+
+        # These three inherited cross-references explicitly encode Q6.  The
+        # reactions remain; only their now-false chain-specific xrefs are removed.
+        for reaction_id in {"R262", "R570", "R740", "R2063"} & connected:
+            reaction = impacted_reactions[reaction_id]
+            reaction.annotation = _coq9_reaction_annotation(reaction)
+            notes = dict(reaction.notes) if isinstance(reaction.notes, dict) else {}
+            notes["coq9_identity_update"] = (
+                "Uses the curated mitochondrial ubiquinone-9/ubiquinol-9 pair; "
+                "reaction chemistry, bounds and GPR are otherwise unchanged."
+            )
+            reaction.notes = notes
+        impacted_reactions["R740"].name = "succinate dehydrogenase (ubiquinone-9)"
+
+        for reaction_id in _COQ9_ROUTE_IDS:
+            imbalance = _coq_balance(route[reaction_id])
+            if imbalance:
+                raise ValueError(f"CoQ9 route reaction {reaction_id} is imbalanced: {imbalance}")
+        for reaction_id, reaction in impacted_reactions.items():
+            if reaction_id in {"R763", "R385"}:
+                continue
+            after = _coq_balance(reaction)
+            if after != balance_before[reaction_id]:
+                raise ValueError(
+                    f"CoQ9 identity replacement changed {reaction_id} balance: "
+                    f"{balance_before[reaction_id]} -> {after}"
+                )
+        if any(
+            (reaction.gene_reaction_rule, tuple(reaction.bounds))
+            != gpr_bounds_before[reaction_id]
+            for reaction_id, reaction in impacted_reactions.items()
+        ):
+            raise ValueError("CoQ9 identity replacement changed a GPR or bound")
+        if (len(model.reactions), len(model.metabolites), len(model.genes)) != counts_before:
+            raise ValueError("CoQ9 identity replacement changed model object counts")
+        if {reaction.id for reaction in model.demands} != demands_before:
+            raise ValueError("CoQ9 identity replacement changed model demands")
+        if {reaction.id for reaction in model.sinks} != sinks_before:
+            raise ValueError("CoQ9 identity replacement changed model sinks")
+
+        stale_tokens = ("q6", "u6", "hexaprenyl", "octaprenyl", "ubiquinone-6", "ubiquinol-6")
+        for metabolite in metabolites.values():
+            if any(token in str(metabolite.annotation).lower() for token in stale_tokens):
+                raise ValueError(f"{metabolite.id} retains a CoQ6-specific annotation")
+        for reaction in impacted_reactions.values():
+            text = f"{reaction.name} {reaction.annotation}".lower()
+            if any(token in text for token in stale_tokens):
+                raise ValueError(f"{reaction.id} retains a CoQ6-specific name/annotation")
+    except Exception:
+        for metabolite_id, snapshot in metabolite_before.items():
+            metabolite = metabolites[metabolite_id]
+            (
+                metabolite.name,
+                metabolite.formula,
+                metabolite.charge,
+                metabolite.annotation,
+                metabolite.notes,
+            ) = snapshot
+        for reaction_id, snapshot in reaction_before.items():
+            reaction = impacted_reactions[reaction_id]
+            reaction.name = snapshot[0]
+            _replace_reaction_stoichiometry(model, reaction, snapshot[1])
+            reaction.annotation = snapshot[2]
+            reaction.notes = snapshot[3]
+        raise
+
+    changed_metabolites = sum(
+        (
+            metabolite.name,
+            metabolite.formula,
+            metabolite.charge,
+            metabolite.annotation,
+            metabolite.notes,
+        )
+        != metabolite_before[metabolite_id]
+        for metabolite_id, metabolite in metabolites.items()
+    )
+    changed_reactions = sum(
+        (
+            reaction.name,
+            _stoichiometry_by_metabolite_id(reaction),
+            reaction.annotation,
+            reaction.notes,
+        )
+        != reaction_before[reaction_id]
+        for reaction_id, reaction in impacted_reactions.items()
+    )
+    return changed_metabolites + changed_reactions
 
 
 # ── Patch 8c: remove spurious carrier-free CoA-thioester transport ─────────
@@ -1072,6 +2199,7 @@ def _validate_schema_v2_patch_gate(
     import os
 
     from .essentiality_evidence import (
+        SIMULATION_CONTEXT_FIELDS,
         chemistry_fingerprint,
         read_ledger,
         require_valid_evidence_dossier,
@@ -1207,6 +2335,20 @@ def _validate_schema_v2_patch_gate(
             f"Essentiality patch {patch_id} chemistry fingerprint does not match "
             "durable ledger"
         )
+    if str(dossier.get("schema_version", "2.0")) >= "2.1":
+        for field in SIMULATION_CONTEXT_FIELDS:
+            dossier_value = dossier.get(field)
+            ledger_value = ledger.get(field, "")
+            if field == "strain_overlay_enabled":
+                matches = str(ledger_value).strip().lower() == str(bool(dossier_value)).lower()
+            elif dossier_value is None:
+                matches = str(ledger_value).strip() == ""
+            else:
+                matches = str(ledger_value) == str(dossier_value)
+            if not matches:
+                raise ValueError(
+                    f"Essentiality patch {patch_id} {field} does not match durable ledger"
+                )
 
     reaction_ids = sorted(
         {
@@ -1864,20 +3006,16 @@ def apply_all_patches(model) -> dict:
     # codes are populated later in the pipeline (gene EC enrichment, EC
     # backfill, reaction xref backfill), so EC formatting must run after those
     # steps — it is invoked separately near the end of main().
-    # NOTE: fix_coa_charge is intentionally NOT called.  Setting free CoA to
-    # charge -4 in isolation unbalances every reaction that produces/consumes
-    # it (the other side is not adjusted), which regressed Memote's
-    # reaction_charge_balance (+10 offenders).  The function is kept for
-    # reference but disabled until a charge fix is applied consistently across
-    # whole reactions rather than to the metabolite alone.
     counts = {
         "nadp_plus_fixed":   fix_nadp_plus_formula(model),
         "ceramide_fixed":    fix_ceramide_formulas(model),
         "cation_formula_fixed": fix_cation_formula_consistency(model),
+        "d_arabinokinase_fixed": fix_d_arabinokinase_direction_and_proton(model),
     }
     logger.info(
         f"  patches applied: NADP+={counts['nadp_plus_fixed']} copies, "
         f"ceramide={counts['ceramide_fixed']} copies, "
-        f"cation-formula={counts['cation_formula_fixed']} copies"
+        f"cation-formula={counts['cation_formula_fixed']} copies, "
+        f"D-arabinokinase={counts['d_arabinokinase_fixed']} reaction"
     )
     return counts

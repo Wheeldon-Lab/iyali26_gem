@@ -12,13 +12,17 @@ For every case, actively try to falsify the proposed verdict:
   annotation used to build the model;
 - distinguish direct experiments from homology inference and related-species evidence;
 - compare strain, temperature, medium, carbon source, compartment and assay endpoint;
+- treat any simulation-context/profile/overlay fingerprint mismatch as a hard block;
 - verify that the cited figure/table/section supports the exact operation;
 - enforce operation-specific evidence for GPR, localization, directionality/transport,
   reaction deletion, biomass composition and tRNA carrier conservation.
 
-Return one JSON object per case with:
-case_id, status="complete", verdict (pass/block/downgrade), findings,
-unresolved_contradictions, corrected_verdict, confidence.
+Return one batch JSON object with batch_case_ids, case_packet_batch_sha256,
+reviewer_result_sha256_by_case and results. Copy the packet batch SHA and the reviewer
+SHA map verbatim. Each results entry must contain case_id, case_packet_sha256,
+reviewer_result_sha256, status="complete", verdict (pass/block/downgrade), findings,
+unresolved_contradictions, corrected_verdict and confidence. Do not produce a result
+when any supplied reviewer hash or packet hash is absent or inconsistent.
 
 Use pass only when the direct Y. lipolytica evidence, identity checks and operation all
 survive the adversarial review. A pass does not accept a patch; only the human user can.

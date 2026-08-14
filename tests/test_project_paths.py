@@ -16,6 +16,9 @@ def test_explicit_research_root_maps_legacy_paths(tmp_path: Path) -> None:
     assert paths.resolve_legacy_path("data/media/sd_leu.csv") == (
         root / "state/media/sd_leu.csv"
     ).resolve()
+    assert paths.resolve_legacy_path(
+        "data/strain_profiles/po1f_sd_leu.json"
+    ) == (root / "state/strain_profiles/po1f_sd_leu.json").resolve()
     assert paths.resolve_legacy_path("data/metabolite_microspecies.csv") == (
         root / "state/curation/data/metabolite_microspecies.csv"
     ).resolve()

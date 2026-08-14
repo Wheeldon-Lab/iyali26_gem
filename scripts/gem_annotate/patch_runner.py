@@ -18,10 +18,16 @@ from cobra.io import read_sbml_model
 from .config import REPO_ROOT
 from .essentiality_evidence import sha256_file
 from .patches import (
+    add_direct_enzyme_like_gprs,
     add_isozyme_gprs,
+    add_r612_ura3_gpr,
     annotate_isozyme_genes,
     clean_ec_overload,
+    correct_external_ndh2_gpr_and_remove_duplicate,
     extend_acyl_pool_c161,
+    fix_d_arabinokinase_direction_and_proton,
+    remove_spurious_quinone_branches,
+    remove_stale_adp_atp_transporter_ec_codes,
 )
 from .sbml import write_deterministic_sbml_model
 
@@ -32,8 +38,14 @@ PatchFunction = Callable[[object], int]
 def _patches(*, allow_network: bool) -> dict[str, PatchFunction]:
     return {
         "c161-pool-extension": extend_acyl_pool_c161,
+        "adp-atp-transporter-ec-cleanup": remove_stale_adp_atp_transporter_ec_codes,
+        "d-arabinokinase-direction": fix_d_arabinokinase_direction_and_proton,
         "ec-overload-cleanup": clean_ec_overload,
         "isozyme-gprs": add_isozyme_gprs,
+        "r612-ura3-gpr": add_r612_ura3_gpr,
+        "external-ndh2-correction": correct_external_ndh2_gpr_and_remove_duplicate,
+        "direct-enzyme-like-gprs": add_direct_enzyme_like_gprs,
+        "quinone-branch-cleanup": remove_spurious_quinone_branches,
         "isozyme-gene-annotations": lambda model: annotate_isozyme_genes(
             model, network=allow_network
         ),

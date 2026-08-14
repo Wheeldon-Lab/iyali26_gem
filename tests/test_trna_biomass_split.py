@@ -12,14 +12,15 @@ from scripts.gem_annotate.validate_essential_genes import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-MODEL_PATH = REPO_ROOT / "model.xml"
+UNSPLIT_MODEL_PATH = REPO_ROOT / "data" / "iyali26.xml"
+CANONICAL_MODEL_PATH = REPO_ROOT / "model.xml"
 
 
 @pytest.mark.integration
 def test_group_b_splits_all_twenty_trna_requirements_and_carries_flux(
     tmp_path: Path,
 ) -> None:
-    model = read_sbml_model(str(MODEL_PATH))
+    model = read_sbml_model(str(UNSPLIT_MODEL_PATH))
     before_counts = (len(model.reactions), len(model.metabolites))
 
     audit = split_trna_charging_from_biomass(model)
@@ -51,7 +52,7 @@ def test_group_b_splits_all_twenty_trna_requirements_and_carries_flux(
     apply_media(model, load_media(DEFAULT_MEDIA))
     solution = model.optimize()
     assert solution.status == "optimal"
-    assert solution.objective_value == pytest.approx(1.399319528373685, rel=1e-9)
+    assert solution.objective_value == pytest.approx(1.3284010586120676, rel=1e-9)
     for row in audit:
         expected_flux = float(row["coefficient"]) * solution.objective_value
         assert solution.fluxes[str(row["split_reaction_id"])] == pytest.approx(
@@ -73,9 +74,35 @@ def test_group_b_splits_all_twenty_trna_requirements_and_carries_flux(
 
 
 def test_group_b_rejects_a_partial_split_state() -> None:
-    model = read_sbml_model(str(MODEL_PATH))
+    model = read_sbml_model(str(UNSPLIT_MODEL_PATH))
     audit = split_trna_charging_from_biomass(model)
     model.remove_reactions([str(audit[0]["split_reaction_id"])])
 
     with pytest.raises(ValueError, match="Partial B-group tRNA biomass state"):
         split_trna_charging_from_biomass(model)
+
+
+@pytest.mark.integration
+def test_canonical_model_contains_the_promoted_b_group_translation_layer() -> None:
+    model = read_sbml_model(str(CANONICAL_MODEL_PATH))
+    biomass = model.reactions.get_by_id("biomass_C")
+    split_reactions = [
+        reaction
+        for reaction in model.reactions
+        if reaction.id.startswith("TRNA_BIOMASS_")
+    ]
+
+    assert biomass.notes["canonical_trna_biomass_mode"] == "split_v1"
+    assert len(split_reactions) == 20
+    assert split_trna_charging_from_biomass(model) == []
+
+    apply_media(model, load_media(DEFAULT_MEDIA))
+    solution = model.optimize()
+    assert solution.status == "optimal"
+    assert solution.objective_value == pytest.approx(1.4492618988553534, rel=1e-9)
+    for reaction in split_reactions:
+        amount = float(reaction.notes["biomass_coefficient"])
+        assert solution.fluxes[reaction.id] == pytest.approx(
+            amount * solution.objective_value,
+            rel=1e-9,
+        )

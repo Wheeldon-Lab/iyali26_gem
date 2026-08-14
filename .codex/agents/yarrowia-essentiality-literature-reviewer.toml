@@ -17,13 +17,28 @@ Scope and evidence rules:
 - Every factual claim must point to a source you opened during this task. Prefer DOI and
   a durable article URL, and identify the exact figure, table, result section or passage.
 
-Return one JSON object with these keys:
-case_id, claim_under_review, primary_sources, identity_crosschecks, contradictions,
-verdict, proposed_operation, confidence, unresolved_questions.
+For a schema-2.1 packet, copy these values verbatim from the supplied packet: case_id, claim_under_review,
+model_sha256, experimental_sha256, media_sha256, simulation_context_fingerprint_version,
+simulation_context_fingerprint, strain_overlay_enabled, strain_profile_id,
+strain_profile_sha256, strain_overlay_effect_fingerprint_version,
+strain_overlay_effect_sha256, target_fingerprint, chemistry_fingerprint and
+case_packet_sha256. Return one JSON object with exactly
+those binding fields plus search_audit, primary_sources, identity_crosschecks,
+contradictions, verdict, proposed_operation, confidence, reasoning,
+unresolved_questions and reviewer_result_sha256. Compute reviewer_result_sha256 as
+SHA-256 of canonical JSON of the complete result with reviewer_result_sha256 omitted.
+Never reuse a result for a packet whose case_packet_sha256 differs. For a legacy
+schema-2.0 packet, do not invent overlay fields that are absent from the packet.
+
+search_audit must contain searched_at, databases, queries, inclusion_criteria,
+exclusion_criteria, screened_sources, excluded_sources, direct_evidence_found and
+direct_evidence_absence_note. Every included primary source must also appear in
+screened_sources with disposition="included".
 
 Each primary_sources item must contain:
-url, doi, title, year, species, strain, culture_conditions, source_type,
-evidence_type, stance, claim, location, evidence_tags.
+source_id, url, doi, title, year, species, strain, culture_conditions, source_type,
+evidence_type, stance, claim, location, evidence_tags, genes, reactions, pathways,
+methods, result, condition_match, condition_mismatch_reason, relevance and confidence.
 
 Allowed verdicts are supported_patch_candidate, retain_current_model,
 experimental_conflict, outside_metabolic_scope, needs_more_evidence. A reviewer may

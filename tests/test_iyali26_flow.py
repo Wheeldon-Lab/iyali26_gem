@@ -637,7 +637,7 @@ def test_toy_targeted_full_fidelity_and_no_input_mutation(
 
 
 @pytest.mark.integration
-def test_real_model_rejects_stale_anchor_experiment_after_model_change() -> None:
+def test_real_model_rejects_any_stale_configured_input() -> None:
     config = load_experiment_config(REAL_CONFIG, repo_root=REPO_ROOT)
     model_path = config.input_map["model"].path
     before = sha256_file(model_path)
@@ -647,8 +647,8 @@ def test_real_model_rejects_stale_anchor_experiment_after_model_change() -> None
         "39f4cae11c3f270400c8a227c78b6af3ed412e85b1ade6cb604b0f85c3d8b1d9"
     )
     assert before == (
-        "b3f60933aa9503ab63ab5d8bca58a9525b8c81534d3eac72cf66d2769ff44f48"
+        "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
     )
-    with pytest.raises(ValueError, match="configured model SHA is stale"):
+    with pytest.raises(ValueError, match=r"configured (?:model|media) SHA is stale"):
         R4R1846CapacitySimulator(config)
     assert sha256_file(model_path) == before

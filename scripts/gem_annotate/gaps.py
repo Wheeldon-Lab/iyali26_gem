@@ -53,6 +53,15 @@ DUPLICATE_PAIRS: list[tuple[str, str]] = [
     ("m878",  "m1963"),
 ]
 
+# Some P0 candidates are already represented by a curated reaction under a
+# different historical ID.  These mappings are intentionally explicit: a
+# generic same-EC or same-GPR heuristic could suppress legitimate paralogous
+# reactions.  The target reactions are reviewed iYali26 representations.
+CURATED_EXISTING_GAP_FILL_REACTIONS: dict[tuple[str, str], str] = {
+    ("SPHPL", "MNXR188844"): "R730",
+    ("R_PSPHPL", "MNXR146152"): "R663",
+}
+
 
 def find_gaps(model) -> dict:
     """
@@ -181,72 +190,6 @@ def report_gaps(gaps: dict) -> None:
     if dead_ends:
         logger.info(f"  Dead-ends (first 10): {dead_ends[:10]}")
     logger.info("────────────────────────────────────────────────────────")
-
-
-def audit_mis_reactions(model, mis_metabolite_ids: list[str]) -> None:
-    """
-    Targeted stoichiometric audit for metabolites identified by MIS analysis.
-
-    For each metabolite in mis_metabolite_ids, prints every reaction that
-    involves it along with:
-      - reaction ID, name
-      - per-element imbalance (C / H / N / O / P / S / charge)
-      - reaction equation string (for manual inspection)
-
-    Use this after `merge_duplicate_metabolites()` to verify that the
-    duplicates were the cause of inconsistency, and to find any residual
-    stoichiometric errors.
-    """
-    def _element_balance(rxn) -> dict[str, float]:
-        """Return per-element net balance across a reaction (should be 0)."""
-        balance: dict[str, float] = {}
-        for met, coeff in rxn.metabolites.items():
-            formula = met.formula or ""
-            for elem, cnt_str in re.findall(r"([A-Z][a-z]?)(\d*)", formula):
-                cnt = int(cnt_str) if cnt_str else 1
-                balance[elem] = balance.get(elem, 0.0) + coeff * cnt
-        return balance
-
-    seen_rxns: set[str] = set()
-    any_found = False
-
-    for mid in mis_metabolite_ids:
-        try:
-            met = model.metabolites.get_by_id(mid)
-        except KeyError:
-            logger.warning(f"audit_mis_reactions: metabolite '{mid}' not in model")
-            continue
-
-        for rxn in met.reactions:
-            if rxn.id in seen_rxns:
-                continue
-            seen_rxns.add(rxn.id)
-            any_found = True
-
-            balance = _element_balance(rxn)
-            imbalanced_elems = {e: v for e, v in balance.items() if abs(v) > 1e-6}
-
-            # Charge balance
-            charge_bal = sum(
-                coeff * (met_.charge or 0)
-                for met_, coeff in rxn.metabolites.items()
-            )
-
-            status = "OK" if (not imbalanced_elems and abs(charge_bal) < 1e-6) else "IMBALANCED"
-            imb_str = ", ".join(
-                f"{e}:{v:+.3g}" for e, v in sorted(imbalanced_elems.items())
-            )
-            if abs(charge_bal) > 1e-6:
-                imb_str += f", charge:{charge_bal:+.3g}"
-
-            logger.info(
-                f"  [{status}] {rxn.id}  ({rxn.name or 'no name'})  "
-                f"imbalance={imb_str or 'none'}  "
-                f"eq={rxn.reaction}"
-            )
-
-    if not any_found:
-        logger.info("audit_mis_reactions: no reactions found for the given metabolite IDs")
 
 
 def _resolve_met_id(model, bare_id: str) -> "list":
@@ -582,7 +525,7 @@ def add_gap_fill_reactions(
     Returns
     -------
     dict with keys: added (list of reaction IDs), skipped_duplicate,
-                    skipped_missing_mets, skipped_unresolved_genes,
+                    skipped_curated_existing, skipped_missing_mets, skipped_unresolved_genes,
                     direction_curated, uncurated_direction, imbalanced
     """
     from cobra import Reaction
@@ -643,6 +586,7 @@ def add_gap_fill_reactions(
     stats = {
         "added": [],
         "skipped_duplicate": [],
+        "skipped_curated_existing": [],
         "skipped_missing_mets": [],
         "skipped_unresolved_genes": [],
         "direction_curated": [],
@@ -677,6 +621,28 @@ def add_gap_fill_reactions(
         if bigg_id in seen_bigg:
             continue
         seen_bigg.add(bigg_id)
+
+        # Some external candidates are known aliases of existing model
+        # reactions even when a later annotation pass changes their BiGG/MNXR
+        # labels.  Do not reinsert a duplicate merely because those labels
+        # drifted; fail closed if the curated target is unexpectedly absent.
+        curated_existing_id = CURATED_EXISTING_GAP_FILL_REACTIONS.get(
+            (bigg_id, mnxr)
+        )
+        if curated_existing_id is not None:
+            if curated_existing_id not in existing_ids:
+                raise ValueError(
+                    "curated existing-reaction target is absent: "
+                    f"{bigg_id} ({mnxr}) -> {curated_existing_id}"
+                )
+            logger.info(
+                "  Skipping %s (%s): represented by curated existing reaction %s",
+                bigg_id,
+                mnxr,
+                curated_existing_id,
+            )
+            stats["skipped_curated_existing"].append(bigg_id)
+            continue
 
         # Skip reactions already in the model (check both raw ID and R_-prefixed)
         bigg_ids_to_check = [bigg_id]
@@ -847,6 +813,7 @@ def add_gap_fill_reactions(
     logger.info(
         f"add_gap_fill_reactions: added={len(stats['added'])}, "
         f"skipped_duplicate={len(stats['skipped_duplicate'])}, "
+        f"skipped_curated_existing={len(stats['skipped_curated_existing'])}, "
         f"skipped_missing_mets={len(stats['skipped_missing_mets'])}, "
         f"skipped_unresolved_genes={len(stats['skipped_unresolved_genes'])}, "
         f"direction_curated={len(stats['direction_curated'])}, "

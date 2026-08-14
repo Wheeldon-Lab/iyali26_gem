@@ -38,7 +38,8 @@ in `config/research-workspace.example.toml`:
 
 - `raw/`: source PDF and spreadsheet files;
 - `reference/`: MetaNetX, KEGG, NCBI, ExPASy, and external models;
-- `state/`: essentiality dossiers, ledgers, media, and curation tables;
+- `state/`: essentiality dossiers, ledgers, media, runtime strain profiles, and
+  curation tables;
 - `experiments/`: experiment definitions and inputs;
 - `artifacts/`: reports, diagnostics, legacy models, and weekly briefings;
 - `cache/`: retained download and tool caches;
@@ -79,6 +80,39 @@ to register historical runs and retained duplicate artifacts, run:
 python -m scripts.gem_annotate.run_registry backfill \
   --research-root "$IYALI26_RESEARCH_ROOT"
 ```
+
+### B-group aminoacyl-tRNA biomass experiment
+
+The fully split B-group translation representation is now part of the
+released canonical `model.xml`. The build pipeline applies 20 independent
+`AA-tRNA -> tRNA + protein-residue` reactions, applies the current SD-Leu
+medium and the SHA-pinned PO1f runtime profile, then runs the positive-only
+1%, 5%, 10%, and 15% essentiality screen:
+
+```bash
+python -m scripts.gem_annotate.trna_biomass_pipeline \
+  --research-root "$IYALI26_RESEARCH_ROOT"
+```
+
+The screening command writes a separately named copy and a provenance manifest
+under the external research workspace. It verifies that the copied model
+preserves the released canonical B-group reaction/metabolite structure.
+The current PO1f regression is 57/265, 63/259, 67/255, and 79/243 TP/FN at
+1%, 5%, 10%, and 15%, respectively.
+
+The PO1f profile is stored at
+`$IYALI26_RESEARCH_ROOT/state/strain_profiles/po1f_sd_leu.json`. It is applied
+only in memory: `R612` is disabled for the `ura3-302` background, while `R45`
+is associated with a runtime `PO1f_plasmid_LEU2` pseudo gene to represent
+LEU2 complementation by the guide-library plasmid. The pseudo gene is not
+treated as a screened genomic target.
+
+The CSM-Leu formulation supplies 20 mg/L uracil (0.178428 mmol/L), but this
+concentration does not determine a flux bound in mmol/gDW/h. The profile
+therefore retains the formulation and legacy concentration-ratio calculation
+as provenance, then applies `R1354=1000` as a permissive static-FBA availability
+bound explicitly marked as not experimentally measured. Batch simulations
+must instead use 0.178428 mmol/L as an initial extracellular pool.
 
 ## MetaNetX
 

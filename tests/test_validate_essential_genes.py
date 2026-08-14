@@ -8,6 +8,7 @@ from cobra.manipulation.delete import knock_out_model_genes
 from scripts.gem_annotate.validate_essential_genes import (
     DEFAULT_EXPERIMENTAL,
     DEFAULT_MEDIA,
+    IRON_EXCHANGE_ID,
     LEUCINE_EXCHANGE_ID,
     REPO_ROOT,
     apply_media,
@@ -15,6 +16,8 @@ from scripts.gem_annotate.validate_essential_genes import (
     load_experimental,
     load_media,
     normalize_gene_id,
+    run_single_gene_deletions,
+    _verify_bypass_candidates,
 )
 from scripts.gem_annotate.essentiality_evidence import sha256_file
 from scripts.gem_annotate import essentiality_evidence, patches as patches_module
@@ -28,6 +31,29 @@ SOURCE_XLSX = REPO_ROOT / "data" / "essentiality" / "42003_2023_4996_MOESM10_ESM
 def test_normalize_gene_id() -> None:
     assert normalize_gene_id("YALI1_A00309g") == "YALI1A00309g"
     assert normalize_gene_id("YALI1A00309g") == "YALI1A00309g"
+
+
+def test_runtime_pseudo_gene_can_be_excluded_from_deletion_screen() -> None:
+    model = Model("runtime-pseudo-gene")
+    precursor = Metabolite("precursor_c", compartment="c")
+    source = Reaction("SOURCE")
+    source.bounds = (0.0, 1.0)
+    source.add_metabolites({precursor: 1.0})
+    biomass = Reaction("BIOMASS")
+    biomass.bounds = (0.0, 1.0)
+    biomass.add_metabolites({precursor: -1.0})
+    biomass.gene_reaction_rule = "real_gene or runtime_pseudo_gene"
+    model.add_reactions([source, biomass])
+    model.objective = biomass
+
+    predictions, growth = run_single_gene_deletions(
+        model,
+        "glpk",
+        excluded_gene_ids={"runtime_pseudo_gene"},
+    )
+
+    assert growth == pytest.approx(1.0)
+    assert predictions["gene_id"].tolist() == ["real_gene"]
 
 
 def test_positive_only_source_requires_explicit_flag() -> None:
@@ -54,9 +80,53 @@ def test_sd_leu_medium_and_wild_type_growth() -> None:
     model.solver = "glpk"
     growth = model.slim_optimize()
 
-    assert len(media) == 34
+    assert len(media) == 35
     assert LEUCINE_EXCHANGE_ID not in active
+    assert active[IRON_EXCHANGE_ID] == pytest.approx(0.0000667)
+    assert model.reactions.get_by_id(IRON_EXCHANGE_ID).lower_bound == pytest.approx(
+        -0.0000667
+    )
     assert 0.1 <= growth <= 2.0
+
+
+def test_verified_bypass_excludes_globally_essential_dependency() -> None:
+    model = Model("gene_specific_bypass")
+    a = Metabolite("a_c", compartment="c")
+    b = Metabolite("b_c", compartment="c")
+    c = Metabolite("c_c", compartment="c")
+
+    uptake = Reaction("UPTAKE")
+    uptake.bounds = (0.0, 1.5)
+    uptake.add_metabolites({a: 1.0})
+
+    global_dependency = Reaction("GLOBAL")
+    global_dependency.add_metabolites({a: -1.0, b: 1.0})
+
+    target = Reaction("TARGET")
+    target.gene_reaction_rule = "target_gene"
+    target.add_metabolites({b: -1.0, c: 1.0})
+
+    bypass = Reaction("ALT")
+    bypass.add_metabolites({b: -2.0, c: 1.0})
+
+    biomass = Reaction("BIOMASS")
+    biomass.bounds = (0.0, 1.0)
+    biomass.add_metabolites({c: -1.0})
+
+    model.add_reactions([uptake, global_dependency, target, bypass, biomass])
+    model.objective = biomass
+    wt_solution = model.optimize()
+
+    verified = _verify_bypass_candidates(
+        model,
+        model.genes.get_by_id("target_gene"),
+        wt_solution.fluxes,
+        wt_growth=float(wt_solution.objective_value),
+        lethal_growth=0.1,
+        max_candidates=10,
+    )
+
+    assert verified == ["ALT"]
 
 
 def test_translation_candidates_are_audited_but_not_connected() -> None:
@@ -275,13 +345,13 @@ def test_schema_v2_post_patch_gate_rejects_mass_imbalance() -> None:
 
 def test_current_input_sha256_values_are_stable() -> None:
     assert sha256_file(MODEL_PATH) == (
-        "b3f60933aa9503ab63ab5d8bca58a9525b8c81534d3eac72cf66d2769ff44f48"
+        "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
     )
     assert sha256_file(DEFAULT_EXPERIMENTAL) == (
         "1e887f5ad4a95827a49b6c86894edaca410bdba3d264ff0d25193dedef3a659b"
     )
     assert sha256_file(DEFAULT_MEDIA) == (
-        "9ff1dafc2841b79cae20ad5ca6065d5328ad06b9cf36799092348814c9216c52"
+        "ed176d26a373f98cc413ed2e32a71f5f060a06e343f90f7db25cd32eff268e85"
     )
 
 
@@ -331,12 +401,12 @@ def test_cpa_ura2_partition_is_idempotent_and_growth_safe(tmp_path) -> None:
     apply_media(model, load_media(DEFAULT_MEDIA))
     model.solver = "glpk"
     wt_growth = float(model.slim_optimize())
-    assert wt_growth == pytest.approx(1.4540809938125043, rel=1e-9)
+    assert wt_growth == pytest.approx(1.4492618988553403, rel=1e-9)
 
     expected_ratios = {
-        "YALI1C33005g": 0.14163749564836411,
-        "YALI1D09420g": 0.14163749564836411,
-        "YALI1E11768g": 0.08045641427959412,
+        "YALI1C33005g": 0.14718038750795417,
+        "YALI1D09420g": 0.14718038750795406,
+        "YALI1E11768g": 0.08360502405782207,
     }
     for gene_id, expected_ratio in expected_ratios.items():
         with model:

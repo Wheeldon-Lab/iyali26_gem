@@ -43,6 +43,10 @@ class ProjectPaths:
         return self.research_root / "state" / "media"
 
     @property
+    def strain_profiles(self) -> Path:
+        return self.research_root / "state" / "strain_profiles"
+
+    @property
     def curation_data(self) -> Path:
         return self.research_root / "state" / "curation" / "data"
 
@@ -72,6 +76,8 @@ class ProjectPaths:
             return (self.essentiality.joinpath(*parts[2:])).resolve()
         if parts[:2] == ("data", "media"):
             return (self.media.joinpath(*parts[2:])).resolve()
+        if parts[:2] == ("data", "strain_profiles"):
+            return (self.strain_profiles.joinpath(*parts[2:])).resolve()
         if parts[:2] == ("data", "metanetx"):
             return (self.metanetx.joinpath(*parts[2:])).resolve()
         if parts[:2] == ("data", "cache"):

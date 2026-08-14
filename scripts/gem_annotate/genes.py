@@ -231,7 +231,9 @@ def _parse_uniprot_entry(entry: dict) -> tuple[set[str], dict]:
     return candidates, ann
 
 
-def _fetch_proteome(proteome_id: str) -> list[dict]:
+def _fetch_proteome(
+    proteome_id: str, *, allow_network: bool = True
+) -> list[dict]:
     """
     Download all entries for a UniProt proteome via paginated /search.
     Returns full JSON entries (including uniProtKBCrossReferences).
@@ -247,6 +249,11 @@ def _fetch_proteome(proteome_id: str) -> list[dict]:
             results = json.load(f)
         logger.info(f"    {len(results)} entries loaded from cache")
         return results
+    if not allow_network:
+        logger.warning(
+            "  Proteome %s is not cached and network is disabled", proteome_id
+        )
+        return []
 
     logger.info(f"  Fetching proteome {proteome_id} from UniProt …")
     results: list[dict] = []
@@ -285,7 +292,10 @@ def _fetch_proteome(proteome_id: str) -> list[dict]:
 
 
 def _tier_a(
-    gene_ids: list[str], resolver: LocusCrosswalk | None = None
+    gene_ids: list[str],
+    resolver: LocusCrosswalk | None = None,
+    *,
+    allow_network: bool = True,
 ) -> dict[str, dict]:
     """
     Tier A: bulk proteome download.
@@ -302,7 +312,11 @@ def _tier_a(
     mapping: dict[str, dict] = {}
 
     for proteome_id in _PROTEOME_IDS:
-        entries = _fetch_proteome(proteome_id)
+        entries = (
+            _fetch_proteome(proteome_id)
+            if allow_network
+            else _fetch_proteome(proteome_id, allow_network=False)
+        )
         for i, e in enumerate(entries[:3]):
             gene_info = e.get("genes", [])
             logger.debug(f"    [debug] entry {i} genes field: {gene_info}")
@@ -331,7 +345,10 @@ def _tier_a(
 
 
 def _tier_b(
-    unmapped: list[str], resolver: LocusCrosswalk | None = None
+    unmapped: list[str],
+    resolver: LocusCrosswalk | None = None,
+    *,
+    allow_network: bool = True,
 ) -> dict[str, dict]:
     """
     Tier B: per-gene UniProt search for Tier A misses.
@@ -358,13 +375,16 @@ def _tier_b(
             cache = json.load(f)
 
     relevant_cache = {gid: cache[gid] for gid in unmapped if gid in cache}
-    to_query = [gid for gid in unmapped if gid not in relevant_cache]
+    uncached = [gid for gid in unmapped if gid not in relevant_cache]
+    to_query = uncached if allow_network else []
     cached_hits = {
         gid: ann for gid, ann in relevant_cache.items() if ann is not None
     }
     logger.info(
         f"  Tier B: {len(cached_hits)} hits from cache, "
-        f"{len(to_query)}/{len(unmapped)} genes need querying"
+        f"{len(uncached)}/{len(unmapped)} genes uncached, "
+        f"{len(to_query)} scheduled for querying "
+        f"(allow_network={allow_network})"
     )
 
     mapping: dict[str, dict] = dict(cached_hits)
@@ -429,7 +449,10 @@ def _tier_b(
 
 
 def _tier_ncbi(
-    unmapped: list[str], resolver: LocusCrosswalk | None = None
+    unmapped: list[str],
+    resolver: LocusCrosswalk | None = None,
+    *,
+    allow_network: bool = True,
 ) -> dict[str, dict]:
     """
     Tier A-prime: bulk NCBI Gene lookup for genes missed by UniProt proteome download.
@@ -471,6 +494,9 @@ def _tier_ncbi(
             f"({cache_file.name})"
         )
         return mapping
+    if not allow_network:
+        logger.warning("  Tier A′ cache is absent and network is disabled")
+        return {}
 
     # ── Build candidate lookup ────────────────────────────────────────────
     candidate_to_model = resolver.build_lookup(unmapped)
@@ -661,7 +687,7 @@ def _enrich_kegg_genes(model, acc_to_kegg: dict[str, str]) -> int:
     return enriched
 
 
-def annotate_genes(model) -> None:
+def annotate_genes(model, *, allow_network: bool = True) -> None:
     """
     Map YALI1* locus IDs to UniProt accessions and cross-database identifiers.
 
@@ -685,7 +711,9 @@ def annotate_genes(model) -> None:
 
     # ── Tier A: UniProt proteome bulk download ────────────────────────────
     logger.info("=== Gene annotation Tier A: UniProt proteome download ===")
-    tier_a_map = _tier_a(gene_ids, resolver)
+    tier_a_map = _tier_a(
+        gene_ids, resolver, allow_network=allow_network
+    )
     logger.info(f"Tier A: {len(tier_a_map)}/{len(gene_ids)} mapped")
 
     unmapped_a = [gid for gid in gene_ids if gid not in tier_a_map]
@@ -694,7 +722,9 @@ def annotate_genes(model) -> None:
     tier_ap_map: dict[str, dict] = {}
     if unmapped_a:
         logger.info(f"=== Gene annotation Tier A′: NCBI Gene bulk ({len(unmapped_a)} remaining) ===")
-        tier_ap_map = _tier_ncbi(unmapped_a, resolver)
+        tier_ap_map = _tier_ncbi(
+            unmapped_a, resolver, allow_network=allow_network
+        )
 
     unmapped_ap = [gid for gid in unmapped_a if gid not in tier_ap_map]
 
@@ -702,7 +732,9 @@ def annotate_genes(model) -> None:
     tier_b_map: dict[str, dict] = {}
     if unmapped_ap:
         logger.info(f"=== Gene annotation Tier B: per-gene UniProt search ({len(unmapped_ap)} remaining) ===")
-        tier_b_map = _tier_b(unmapped_ap, resolver)
+        tier_b_map = _tier_b(
+            unmapped_ap, resolver, allow_network=allow_network
+        )
 
     # ── Apply all tiers to model ──────────────────────────────────────────
     annotated = 0

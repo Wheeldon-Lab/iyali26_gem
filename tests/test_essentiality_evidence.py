@@ -10,6 +10,8 @@ from scripts.gem_annotate.essentiality_evidence import (
     LEDGER_FIELDS,
     assert_transition,
     chemistry_fingerprint,
+    import_chemistry_review,
+    import_identity_review,
     import_research_batch_results,
     merge_detected_cases,
     read_ledger,
@@ -257,7 +259,7 @@ def _case_packet(
     gene_id = f"g{verdict_index}"
     reaction_id = f"R{verdict_index}"
     context = _reaction_context(reaction_id, gene_id)
-    return {
+    packet = {
         "schema_version": "2.0",
         "case_id": case_id,
         "category": category,
@@ -276,12 +278,25 @@ def _case_packet(
             "diagnostics": [{"ko_growth_ratio": ko_growth_ratio}],
         },
     }
+    packet["case_packet_sha256"] = evidence_module.case_packet_sha256(packet)
+    return packet
 
 
 def _reviewer_result(packet: dict, *, supported: bool = False) -> dict:
     result = {
         "case_id": packet["case_id"],
         "claim_under_review": packet["claim_under_review"],
+        **{
+            field: packet[field]
+            for field in (
+                "model_sha256",
+                "experimental_sha256",
+                "media_sha256",
+                "target_fingerprint",
+                "chemistry_fingerprint",
+                "case_packet_sha256",
+            )
+        },
         "search_audit": _search_audit([], direct_found=False),
         "primary_sources": [],
         "identity_crosschecks": [],
@@ -314,15 +329,52 @@ def _reviewer_result(packet: dict, *, supported: bool = False) -> dict:
                 "unresolved_questions": [],
             }
         )
+    result["reviewer_result_sha256"] = evidence_module.reviewer_result_sha256(result)
     return result
 
 
-def _skeptic_batch(packets: list[dict]) -> dict:
+def test_schema_21_packet_binds_overlay_context_to_ledger_and_dossier(tmp_path) -> None:
+    packet = _case_packet("EGC-overlay-context")
+    packet.update(
+        {
+            "schema_version": "2.1",
+            "simulation_context_fingerprint_version": "1",
+            "simulation_context_fingerprint": "context-sha",
+            "strain_overlay_enabled": True,
+            "strain_profile_id": "po1f_sd_leu",
+            "strain_profile_sha256": "profile-sha",
+            "strain_overlay_effect_fingerprint_version": "1",
+            "strain_overlay_effect_sha256": "effect-sha",
+        }
+    )
+    packet["case_packet_sha256"] = evidence_module.case_packet_sha256(packet)
+    ledger_path = tmp_path / "ledger.csv"
+    evidence_dir = tmp_path / "evidence"
+
+    merge_detected_cases([packet], ledger_path=ledger_path, evidence_dir=evidence_dir)
+
+    row = read_ledger(ledger_path)[0]
+    dossier = json.loads((evidence_dir / "EGC-overlay-context.json").read_text())
+    assert row["simulation_context_fingerprint"] == "context-sha"
+    assert row["strain_overlay_effect_sha256"] == "effect-sha"
+    assert dossier["schema_version"] == "2.1"
+    assert dossier["strain_profile_id"] == "po1f_sd_leu"
+
+
+def _skeptic_batch(packets: list[dict], reviewers: list[dict]) -> dict:
+    reviewer_hashes = {
+        reviewer["case_id"]: reviewer["reviewer_result_sha256"]
+        for reviewer in reviewers
+    }
     return {
         "batch_case_ids": [packet["case_id"] for packet in packets],
+        "case_packet_batch_sha256": evidence_module.case_packet_batch_sha256(packets),
+        "reviewer_result_sha256_by_case": reviewer_hashes,
         "results": [
             {
                 "case_id": packet["case_id"],
+                "case_packet_sha256": packet["case_packet_sha256"],
+                "reviewer_result_sha256": reviewer_hashes.get(packet["case_id"], ""),
                 "status": "complete",
                 "verdict": "pass",
                 "findings": [],
@@ -374,6 +426,9 @@ def test_input_sha_refresh_reuses_complete_literature_review(tmp_path) -> None:
 
     refreshed_case = json.loads(json.dumps(case))
     refreshed_case["model_sha256"] = "new-model-sha"
+    refreshed_case["case_packet_sha256"] = evidence_module.case_packet_sha256(
+        refreshed_case
+    )
     merge_detected_cases(
         [refreshed_case], ledger_path=ledger_path, evidence_dir=evidence_dir
     )
@@ -538,7 +593,7 @@ def test_reviewer_search_audit_is_persisted_verbatim(tmp_path) -> None:
     import_research_batch_results(
         packets,
         reviewers,
-        _skeptic_batch(packets),
+        _skeptic_batch(packets, reviewers),
         ledger_path=ledger_path,
         evidence_dir=evidence_dir,
     )
@@ -715,6 +770,118 @@ def test_generic_transition_cannot_create_acceptance(tmp_path) -> None:
         )
 
 
+def test_reviewer_result_rejects_packet_hash_mismatch(tmp_path) -> None:
+    packets, _extra, ledger_path, evidence_dir = _prepare_batch_state(tmp_path)
+    transition_selected_batch_to_researching(
+        packets, ledger_path=ledger_path, evidence_dir=evidence_dir
+    )
+    reviewers = [_reviewer_result(packet) for packet in packets]
+    reviewers[0]["case_packet_sha256"] = "stale-packet"
+    reviewers[0]["reviewer_result_sha256"] = evidence_module.reviewer_result_sha256(
+        reviewers[0]
+    )
+
+    with pytest.raises(ValueError, match="case_packet_sha256 does not match"):
+        import_research_batch_results(
+            packets,
+            reviewers,
+            _skeptic_batch(packets, reviewers),
+            ledger_path=ledger_path,
+            evidence_dir=evidence_dir,
+        )
+
+
+def test_identity_and_chemistry_imports_require_current_provenance(tmp_path) -> None:
+    packet = _case_packet("EGC-review000001", 1)
+    ledger_path = tmp_path / "ledger.csv"
+    evidence_dir = tmp_path / "evidence"
+    merge_detected_cases([packet], ledger_path=ledger_path, evidence_dir=evidence_dir)
+    fields = {
+        field: packet[field]
+        for field in (
+            "case_id",
+            "model_sha256",
+            "experimental_sha256",
+            "media_sha256",
+            "target_fingerprint",
+            "chemistry_fingerprint",
+        )
+    }
+    identity = {
+        **fields,
+        "identity_review": {
+            "status": "function_unverified",
+            "model_sha256": packet["model_sha256"],
+        },
+    }
+    row = import_identity_review(
+        packet["case_id"], identity, ledger_path=ledger_path, evidence_dir=evidence_dir
+    )
+    assert row["case_id"] == packet["case_id"]
+
+    audit_path = evidence_dir / "chemistry" / "audit.json"
+    audit_path.parent.mkdir(parents=True)
+    audit_path.write_text("{}\n", encoding="utf-8")
+    chemistry = {
+        **fields,
+        "chemistry_review": {
+            "status": "blocked_component_migration",
+            "model_sha256": packet["model_sha256"],
+            "chemistry_fingerprint": packet["chemistry_fingerprint"],
+            "audit_path": str(audit_path),
+            "audit_sha256": sha256_file(audit_path),
+        },
+    }
+    row = import_chemistry_review(
+        packet["case_id"], chemistry, ledger_path=ledger_path, evidence_dir=evidence_dir
+    )
+    assert row["case_id"] == packet["case_id"]
+
+
+def test_terminal_transitions_require_matching_artifact_manifest(tmp_path) -> None:
+    dossier = _valid_dossier()
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir()
+    dossier_path = evidence_dir / f"{dossier['case_id']}.json"
+    dossier_path.write_text(json.dumps(dossier), encoding="utf-8")
+    ledger_path = tmp_path / "ledger.csv"
+    row = {field: "" for field in LEDGER_FIELDS}
+    row.update(
+        {
+            "case_id": dossier["case_id"],
+            "status": "accepted",
+            "model_sha256": dossier["model_sha256"],
+            "target_fingerprint": dossier["target_fingerprint"],
+            "chemistry_fingerprint": dossier["chemistry_fingerprint"],
+        }
+    )
+    write_ledger([row], ledger_path)
+    with pytest.raises(ValueError, match="artifact-manifest"):
+        transition_case_status(
+            dossier["case_id"], "implemented", ledger_path=ledger_path, evidence_dir=evidence_dir
+        )
+    manifest = tmp_path / "implementation.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "case_id": dossier["case_id"],
+                "model_sha256": dossier["model_sha256"],
+                "target_fingerprint": dossier["target_fingerprint"],
+                "chemistry_fingerprint": dossier["chemistry_fingerprint"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    updated = transition_case_status(
+        dossier["case_id"],
+        "implemented",
+        ledger_path=ledger_path,
+        evidence_dir=evidence_dir,
+        artifact_manifest=manifest,
+    )
+    assert updated["status"] == "implemented"
+
+
 def test_changed_input_sha_requeues_case_without_reusing_simulation_state(tmp_path) -> None:
     context = _reaction_context()
     case = {
@@ -754,6 +921,7 @@ def test_changed_input_sha_requeues_case_without_reusing_simulation_state(tmp_pa
     dossier_path.write_text(json.dumps(dossier), encoding="utf-8")
 
     changed = dict(case, model_sha256="model-b")
+    changed["case_packet_sha256"] = evidence_module.case_packet_sha256(changed)
     merge_detected_cases(
         [changed], ledger_path=ledger_path, evidence_dir=evidence_dir
     )
@@ -965,6 +1133,9 @@ def test_internally_inconsistent_fresh_fingerprint_writes_nothing(tmp_path) -> N
     }
     inconsistent = json.loads(json.dumps(case))
     inconsistent["target_fingerprint"] = "sha256:internally-wrong"
+    inconsistent["case_packet_sha256"] = evidence_module.case_packet_sha256(
+        inconsistent
+    )
 
     with pytest.raises(ValueError, match="internally inconsistent"):
         merge_detected_cases(
@@ -1053,6 +1224,15 @@ def test_agent_cases_group_shared_reaction_and_rank_counterfactual_first() -> No
         "model": {"sha256": "model-sha"},
         "experimental": {"sha256": "experiment-sha"},
         "medium": {"sha256": "medium-sha"},
+        "simulation_context": {
+            "simulation_context_fingerprint_version": "1",
+            "simulation_context_fingerprint": "context-sha",
+            "strain_overlay_enabled": False,
+            "strain_profile_id": None,
+            "strain_profile_sha256": None,
+            "strain_overlay_effect_fingerprint_version": None,
+            "strain_overlay_effect_sha256": None,
+        },
         "wt_growth": 1.0,
         "cutoff_curve": [
             {"cutoff_fraction_of_wt": value} for value in (0.01, 0.05, 0.10, 0.15)
@@ -1240,7 +1420,7 @@ def test_complete_review_batch_moves_supported_pass_only_to_awaiting_human(
     result = import_research_batch_results(
         packets,
         reviewer_results,
-        _skeptic_batch(packets),
+        _skeptic_batch(packets, reviewer_results),
         ledger_path=ledger_path,
         evidence_dir=evidence_dir,
     )
@@ -1281,7 +1461,7 @@ def test_incomplete_reviewer_batch_is_rejected_without_any_writes(tmp_path) -> N
         import_research_batch_results(
             packets,
             reviewer_results,
-            _skeptic_batch(packets),
+            _skeptic_batch(packets, reviewer_results),
             ledger_path=ledger_path,
             evidence_dir=evidence_dir,
         )

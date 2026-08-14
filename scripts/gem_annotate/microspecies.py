@@ -20,11 +20,14 @@ from __future__ import annotations
 
 import copy
 import csv
+import datetime as dt
 import hashlib
 import json
 import logging
 import math
+import os
 import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -52,6 +55,7 @@ _CHEBI_RE = re.compile(r"^CHEBI:\d+$")
 _FORMULA_SUFFIX_RE = re.compile(
     r"^(?:[A-Z][A-Za-z0-9\.]*|(?i:[pnq][+-]\d+|charge[+-]\d+))$",
 )
+_MNXM_CHEMISTRY_CONFLICT_NOTE = "metanetx_formula_charge_conflict"
 _REQUIRED_COLUMNS = {
     "schema_version",
     "status",
@@ -308,6 +312,52 @@ def _metabolite_pair(metabolite) -> tuple[str | None, int | None]:
     return formula, charge
 
 
+def _is_allowed_current_pair(row: MicrospeciesRow, metabolite) -> bool:
+    """Accept curated pairs or an audited MetaNetX conflict-preserved pair.
+
+    Atomic MetaNetX enrichment deliberately leaves the name/source pair
+    untouched when its formula conflicts with the complete MetaNetX pair.  A
+    deferred family may recognize that state only when the structured note
+    proves both the preserved pair and the exact curated target.  Active rows
+    never receive this exception.
+    """
+
+    current = _metabolite_pair(metabolite)
+    if current in row.allowed_current_pairs:
+        return True
+    if row.status != _DEFERRED_STATUS:
+        return False
+    raw_conflict = (metabolite.notes or {}).get(_MNXM_CHEMISTRY_CONFLICT_NOTE)
+    if not isinstance(raw_conflict, str):
+        return False
+    try:
+        conflict = json.loads(raw_conflict)
+    except (TypeError, ValueError):
+        return False
+    preserved_pair = (
+        conflict.get("existing_formula"),
+        conflict.get("existing_charge"),
+    )
+    preserved_or_curated_legacy = preserved_pair == current or (
+        current[1] == 0
+        and current[0]
+        in {
+            formula
+            for formula, _charge in row.allowed_current_pairs
+            if formula is not None
+        }
+    )
+    return (
+        conflict.get("action") == "preserved_existing_pair"
+        and preserved_or_curated_legacy
+        and (
+            conflict.get("proposed_formula"),
+            conflict.get("proposed_charge"),
+        )
+        == row.target_pair
+    )
+
+
 def _is_fully_checkable(reaction) -> bool:
     return all(
         metabolite.formula and metabolite.charge is not None
@@ -370,7 +420,7 @@ def apply_curated_microspecies(
         resolved[row.family_id] = matches
         for metabolite in matches:
             current = _metabolite_pair(metabolite)
-            if current not in row.allowed_current_pairs:
+            if not _is_allowed_current_pair(row, metabolite):
                 errors.append(
                     f"{row.family_id}: {metabolite.id} has stale/unexpected pair "
                     f"{current!r}; allowed={sorted(row.allowed_current_pairs, key=str)!r}"
@@ -645,7 +695,7 @@ def audit_component_migration(
         selected_targets[row.family_id] = targets
         for metabolite in targets:
             current = _metabolite_pair(metabolite)
-            if current not in row.allowed_current_pairs:
+            if not _is_allowed_current_pair(row, metabolite):
                 raise ValueError(
                     f"{row.family_id}: {metabolite.id} has stale/unexpected pair "
                     f"{current!r}; allowed="
@@ -821,6 +871,80 @@ def audit_component_migration(
     }
 
 
+def _sha256_path(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def write_component_migration_audit(
+    model_path: str | Path,
+    output_path: str | Path,
+    family_ids: Iterable[str],
+    *,
+    table_path: str | Path = DEFAULT_MICROSPECIES_TABLE,
+    tolerance: float = 1e-9,
+) -> Path:
+    """Write one provenance-rich component audit with an atomic replace.
+
+    The curation table is read-only in this operation.  A failed serialization,
+    flush, or replacement leaves any existing audit byte-for-byte unchanged.
+    """
+
+    from cobra.io import read_sbml_model
+
+    model_path = Path(model_path)
+    output_path = Path(output_path)
+    table_path = Path(table_path)
+    selected_family_ids = sorted(set(family_ids))
+    model = read_sbml_model(str(model_path))
+    audit = audit_component_migration(
+        model,
+        selected_family_ids,
+        tolerance=tolerance,
+        table_path=table_path,
+    )
+    payload = {
+        "schema_version": 1,
+        "generated_at": dt.datetime.now(dt.UTC).isoformat(),
+        "provenance": {
+            "model_path": str(model_path.resolve()),
+            "model_sha256": _sha256_path(model_path),
+            "microspecies_table_path": str(table_path.resolve()),
+            "microspecies_table_sha256": _sha256_path(table_path),
+        },
+        "selected_family_ids": selected_family_ids,
+        "audit": audit,
+    }
+    text = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    mode = output_path.stat().st_mode & 0o777 if output_path.exists() else 0o644
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=output_path.parent,
+            prefix=f".{output_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary_path, mode)
+        os.replace(temporary_path, output_path)
+    except Exception:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+        raise
+    return output_path
+
+
 def _family_row(rows: list[MicrospeciesRow], family_id: str) -> MicrospeciesRow:
     matches = [row for row in rows if row.family_id == family_id]
     if len(matches) != 1:
@@ -959,8 +1083,18 @@ def balance_protons_and_water(
     changes: list[dict] = []
     rejected: list[dict] = []
     skipped_missing_formula = 0
+    skipped_curated_locks: list[str] = []
     for reaction in reactions:
         if len(reaction.metabolites) <= 1:
+            continue
+        curated_correction = (reaction.notes or {}).get(
+            "curated_reaction_correction"
+        )
+        if (
+            isinstance(curated_correction, dict)
+            and curated_correction.get("lock_proton_water_stoichiometry") is True
+        ):
+            skipped_curated_locks.append(reaction.id)
             continue
         if not _is_fully_checkable(reaction):
             skipped_missing_formula += 1
@@ -1069,6 +1203,7 @@ def balance_protons_and_water(
         "changed_reactions": len(changes),
         "rejected_reactions": len(rejected),
         "skipped_missing_formula": skipped_missing_formula,
+        "skipped_curated_lock_reaction_ids": skipped_curated_locks,
         "changes": changes,
         "rejected": rejected,
     }
@@ -1085,4 +1220,5 @@ __all__ = [
     "metabolite_base_name",
     "normalize_hydroxide_reactions",
     "resolve_microspecies_targets",
+    "write_component_migration_audit",
 ]

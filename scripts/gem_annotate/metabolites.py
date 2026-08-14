@@ -2,6 +2,7 @@
 metabolites.py — metabolite annotation and H+/H2O balancing.
 """
 
+import json
 import logging
 import re
 from collections import defaultdict
@@ -181,8 +182,71 @@ def _normalize_annotation(ann: dict) -> dict:
     return ann
 
 
-def _apply_mnxm(met, mnxm_id: str, by_mnxid: dict, prop: dict) -> dict:
-    """Build annotation dict for a matched MNXM ID and update met formula/charge."""
+_MNXM_CHEMISTRY_CONFLICT_NOTE = "metanetx_formula_charge_conflict"
+
+
+def _valid_mnxm_pair(properties: dict) -> tuple[str, int] | None:
+    """Return a complete MetaNetX formula/charge pair, or ``None``.
+
+    Formula and charge are deliberately inseparable here.  Returning ``None``
+    prevents an incomplete MetaNetX property record from partially mutating a
+    metabolite's chemistry.
+    """
+
+    formula = str(properties.get("formula", "") or "").strip()
+    raw_charge = properties.get("charge")
+    if not formula or not _ELEMENT_RE.search(formula):
+        return None
+    if raw_charge in ("", "NA", None):
+        return None
+    try:
+        charge = int(float(raw_charge))
+    except (ValueError, TypeError):
+        return None
+    return formula, charge
+
+
+def _apply_mnxm_chemistry_atomically(met, mnxm_id: str, properties: dict) -> str:
+    """Apply one complete MetaNetX chemistry pair without creating a hybrid.
+
+    Returns ``applied``, ``matched``, ``conflict`` or ``incomplete``.  When a
+    name-derived/source formula conflicts with MetaNetX, the existing formula
+    *and* charge are preserved and the proposed pair is recorded in a stable
+    JSON note for downstream release audits.
+    """
+
+    pair = _valid_mnxm_pair(properties)
+    if pair is None:
+        return "incomplete"
+    proposed_formula, proposed_charge = pair
+
+    if met.formula and str(met.formula).strip() != proposed_formula:
+        conflict = {
+            "action": "preserved_existing_pair",
+            "existing_charge": met.charge,
+            "existing_formula": met.formula,
+            "mnxm_id": mnxm_id,
+            "proposed_charge": proposed_charge,
+            "proposed_formula": proposed_formula,
+            "source": "MetaNetX",
+        }
+        notes = dict(met.notes or {})
+        notes[_MNXM_CHEMISTRY_CONFLICT_NOTE] = json.dumps(
+            conflict, sort_keys=True, separators=(",", ":")
+        )
+        met.notes = notes
+        return "conflict"
+
+    before = (met.formula, met.charge)
+    met.formula = proposed_formula
+    met.charge = proposed_charge
+    return "matched" if before == (met.formula, met.charge) else "applied"
+
+
+def _apply_mnxm(
+    met, mnxm_id: str, by_mnxid: dict, prop: dict
+) -> tuple[dict, str]:
+    """Build annotations and atomically enrich formula/charge from MetaNetX."""
     new_ann: dict = defaultdict(list)
     for db_prefix, db_id in by_mnxid.get(mnxm_id, []):
         new_ann[db_prefix].append(db_id)
@@ -194,14 +258,10 @@ def _apply_mnxm(met, mnxm_id: str, by_mnxid: dict, prop: dict) -> dict:
             new_ann["inchi"] = p["inchi"]
         if p["inchikey"]:
             new_ann["inchikey"] = p["inchikey"]
-        if p["formula"] and not met.formula and _ELEMENT_RE.search(p["formula"]):
-            met.formula = p["formula"]
-        if p["charge"] not in ("", "NA"):
-            try:
-                met.charge = int(float(p["charge"]))
-            except (ValueError, TypeError):
-                pass
-    return new_ann
+        chemistry_status = _apply_mnxm_chemistry_atomically(met, mnxm_id, p)
+    else:
+        chemistry_status = "incomplete"
+    return new_ann, chemistry_status
 
 
 def _carbon_count(formula: str) -> int | None:
@@ -284,7 +344,7 @@ def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
 
     formula_from_name = 0
     formula_from_prop = 0
-    charge_from_prop  = 0
+    chemistry_matched = chemistry_conflicts = chemistry_incomplete = 0
     hit_A = hit_B = hit_BD = hit_B0 = hit_B1 = hit_B2a = hit_B2b = hit_C = no_match = 0
 
     for met in model.metabolites:
@@ -415,14 +475,21 @@ def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
             no_match += 1
             continue
 
-        new_ann = _normalize_annotation(_apply_mnxm(met, mnxm_id, by_mnxid, prop))
+        before_pair = (met.formula, met.charge)
+        raw_ann, chemistry_status = _apply_mnxm(
+            met, mnxm_id, by_mnxid, prop
+        )
+        new_ann = _normalize_annotation(raw_ann)
 
         # Track per-strategy formula/charge enrichment
-        if met.formula and formula_str and met.formula != formula_str:
+        if chemistry_status == "applied" and met.formula != before_pair[0]:
             formula_from_prop += 1
-        p = prop.get(mnxm_id, {})
-        if p.get("charge") not in ("", "NA", None):
-            charge_from_prop += 1
+        if chemistry_status in {"applied", "matched"}:
+            chemistry_matched += 1
+        elif chemistry_status == "conflict":
+            chemistry_conflicts += 1
+        else:
+            chemistry_incomplete += 1
 
         # Merge: keep existing keys, fill in missing ones only
         merged = dict(met.annotation)
@@ -457,7 +524,9 @@ def annotate_metabolites(model, chem_xref: dict, chem_prop_data: dict) -> None:
     )
     logger.info(
         f"Formulas: {formula_from_name} from name, {formula_from_prop} from prop | "
-        f"Charges: {charge_from_prop} from prop"
+        f"Atomic MetaNetX pairs: {chemistry_matched} applied/matched, "
+        f"{chemistry_conflicts} conflicts preserved, "
+        f"{chemistry_incomplete} incomplete skipped"
     )
 
 
@@ -524,26 +593,6 @@ def _bigg_id(met) -> str:
     if not raw:
         return ""
     return raw[0] if isinstance(raw, list) else str(raw)
-
-
-def _build_compartment_met_index(model) -> dict[str, dict[str, object]]:
-    """
-    Pre-build per-compartment lookup for H+ and H2O, keyed by bigg.metabolite.
-    Returns {compartment: {"h": met_or_None, "h2o": met_or_None}}
-    """
-    index: dict[str, dict] = {}
-    for met in model.metabolites:
-        bid = _bigg_id(met)
-        if bid not in ("h", "h2o"):
-            continue
-        comp = met.compartment
-        if comp not in index:
-            index[comp] = {"h": None, "h2o": None}
-        if bid == "h" and index[comp]["h"] is None:
-            index[comp]["h"] = met
-        elif bid == "h2o" and index[comp]["h2o"] is None:
-            index[comp]["h2o"] = met
-    return index
 
 
 def fix_proton_water_balance(model) -> dict:
