@@ -1,0 +1,34 @@
+scenario	reaction_id	equation	mass_balance
+Q1_legacy_Q6_demand	R763	m984[C_mi] + m985[C_mi] --> m204[C_mi] + m640[C_mi]	{}
+Q1_legacy_Q6_demand	R407	m138[C_mi] + m640[C_mi] --> m204[C_mi] + m641[C_mi]	{}
+Q1_legacy_Q6_demand	R969	m108[C_cy] <=> m641[C_mi]	{}
+Q1_legacy_Q6_demand	R39	m108[C_cy] + 0.5 m109[C_cy] --> m10[C_cy] + m110[C_cy]	{}
+Q1_legacy_Q6_demand	R808	m110[C_cy] <=> m939[C_mi]	{}
+Q1_legacy_Q6_demand	R715	m60[C_mi] + m939[C_mi] --> m111[C_mi] + m62[C_mi]	{}
+Q1_legacy_Q6_demand	R40	m111[C_mi] + m28[C_mi] --> m44[C_mi] + m63[C_mi]	{}
+Q1_legacy_Q6_demand	R19	m63[C_mi] + m64[C_mi] --> m26[C_mi] + m59[C_mi]	{}
+Q1_legacy_Q6_demand	R18	m59[C_mi] + m60[C_mi] --> m61[C_mi] + m62[C_mi]	{}
+Q1_legacy_Q6_demand	R695	m30[C_mi] + m61[C_mi] + m64[C_mi] --> m26[C_mi] + m27[C_mi] + m611[C_mi]	{}
+Q1_legacy_Q6_demand	R385	m28[C_mi] + m60[C_mi] + m611[C_mi] --> m471[C_mi] + m62[C_mi]	"{""H"":1.0,""charge"":-1.0}"
+Q1b_balanced_Q6_demand	R763	m984[C_mi] + m985[C_mi] --> m204[C_mi] + m640[C_mi]	{}
+Q1b_balanced_Q6_demand	R407	m138[C_mi] + m640[C_mi] --> m204[C_mi] + m641[C_mi]	{}
+Q1b_balanced_Q6_demand	R969	m108[C_cy] <=> m641[C_mi]	{}
+Q1b_balanced_Q6_demand	R39	m108[C_cy] + 0.5 m109[C_cy] --> m10[C_cy] + m110[C_cy]	{}
+Q1b_balanced_Q6_demand	R808	m110[C_cy] <=> m939[C_mi]	{}
+Q1b_balanced_Q6_demand	R715	m60[C_mi] + m939[C_mi] --> m111[C_mi] + m62[C_mi]	{}
+Q1b_balanced_Q6_demand	R40	m111[C_mi] + m28[C_mi] --> m44[C_mi] + m63[C_mi]	{}
+Q1b_balanced_Q6_demand	R19	m63[C_mi] + m64[C_mi] --> m26[C_mi] + m59[C_mi]	{}
+Q1b_balanced_Q6_demand	R18	m59[C_mi] + m60[C_mi] --> m61[C_mi] + m62[C_mi]	{}
+Q1b_balanced_Q6_demand	R695	m30[C_mi] + m61[C_mi] + m64[C_mi] --> m26[C_mi] + m27[C_mi] + m611[C_mi]	{}
+Q1b_balanced_Q6_demand	R385	m60[C_mi] + m611[C_mi] --> m468[C_mi] + m62[C_mi]	{}
+Q2_balanced_Q9_demand	R763	4.0 m984[C_mi] + m985[C_mi] --> 4.0 m204[C_mi] + m640[C_mi]	{}
+Q2_balanced_Q9_demand	R407	m138[C_mi] + m640[C_mi] --> m204[C_mi] + m641[C_mi]	{}
+Q2_balanced_Q9_demand	R969	m108[C_cy] <=> m641[C_mi]	{}
+Q2_balanced_Q9_demand	R39	m108[C_cy] + 0.5 m109[C_cy] --> m10[C_cy] + m110[C_cy]	{}
+Q2_balanced_Q9_demand	R808	m110[C_cy] <=> m939[C_mi]	{}
+Q2_balanced_Q9_demand	R715	m60[C_mi] + m939[C_mi] --> m111[C_mi] + m62[C_mi]	{}
+Q2_balanced_Q9_demand	R40	m111[C_mi] + m28[C_mi] --> m44[C_mi] + m63[C_mi]	{}
+Q2_balanced_Q9_demand	R19	m63[C_mi] + m64[C_mi] --> m26[C_mi] + m59[C_mi]	{}
+Q2_balanced_Q9_demand	R18	m59[C_mi] + m60[C_mi] --> m61[C_mi] + m62[C_mi]	{}
+Q2_balanced_Q9_demand	R695	m30[C_mi] + m61[C_mi] + m64[C_mi] --> m26[C_mi] + m27[C_mi] + m611[C_mi]	{}
+Q2_balanced_Q9_demand	R385	m60[C_mi] + m611[C_mi] --> m468[C_mi] + m62[C_mi]	{}

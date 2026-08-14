@@ -1,0 +1,6 @@
+theta,exp_mean_siroheme_coefficient_mmol_gDW,exp_min_mmol_gDW,exp_max_mmol_gDW,nlim_mean_siroheme_coefficient_mmol_gDW,nlim_min_mmol_gDW,nlim_max_mmol_gDW,identifiability_status
+0,0,0,0,0,0,0,not_identifiable_without_siroheme_or_flux_observation
+0.25,9.86965606e-08,8.06940383e-08,1.16048467e-07,1.72471010e-08,1.04832628e-08,3.52865930e-08,not_identifiable_without_siroheme_or_flux_observation
+0.5,1.97393121e-07,1.61388077e-07,2.32096934e-07,3.44942019e-08,2.09665255e-08,7.05731860e-08,not_identifiable_without_siroheme_or_flux_observation
+0.75,2.96089682e-07,2.42082115e-07,3.48145401e-07,5.17413029e-08,3.14497883e-08,1.05859779e-07,not_identifiable_without_siroheme_or_flux_observation
+1,3.94786242e-07,3.22776153e-07,4.64193868e-07,6.89884039e-08,4.19330510e-08,1.41146372e-07,not_identifiable_without_siroheme_or_flux_observation

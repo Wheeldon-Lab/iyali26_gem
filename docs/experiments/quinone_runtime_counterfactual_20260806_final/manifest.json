@@ -1,0 +1,52 @@
+{
+  "artifact_hashes": {
+    "chemistry_audit.tsv": "a962a248e32191d395f860bb3999419ed3db2dbdb560b15c9b4696f49b8be6ab",
+    "dilution_scan.tsv": "742cd2502a744dccd3580cbba031d4a3761e2d89d9d7af6cec1139659fc6448a",
+    "essentiality_scenario_deltas.tsv": "d0cfab509bc1fd16c4678272fd1fe6367253216304b28cdda74da4bc0644f532",
+    "essentiality_threshold_summary.tsv": "78a80e30b7e1871b4d5e2fb340268211a0548ccc74534b6c074f937d62bea5dd",
+    "experiment_result.json": "3facee97a0a6334817d484c484890970e598b2dbe60b06217b1d530c9fedf5b3",
+    "experiment_result.md": "dc9bec21e6cdb79781fba35e522d246916e91050b31781872bd53eafc80b81c1",
+    "quinone_gene_effects.tsv": "791352f09ca121e6f5bbf87094a499684e19edb4c51924757351b1c5e291110c",
+    "reachability.tsv": "700358428f1dec21402fc731fc18bbeb3bdb7effd6236d5e43e93fe2ea944f94",
+    "route_flux_at_max_demand.tsv": "d6c4cf7d3c2cd74548e4c88e302c13199ae4769109822dc11044f4389077695b",
+    "route_fva.tsv": "67a301b1a23851e68d4fb9de7ec11501198688ee9b9684d84ed1a414228c02cb"
+  },
+  "base_context_fingerprint": "a85218c0be14e14f1b82f4e9c3aec57322080f9d4e44a80df0f4754f66fa53db",
+  "experiment_date": "2026-08-06",
+  "experiment_design_sha256": "5c13517f6e08abacdae3a14ef7e2aebca6920976ed409933b442e55dbeda09b9",
+  "input_hashes": {
+    "experimental": "1e887f5ad4a95827a49b6c86894edaca410bdba3d264ff0d25193dedef3a659b",
+    "medium": "ed176d26a373f98cc413ed2e32a71f5f060a06e343f90f7db25cd32eff268e85",
+    "model": "0f3a6c2b151e945b3461d3fa85f04575f8e8570ba817ed2879013aec91f62415",
+    "overlay_effect": "d15acbde9438f5d2391c4da23705a34a3585833062d616517d5af052088606c2",
+    "profile": "35307853a477d0b8540919acc6cd18d922e1e010ce98fb355316172a15048383"
+  },
+  "scenario_fingerprints": {
+    "Q0_B_PO1f": "3ed4cf14aac4bbd47fa2e1f4c2d2b4a646e0283ba27fc5dd00ea5814a22bf8b4",
+    "Q1_legacy_Q6_demand": "f055b6fbc999ebf18a9673b7ee85d396169e463f5b25540596f074303a09e575",
+    "Q1b_balanced_Q6_demand": "8428ac110a10c1191f612543b59e72ca3d36f9127fff979ce2dcfdac7bc01ca9",
+    "Q2_balanced_Q9_demand": "5e7179d9d77c96c12bf25dd0017ffd061a4c0415c36c2ccc8b76efe13e17dbaa",
+    "Q9_current_repeated_AND": "058accd92d2cd2f45046c0c6f8303e36d58c76472d4e72dd82fd4b48bbe31250",
+    "Q9_dilution_scan": "702b44bfaf188ae81f2ebcef66b288d77400be5a194be572708a09f3326fe8f1",
+    "Q9_step_specific_GPR": "fed4d937b4ad07c4bbef5c915c06af94fcde730bad99e8c293af9b8061ce8be3"
+  },
+  "schema_version": "1.0",
+  "script_sha256": "ad43f632329b365b967970b6adbd10b251bce28e976c607a6875b1c2b0638003",
+  "software_versions": {
+    "cobra": "0.30.0",
+    "gurobi": "13.0.1",
+    "pandas": "2.3.3",
+    "python": "3.13.5",
+    "solver": "gurobi"
+  },
+  "status": "completed",
+  "verification_status": "reproducibility_pending",
+  "workflow": "quinone_runtime_counterfactual",
+  "writes_forbidden": [
+    "model.xml",
+    "data/iyali26.xml",
+    "curated tables",
+    "durable FN ledger",
+    "Obsidian"
+  ]
+}

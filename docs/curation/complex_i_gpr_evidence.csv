@@ -1,0 +1,43 @@
+gene_id,structural_evidence,current_model_context,identity_status,gpr_decision,reason_or_next_gate,source
+YALI1A01824g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1A03153g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1A18188g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1A21711g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1B00908g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1B19507g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1B26679g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1C04281g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1C30086g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1D00766g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1D06302g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1D07089g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1D09203g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1D12956g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1D18037g,PDB_6YJ4_ACPM_candidate,present_in_legacy_R570_rule,identity_conflict,deferred,Resolve acyl-carrier subunit label against YALI1D32594g before any GPR,https://www.rcsb.org/structure/6YJ4
+YALI1D22691g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1D24109g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1D30003g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1D32550g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1D32594g,PDB_6YJ4_ACPM_candidate,absent_from_legacy_R570_rule,identity_conflict,deferred,Resolve acyl-carrier subunit label against YALI1D18037g before any GPR,https://www.rcsb.org/structure/6YJ4
+YALI1E00527g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1E14698g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1E27218g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1E28107g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1E33570g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1E34222g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1E34367g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1E37603g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1F01456g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1F03371g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1F09003g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1F09017g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1F18857g,PDB_6YJ4_subunit,absent_from_legacy_R570_rule,provisional,deferred,Structural presence alone does not establish required Boolean membership,https://www.rcsb.org/structure/6YJ4
+YALI1F22993g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1F24343g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1M00056g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1M00064g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1M00296g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1M00335g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1M00338r,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1M00458g,PDB_6YJ4_subunit,present_in_legacy_R570_rule,provisional,deferred,Legacy R570 AND rule is not evidence for R1889 membership,https://www.rcsb.org/structure/6YJ4
+YALI1M00472r,PDB_6YJ4_ND3_subunit,legacy_alias_YALIfMp29,identity_conflict,deferred,Resolve YALI1M00472r versus legacy YALIfMp29 identifier before any GPR,https://www.rcsb.org/structure/6YJ4

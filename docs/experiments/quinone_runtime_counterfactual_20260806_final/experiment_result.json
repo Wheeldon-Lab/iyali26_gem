@@ -1,0 +1,222 @@
+{
+  "base_context": {
+    "B_group_split_reactions": 20,
+    "canonical_model_sha256": "0f3a6c2b151e945b3461d3fa85f04575f8e8570ba817ed2879013aec91f62415",
+    "experimental_sha256": "1e887f5ad4a95827a49b6c86894edaca410bdba3d264ff0d25193dedef3a659b",
+    "medium_sha256": "ed176d26a373f98cc413ed2e32a71f5f060a06e343f90f7db25cd32eff268e85",
+    "simulation_context_fingerprint": "a85218c0be14e14f1b82f4e9c3aec57322080f9d4e44a80df0f4754f66fa53db",
+    "simulation_context_fingerprint_version": "1",
+    "strain_overlay_effect_fingerprint_version": "1",
+    "strain_overlay_effect_sha256": "d15acbde9438f5d2391c4da23705a34a3585833062d616517d5af052088606c2",
+    "strain_overlay_enabled": true,
+    "strain_profile_id": "po1f_sd_leu_accrispr_v1",
+    "strain_profile_sha256": "35307853a477d0b8540919acc6cd18d922e1e010ce98fb355316172a15048383"
+  },
+  "baseline_growth_h-1": 1.4650760568106074,
+  "changed_gene_threshold_rows": {
+    "baseline_to_q9_current_AND": 37,
+    "q9_current_AND_to_step_specific": 8
+  },
+  "dilution_coefficients_mmol_per_gDW": [
+    0.0,
+    1e-06,
+    1e-05,
+    0.0001,
+    0.001,
+    0.01
+  ],
+  "experiment_date": "2026-08-06",
+  "experiment_design": {
+    "diagnostic_demand_bounds": [
+      0.0,
+      1000.0
+    ],
+    "dilution_coefficients_mmol_per_gDW": [
+      0.0,
+      1e-06,
+      1e-05,
+      0.0001,
+      0.001,
+      0.01
+    ],
+    "oxidized_terminal_R385_variant": "SAM + 3-demethylubiquinone -> SAH + ubiquinone",
+    "q9_R763_stoichiometry": "4 isopentenyl diphosphate + pentaprenyl diphosphate -> 4 diphosphate + nonaprenyl diphosphate",
+    "q9_chemistry": {
+      "m108[C_cy]": [
+        "3-nonaprenyl-4-hydroxybenzoic acid",
+        "C52H78O3"
+      ],
+      "m110[C_cy]": [
+        "3-nonaprenyl-4,5-dihydroxybenzoic acid",
+        "C52H77O4"
+      ],
+      "m111[C_mi]": [
+        "3-nonaprenyl-4-hydroxy-5-methoxybenzoic acid",
+        "C53H79O4"
+      ],
+      "m468[C_mi]": [
+        "ubiquinone-9",
+        "C54H82O4"
+      ],
+      "m471[C_mi]": [
+        "ubiquinol-9",
+        "C54H84O4"
+      ],
+      "m59[C_mi]": [
+        "2-nonaprenyl-6-methoxy-1,4-benzoquinone",
+        "C52H78O3"
+      ],
+      "m611[C_mi]": [
+        "2-nonaprenyl-5-hydroxy-6-methoxy-3-methyl-1,4-benzoquinone",
+        "C53H80O4"
+      ],
+      "m61[C_mi]": [
+        "2-nonaprenyl-6-methoxy-3-methyl-1,4-benzoquinone",
+        "C53H80O3"
+      ],
+      "m63[C_mi]": [
+        "2-nonaprenyl-6-methoxyphenol",
+        "C52H80O2"
+      ],
+      "m640[C_mi]": [
+        "nonaprenyl diphosphate",
+        "C45H76O7P2"
+      ],
+      "m641[C_mi]": [
+        "3-nonaprenyl-4-hydroxybenzoic acid",
+        "C52H78O3"
+      ],
+      "m939[C_mi]": [
+        "3-nonaprenyl-4,5-dihydroxybenzoic acid",
+        "C52H77O4"
+      ]
+    },
+    "repeated_and_genes": [
+      "YALI1A08781g",
+      "YALI1B20527g",
+      "YALI1B20835g",
+      "YALI1C25352g",
+      "YALI1E18269g",
+      "YALI1F34625g",
+      "YALI1F34675g"
+    ],
+    "repeated_and_reactions": [
+      "R715",
+      "R19",
+      "R18",
+      "R695",
+      "R385"
+    ],
+    "route_ids": [
+      "R763",
+      "R407",
+      "R969",
+      "R39",
+      "R808",
+      "R715",
+      "R40",
+      "R19",
+      "R18",
+      "R695",
+      "R385"
+    ],
+    "screen_cutoffs_fraction_of_wt": [
+      0.01,
+      0.05,
+      0.1,
+      0.15
+    ],
+    "screen_dilution_coefficient_mmol_per_gDW": 0.001,
+    "screen_positive_only": true,
+    "screen_scenarios": [
+      "Q0_B_PO1f",
+      "Q9_current_repeated_AND",
+      "Q9_step_specific_GPR"
+    ],
+    "step_specific_gprs": {
+      "R18": "YALI1C25352g",
+      "R19": "YALI1A08781g",
+      "R385": "YALI1B20835g",
+      "R39": "YALI1A08781g",
+      "R40": "YALI1F34625g",
+      "R407": "YALI1F08349g",
+      "R695": "YALI1E18269g",
+      "R715": "YALI1B20835g",
+      "R763": "YALI1C26017g"
+    }
+  },
+  "experiment_design_sha256": "5c13517f6e08abacdae3a14ef7e2aebca6920976ed409933b442e55dbeda09b9",
+  "in_model_positive_count": 322,
+  "input_hashes": {
+    "experimental": "1e887f5ad4a95827a49b6c86894edaca410bdba3d264ff0d25193dedef3a659b",
+    "medium": "ed176d26a373f98cc413ed2e32a71f5f060a06e343f90f7db25cd32eff268e85",
+    "model": "0f3a6c2b151e945b3461d3fa85f04575f8e8570ba817ed2879013aec91f62415",
+    "overlay_effect": "d15acbde9438f5d2391c4da23705a34a3585833062d616517d5af052088606c2",
+    "profile": "35307853a477d0b8540919acc6cd18d922e1e010ce98fb355316172a15048383"
+  },
+  "positive_reference_total": 1612,
+  "reachability": [
+    {
+      "R385_flux": 0.9344964993058806,
+      "biomass_at_maximum_demand": 0.0,
+      "chemistry": "legacy_q6",
+      "demand_metabolite": "m471[C_mi]",
+      "maximum_demand": 0.9344964993058806,
+      "maximum_demand_with_R385_closed": 0.0,
+      "maximum_type": "zero_growth_stoichiometric_reachability_maximum",
+      "scenario": "Q1_legacy_Q6_demand",
+      "scenario_fingerprint": "f055b6fbc999ebf18a9673b7ee85d396169e463f5b25540596f074303a09e575"
+    },
+    {
+      "R385_flux": 0.9342803307888057,
+      "biomass_at_maximum_demand": 0.0,
+      "chemistry": "oxidized_q6_variant",
+      "demand_metabolite": "m468[C_mi]",
+      "maximum_demand": 0.9342803307888055,
+      "maximum_demand_with_R385_closed": 0.0,
+      "maximum_type": "zero_growth_stoichiometric_reachability_maximum",
+      "scenario": "Q1b_balanced_Q6_demand",
+      "scenario_fingerprint": "8428ac110a10c1191f612543b59e72ca3d36f9127fff979ce2dcfdac7bc01ca9"
+    },
+    {
+      "R385_flux": 0.6734857211939294,
+      "biomass_at_maximum_demand": 0.0,
+      "chemistry": "q9",
+      "demand_metabolite": "m468[C_mi]",
+      "maximum_demand": 0.6734857211939289,
+      "maximum_demand_with_R385_closed": 0.0,
+      "maximum_type": "zero_growth_stoichiometric_reachability_maximum",
+      "scenario": "Q2_balanced_Q9_demand",
+      "scenario_fingerprint": "5e7179d9d77c96c12bf25dd0017ffd061a4c0415c36c2ccc8b76efe13e17dbaa"
+    }
+  ],
+  "schema_version": "1.0",
+  "scientific_boundary": {
+    "Q9_chemistry": "atom_and_charge_balanced_oxidized_terminal_variant_not_curated_patch",
+    "diagnosis": "missing_terminal_net_demand_is_immediate_modeled_cause",
+    "dilution_coefficients": "sensitivity_only_not_calibrated",
+    "legacy_R385": "mass_and_charge_imbalanced",
+    "maximum_demand_values": "zero_growth_stoichiometric_reachability_only",
+    "step_specific_GPR": "minimal_direct_catalyst_counterfactual_not_native_dependency_claim",
+    "step_specific_GPR_scope": "route_wide_remapping_including_previously_ungated_R39_and_R40",
+    "terminal_redox_state": "unresolved_oxidized_and_reduced_database_variants"
+  },
+  "screen_dilution_coefficient_mmol_per_gDW": 0.001,
+  "screen_wt_growth_h-1": {
+    "Q0_B_PO1f": 1.4650760568106032,
+    "Q9_current_repeated_AND": 1.4623664559112712,
+    "Q9_step_specific_GPR": 1.4623664559112712
+  },
+  "script_sha256": "ad43f632329b365b967970b6adbd10b251bce28e976c607a6875b1c2b0638003",
+  "software_versions": {
+    "cobra": "0.30.0",
+    "gurobi": "13.0.1",
+    "pandas": "2.3.3",
+    "python": "3.13.5",
+    "solver": "gurobi"
+  },
+  "solver": "gurobi",
+  "status": "completed",
+  "verification_status": "reproducibility_pending",
+  "workflow": "quinone_runtime_counterfactual"
+}
