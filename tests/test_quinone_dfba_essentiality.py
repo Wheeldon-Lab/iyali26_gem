@@ -25,6 +25,14 @@ def _toy_model():
     return model
 
 
+def _toy_model_with_maintenance():
+    model = _toy_model()
+    maintenance = Reaction("xMAINTENANCE", lower_bound=1, upper_bound=1000)
+    maintenance.add_metabolites({model.metabolites.get_by_id("a"): -1})
+    model.add_reactions([maintenance])
+    return model
+
+
 def test_runtime_q9_reserve_is_used_only_after_q9_synthesis_knockout():
     model = _toy_model()
     source, _ = _add_runtime_q9(model, 0.1)
@@ -53,3 +61,17 @@ def test_po1f_nonlimiting_uracil_keeps_base_bound_and_has_no_finite_pool(monkeyp
     assert math.isnan(nonlimiting["final_uracil_mmol_L"])
     assert all(row["uracil_mode"] == "po1f_nonlimiting" for row in trace)
     assert all(math.isnan(row["uracil_mmol_L"]) for row in trace)
+
+
+def test_nonoptimal_step_is_recorded_once_without_reading_invalid_fluxes(monkeypatch):
+    monkeypatch.setattr(dfba, "INITIAL_POOLS_MMOL_L", {"R1070": 0.5, "R1354": 1e9})
+    result, trace = dfba.simulate_gene(
+        _toy_model_with_maintenance(), gene_id=None, alpha=0, pool_multiplier=0,
+        hours=1, dt=0.5, initial_biomass=1,
+    )
+
+    assert [row["status"] for row in trace] == ["optimal", "infeasible"]
+    assert math.isnan(trace[-1]["growth_h-1"])
+    assert math.isnan(trace[-1]["q9_source_flux_mmol_gDW_h"])
+    assert result["termination_status"] == "infeasible"
+    assert result["termination_time_h"] == 0.5

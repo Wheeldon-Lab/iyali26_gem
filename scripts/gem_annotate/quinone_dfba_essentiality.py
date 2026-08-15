@@ -18,6 +18,8 @@ from typing import Any
 
 import pandas as pd
 from cobra import Reaction
+from cobra.exceptions import OptimizationError
+from cobra.flux_analysis import pfba
 from cobra.manipulation.delete import knock_out_model_genes
 
 from .config import load_project_paths
@@ -30,7 +32,7 @@ from .validate_essential_genes import DEFAULT_CUTOFFS, load_experimental
 
 
 WORKFLOW = "quinone_dfba_essentiality"
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
 Q9_METABOLITE_ID = "m468[C_mi]"
 BIOMASS_ID = "biomass_C"
 POOL_SOURCE_ID = "DFBA_Q9_POOL_SOURCE"
@@ -90,33 +92,27 @@ def _finite_medium(base_medium: dict[str, float], pools: dict[str, float], bioma
 
 
 def _optimize_minimal_pool(model, source: Reaction) -> tuple[float, Any]:
-    """Maximize growth first, then use the reserve only if synthesis cannot serve it."""
+    """Use pFBA and permit reserve use only when synthesis cannot support growth."""
     model.objective = model.reactions.get_by_id(BIOMASS_ID)
     source_limit = source.upper_bound
     source.upper_bound = 0.0
-    primary = model.optimize()
+    try:
+        primary = pfba(model)
+    except OptimizationError:
+        primary = model.optimize()
     source.upper_bound = source_limit
-    if primary.status != "optimal" or primary.objective_value is None:
+    if primary.status != "optimal":
         return 0.0, primary
-    growth = max(0.0, float(primary.objective_value))
+    growth = max(0.0, float(primary.fluxes[BIOMASS_ID]))
     if growth > 1e-9:
         return growth, primary
-    primary = model.optimize()
-    if primary.status != "optimal" or primary.objective_value is None:
+    try:
+        primary = pfba(model)
+    except OptimizationError:
+        primary = model.optimize()
+    if primary.status != "optimal":
         return 0.0, primary
-    growth = max(0.0, float(primary.objective_value))
-    biomass = model.reactions.get_by_id(BIOMASS_ID)
-    with model:
-        growth_lock = model.problem.Constraint(
-            biomass.flux_expression, lb=max(0.0, growth - 1e-9), name="dfba_growth_lock"
-        )
-        model.add_cons_vars(growth_lock)
-        model.objective = source
-        model.objective_direction = "min"
-        secondary = model.optimize()
-        if secondary.status != "optimal":
-            raise RuntimeError(f"Reserve minimization failed: {secondary.status}")
-        return growth, secondary
+    return max(0.0, float(primary.fluxes[BIOMASS_ID])), primary
 
 
 def _software_versions(solver: str) -> dict[str, str]:
@@ -159,12 +155,32 @@ def simulate_gene(
         q9_tolerance = max(1e-12, initial_q9_pool * 1e-9)
         biomass = initial_biomass
         depleted_at: float | None = 0.0 if q9_pool == 0 else None
+        termination_status = "completed"
+        termination_time_h = hours
         trajectory: list[dict[str, Any]] = []
         for step in range(int(round(hours / dt))):
             time = step * dt
             model.medium = _finite_medium(base_medium, pools, biomass, dt)
             source.upper_bound = q9_pool / (biomass * dt) if q9_pool > 0 else 0.0
             growth, solution = _optimize_minimal_pool(model, source)
+            if solution.status != "optimal":
+                trajectory.append(
+                    {
+                        "gene_id": gene_id or "WT",
+                        "uracil_mode": uracil_mode,
+                        "time_h": time,
+                        "biomass_gDW_L": biomass,
+                        "growth_h-1": math.nan,
+                        "q9_pool_mmol_L": q9_pool,
+                        "q9_source_flux_mmol_gDW_h": math.nan,
+                        "uracil_mmol_L": pools.get("R1354", math.nan),
+                        "glucose_mmol_L": pools["R1070"],
+                        "status": solution.status,
+                    }
+                )
+                termination_status = solution.status
+                termination_time_h = time
+                break
             source_flux = max(0.0, float(solution.fluxes[source.id]))
             consumed_q9 = min(q9_pool, source_flux * biomass * dt)
             q9_pool = max(0.0, q9_pool - consumed_q9)
@@ -201,6 +217,8 @@ def simulate_gene(
                 "q9_source_total_mmol_L": initial_q9_pool - q9_pool,
                 "final_glucose_mmol_L": pools["R1070"],
                 "final_uracil_mmol_L": pools.get("R1354", math.nan),
+                "termination_status": termination_status,
+                "termination_time_h": termination_time_h,
             },
             trajectory,
         )
@@ -244,6 +262,8 @@ def _run_chunk(args: argparse.Namespace) -> Path:
                 rows.append({
                     **result, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier,
                     "wt_dynamic_doublings": wt["dynamic_doublings"], "dynamic_growth_ratio": ratio,
+                    "wt_termination_status": wt["termination_status"],
+                    "wt_termination_time_h": wt["termination_time_h"],
                     "experimental_essential": gene_id in set(experimental["gene_id"]),
                     **{f"essential_at_{cutoff * 100:g}pct": bool(ratio < cutoff) for cutoff in DEFAULT_CUTOFFS},
                 })
@@ -261,6 +281,8 @@ def _run_chunk(args: argparse.Namespace) -> Path:
         "initial_pools_mmol_L": {**INITIAL_POOLS_MMOL_L, "R1354": None} if args.uracil_mode == "po1f_nonlimiting" else INITIAL_POOLS_MMOL_L,
         "base_r1354_bound_mmol_gDW_h": base_r1354_bound,
         "q9_reserve_definition": "alpha * initial_biomass * pool_multiplier mmol/L",
+        "optimizer": "pfba",
+        "nonoptimal_policy": "terminal_record_and_stop",
         "calibration_status": "sensitivity_only_not_calibrated",
         "simulation_context": context.provenance(),
         "input_sha256": {"model": context.canonical_model_sha256, "medium": sha256_file(media_path), "profile": sha256_file(profile_path), "experimental": sha256_file(experimental_path)},
