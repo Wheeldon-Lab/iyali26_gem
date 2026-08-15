@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -29,11 +30,12 @@ from .validate_essential_genes import DEFAULT_CUTOFFS, load_experimental
 
 
 WORKFLOW = "quinone_dfba_essentiality"
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 Q9_METABOLITE_ID = "m468[C_mi]"
 BIOMASS_ID = "biomass_C"
 POOL_SOURCE_ID = "DFBA_Q9_POOL_SOURCE"
 DEMAND_ID = "DFBA_Q9_GROWTH_DEMAND"
+URACIL_MODES = ("finite_batch", "po1f_nonlimiting")
 
 # Values are the concentration statements already recorded in the SD-Leu
 # medium comments.  They are finite batch inventories, not uptake kinetics.
@@ -117,6 +119,15 @@ def _optimize_minimal_pool(model, source: Reaction) -> tuple[float, Any]:
         return growth, secondary
 
 
+def _software_versions(solver: str) -> dict[str, str]:
+    versions = {"python": sys.version.split()[0], "cobra": __import__("cobra").__version__}
+    if solver.lower() == "gurobi":
+        import gurobipy
+
+        versions["gurobipy"] = ".".join(map(str, gurobipy.gurobi.version()))
+    return versions
+
+
 def simulate_gene(
     base_model,
     *,
@@ -126,10 +137,13 @@ def simulate_gene(
     hours: float,
     dt: float,
     initial_biomass: float,
+    uracil_mode: str = "finite_batch",
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run a disposable Euler batch simulation for WT or one single-gene KO."""
     if hours <= 0 or dt <= 0 or initial_biomass <= 0:
         raise ValueError("hours, dt, and initial_biomass must be positive")
+    if uracil_mode not in URACIL_MODES:
+        raise ValueError(f"uracil_mode must be one of {URACIL_MODES}")
     if not math.isclose(hours / dt, round(hours / dt), rel_tol=0.0, abs_tol=1e-9):
         raise ValueError("hours must be an exact multiple of dt")
     with base_model as model:
@@ -138,6 +152,8 @@ def simulate_gene(
         source, _ = _add_runtime_q9(model, alpha)
         base_medium = dict(model.medium)
         pools = dict(INITIAL_POOLS_MMOL_L)
+        if uracil_mode == "po1f_nonlimiting":
+            pools.pop("R1354")
         initial_q9_pool = alpha * initial_biomass * pool_multiplier
         q9_pool = initial_q9_pool
         q9_tolerance = max(1e-12, initial_q9_pool * 1e-9)
@@ -162,12 +178,13 @@ def simulate_gene(
             trajectory.append(
                 {
                     "gene_id": gene_id or "WT",
+                    "uracil_mode": uracil_mode,
                     "time_h": time,
                     "biomass_gDW_L": biomass,
                     "growth_h-1": growth,
                     "q9_pool_mmol_L": q9_pool,
                     "q9_source_flux_mmol_gDW_h": source_flux,
-                    "uracil_mmol_L": pools["R1354"],
+                    "uracil_mmol_L": pools.get("R1354", math.nan),
                     "glucose_mmol_L": pools["R1070"],
                     "status": solution.status,
                 }
@@ -176,13 +193,14 @@ def simulate_gene(
         return (
             {
                 "gene_id": gene_id or "WT",
+                "uracil_mode": uracil_mode,
                 "final_biomass_gDW_L": biomass,
                 "dynamic_doublings": math.log2(biomass / initial_biomass),
                 "initial_growth_h-1": trajectory[0]["growth_h-1"],
                 "q9_pool_depleted_h": depleted_at,
                 "q9_source_total_mmol_L": initial_q9_pool - q9_pool,
                 "final_glucose_mmol_L": pools["R1070"],
-                "final_uracil_mmol_L": pools["R1354"],
+                "final_uracil_mmol_L": pools.get("R1354", math.nan),
             },
             trajectory,
         )
@@ -209,6 +227,7 @@ def _run_chunk(args: argparse.Namespace) -> Path:
         model_path=paths.output_model, media_path=media_path, strain_profile_path=profile_path
     )
     context.model.solver = args.solver
+    base_r1354_bound = float(context.model.medium["R1354"])
     genes = _gene_ids(context.model, args.genes, context.excluded_runtime_genes, args.chunk_index, args.chunk_count)
     out = Path(args.output_dir or paths.results / WORKFLOW / args.run_id).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -217,10 +236,10 @@ def _run_chunk(args: argparse.Namespace) -> Path:
     trajectories: list[dict[str, Any]] = []
     for alpha in args.alphas:
         for multiplier in args.pool_multipliers:
-            wt, wt_trace = simulate_gene(context.model, gene_id=None, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass)
+            wt, wt_trace = simulate_gene(context.model, gene_id=None, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode)
             trajectories.extend([{**item, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier} for item in wt_trace])
             for gene_id in genes:
-                result, trace = simulate_gene(context.model, gene_id=gene_id, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass)
+                result, trace = simulate_gene(context.model, gene_id=gene_id, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode)
                 ratio = result["dynamic_doublings"] / wt["dynamic_doublings"] if wt["dynamic_doublings"] > 0 else math.nan
                 rows.append({
                     **result, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier,
@@ -234,9 +253,13 @@ def _run_chunk(args: argparse.Namespace) -> Path:
     manifest = {
         "workflow": WORKFLOW, "schema_version": SCHEMA_VERSION, "run_id": args.run_id,
         "chunk_index": args.chunk_index, "chunk_count": args.chunk_count, "genes": genes,
-        "solver": args.solver, "hours": args.hours, "dt_h": args.dt,
+        "solver": args.solver, "runtime_versions": _software_versions(args.solver),
+        "script_sha256": sha256_file(Path(__file__)), "hours": args.hours, "dt_h": args.dt,
         "initial_biomass_gDW_L": args.initial_biomass, "alphas_mmol_gDW": args.alphas,
-        "pool_multipliers": args.pool_multipliers, "initial_pools_mmol_L": INITIAL_POOLS_MMOL_L,
+        "pool_multipliers": args.pool_multipliers,
+        "uracil_mode": args.uracil_mode,
+        "initial_pools_mmol_L": {**INITIAL_POOLS_MMOL_L, "R1354": None} if args.uracil_mode == "po1f_nonlimiting" else INITIAL_POOLS_MMOL_L,
+        "base_r1354_bound_mmol_gDW_h": base_r1354_bound,
         "q9_reserve_definition": "alpha * initial_biomass * pool_multiplier mmol/L",
         "calibration_status": "sensitivity_only_not_calibrated",
         "simulation_context": context.provenance(),
@@ -283,6 +306,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--initial-biomass", type=float, default=0.01)
     parser.add_argument("--alphas", type=float, nargs="+", default=list(DEFAULT_ALPHAS))
     parser.add_argument("--pool-multipliers", type=float, nargs="+", default=list(DEFAULT_POOL_MULTIPLIERS))
+    parser.add_argument("--uracil-mode", choices=URACIL_MODES, default="finite_batch")
     parser.add_argument("--merge", action="store_true")
     return parser
 
