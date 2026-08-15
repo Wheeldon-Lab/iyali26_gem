@@ -974,7 +974,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cobra", specifier = ">=0.30.0" },
-    { name = "gurobipy", specifier = ">=13.0.1" },
+    { name = "gurobipy", specifier = ">=10.0.3" },
     { name = "lampe", marker = "extra == 'fmpe'", specifier = ">=0.9,<0.10" },
     { name = "memote", specifier = ">=0.17.0" },
     { name = "openpyxl", specifier = ">=3.1.5" },
