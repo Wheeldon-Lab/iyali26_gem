@@ -16,6 +16,7 @@ from cobra.io import read_sbml_model
 SAFE_REACTION_STOICHIOMETRY = {"R2041"}
 SAFE_REACTION_BOUNDS = {"R2041"}
 SAFE_REACTION_ANNOTATIONS = {"R815", "R816"}
+SAFE_REACTION_GPRS = {"R715", "R385", "R18", "R695", "R40", "R19"}
 SAFE_METABOLITE_CHEMISTRY = {"m884[C_cy]"}
 PROTECTED_REACTIONS = {"R634", "R_PGAM1_PhosHydro", "R1372"}
 REVIEW_REACTIONS = PROTECTED_REACTIONS | {
@@ -23,7 +24,7 @@ REVIEW_REACTIONS = PROTECTED_REACTIONS | {
     "R643",
     "R815",
     "R816",
-}
+} | SAFE_REACTION_GPRS
 REVIEW_METABOLITES = {"m884[C_cy]"}
 
 
@@ -154,7 +155,7 @@ def compare_models(
     }
 
     violations: list[str] = []
-    for field in ("added", "removed", "gpr_changed"):
+    for field in ("added", "removed"):
         if reaction_diff[field]:
             violations.append(f"reaction.{field}")
     for field in ("added", "removed", "name_changed", "compartment_changed"):
@@ -163,8 +164,9 @@ def compare_models(
     whitelist_checks = (
         ("reaction.stoichiometry_changed", reaction_diff["stoichiometry_changed"], SAFE_REACTION_STOICHIOMETRY),
         ("reaction.bounds_changed", reaction_diff["bounds_changed"], SAFE_REACTION_BOUNDS),
+        ("reaction.gpr_changed", reaction_diff["gpr_changed"], SAFE_REACTION_GPRS),
         ("reaction.annotation_changed", reaction_diff["annotation_changed"], SAFE_REACTION_ANNOTATIONS),
-        ("reaction.notes_changed", reaction_diff["notes_changed"], SAFE_REACTION_STOICHIOMETRY),
+        ("reaction.notes_changed", reaction_diff["notes_changed"], SAFE_REACTION_STOICHIOMETRY | SAFE_REACTION_GPRS),
         ("metabolite.formula_changed", metabolite_diff["formula_changed"], SAFE_METABOLITE_CHEMISTRY),
         ("metabolite.charge_changed", metabolite_diff["charge_changed"], SAFE_METABOLITE_CHEMISTRY),
         ("metabolite.annotation_changed", metabolite_diff["annotation_changed"], set()),
@@ -251,7 +253,11 @@ def compare_models(
         "safe_stage_whitelist": {
             "reaction_stoichiometry": sorted(SAFE_REACTION_STOICHIOMETRY),
             "reaction_bounds": sorted(SAFE_REACTION_BOUNDS),
+            "reaction_gprs": sorted(SAFE_REACTION_GPRS),
             "reaction_annotations": sorted(SAFE_REACTION_ANNOTATIONS),
+            "reaction_notes": sorted(
+                SAFE_REACTION_STOICHIOMETRY | SAFE_REACTION_GPRS
+            ),
             "metabolite_chemistry": sorted(SAFE_METABOLITE_CHEMISTRY),
         },
         "release_gate": {

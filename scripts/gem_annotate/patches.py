@@ -918,7 +918,7 @@ def add_direct_enzyme_like_gprs(model) -> int:
 # pathway. Removing these six reactions therefore deletes an inert duplicate/
 # mis-annotation; it does not open a pathway, add a demand, or tune essentiality
 # recall. Native Y. lipolytica CoQ9 chain-length repair and decomposition of the
-# broad COQ-synthome GPR remain separate work.
+# broad COQ-synthome GPR are handled by separate, independently gated patches.
 _SPURIOUS_QUINONE_REACTION_GPRS = {
     "R189": "YALI1D17983g and YALI1B21088g",
     "R2242": "YALI1E01159g",
@@ -1681,6 +1681,137 @@ def replace_coq6_route_with_coq9(model) -> int:
         for reaction_id, reaction in impacted_reactions.items()
     )
     return changed_metabolites + changed_reactions
+
+
+# ── Patch 8g: decompose the inherited quinone-synthome GPR ───────────────
+
+_LEGACY_QUINONE_SYNTHOME_GPR = (
+    "YALI1F34625g and YALI1B20527g and YALI1A08781g and "
+    "YALI1F34675g and YALI1C25352g and YALI1B20835g and YALI1E18269g"
+)
+_LEGACY_QUINONE_STEP_GPRS = {
+    "R715": _LEGACY_QUINONE_SYNTHOME_GPR,
+    "R385": _LEGACY_QUINONE_SYNTHOME_GPR,
+    "R18": _LEGACY_QUINONE_SYNTHOME_GPR,
+    "R695": _LEGACY_QUINONE_SYNTHOME_GPR,
+    "R40": "",
+    "R19": _LEGACY_QUINONE_SYNTHOME_GPR,
+}
+_REVIEWED_QUINONE_STEP_GPRS = {
+    "R715": "YALI1B20835g",
+    "R385": "YALI1B20835g",
+    "R18": "YALI1C25352g",
+    "R695": "YALI1E18269g",
+    "R40": "YALI1F34625g",
+    "R19": "",
+}
+_REVIEWED_QUINONE_STEP_EVIDENCE = {
+    "R715": (
+        "YALI1B20835g (COQ3 candidate; active UniProt Q6CEG2), CoQ "
+        "O-methyltransferase. Cross-species step evidence: E. coli UbiG "
+        "structure 4KDC and reconstructed ancestral tetrapod COQ3."
+    ),
+    "R385": (
+        "YALI1B20835g (COQ3 candidate; active UniProt Q6CEG2), CoQ "
+        "O-methyltransferase. Cross-species evidence supports the second "
+        "CoQ O-methylation; the native Yarrowia substrate redox state remains unresolved."
+    ),
+    "R18": (
+        "YALI1C25352g (COQ5 candidate; active UniProt Q6CBJ6), CoQ-ring "
+        "C-methyltransferase. Cross-species step evidence: S. cerevisiae "
+        "SAM-bound Coq5 structure 4OBW and reconstructed ancestral COQ5 activity."
+    ),
+    "R695": (
+        "YALI1E18269g (COQ7 candidate; active UniProt Q6C5T9), "
+        "demethoxyubiquinone hydroxylase. Cross-species step evidence: human "
+        "COQ7:COQ9 structure 7SSS and reconstructed COQ7 activity."
+    ),
+    "R40": (
+        "YALI1F34625g (COQ4; UniProt Q6C074), CoQ-ring C1 decarboxylase/"
+        "synthome-organising protein. Cross-species experiments support C1 "
+        "decarboxylation, while oxidative versus sequential decarboxylation/"
+        "hydroxylation remains unresolved."
+    ),
+}
+
+
+def apply_reviewed_quinone_step_gprs(model) -> int:
+    """Replace the inherited seven-gene AND with reviewed step-specific GPRs.
+
+    Cross-species biochemical/structural evidence plus compatible AlphaFold
+    cores support the COQ3/4/5/7 assignments.  R19 is deliberately left
+    GPR-less because the exact COQ6 regioselectivity, product redox state and
+    electron-transfer partners do not yet match the model reaction.  An empty
+    R19 rule means unknown, not spontaneous.  No demand, bound or chemistry is
+    changed.
+    """
+
+    try:
+        reactions = {
+            reaction_id: model.reactions.get_by_id(reaction_id)
+            for reaction_id in _REVIEWED_QUINONE_STEP_GPRS
+        }
+        model.metabolites.get_by_id("m468[C_mi]")
+        for gene_id in set(_REVIEWED_QUINONE_STEP_GPRS.values()) - {""}:
+            model.genes.get_by_id(gene_id)
+    except KeyError as exc:
+        raise ValueError(f"Reviewed quinone GPR patch requires {exc.args[0]}") from exc
+
+    if model.metabolites.get_by_id("m468[C_mi]").formula != "C54H82O4":
+        raise ValueError("Reviewed quinone GPR patch requires the formal CoQ9 chemistry")
+    imbalanced = [
+        reaction_id
+        for reaction_id, reaction in reactions.items()
+        if _coq_balance(reaction)
+    ]
+    if imbalanced:
+        raise ValueError(
+            "Reviewed quinone GPR targets are not mass/charge balanced: "
+            f"{sorted(imbalanced)}"
+        )
+
+    actual = {
+        reaction_id: reaction.gene_reaction_rule.strip()
+        for reaction_id, reaction in reactions.items()
+    }
+    if actual == _REVIEWED_QUINONE_STEP_GPRS:
+        changed = 0
+    elif actual == _LEGACY_QUINONE_STEP_GPRS:
+        changed = len(_REVIEWED_QUINONE_STEP_GPRS)
+    else:
+        raise ValueError(
+            "Quinone step GPRs are partially migrated or unexpected; refusing "
+            f"an atomic replacement: {actual}"
+        )
+
+    for reaction_id, target_rule in _REVIEWED_QUINONE_STEP_GPRS.items():
+        reaction = reactions[reaction_id]
+        reaction.gene_reaction_rule = target_rule
+        notes = dict(reaction.notes) if isinstance(reaction.notes, dict) else {}
+        if reaction_id == "R19":
+            notes["curated_gpr_correction"] = (
+                "Removed the unsupported inherited seven-gene synthome AND. "
+                "YALI1A08781g (COQ6 candidate; active UniProt F2Z6J4) remains "
+                "deferred for this exact reaction; an empty GPR denotes unknown "
+                "catalyst identity, not a spontaneous reaction."
+            )
+            notes["gpr_evidence_status"] = "deferred_reaction_identity_unresolved"
+            notes["gpr_evidence_limit"] = (
+                "COQ6 family/AlphaFold compatibility is supported, but R19 "
+                "regioselectivity, product redox state and ferredoxin/reductase "
+                "electron transfer remain unresolved."
+            )
+        else:
+            notes["curated_gpr_correction"] = _REVIEWED_QUINONE_STEP_EVIDENCE[
+                reaction_id
+            ]
+            notes["gpr_evidence_status"] = (
+                "cross_species_experimental_plus_alphafold_compatible; "
+                "native_yarrowia_biochemistry_unverified"
+            )
+        reaction.notes = notes
+
+    return changed
 
 
 # ── Patch 8c: remove spurious carrier-free CoA-thioester transport ─────────

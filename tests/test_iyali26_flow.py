@@ -647,7 +647,7 @@ def test_real_model_rejects_any_stale_configured_input() -> None:
         "39f4cae11c3f270400c8a227c78b6af3ed412e85b1ade6cb604b0f85c3d8b1d9"
     )
     assert before == (
-        "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
+        "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
     )
     with pytest.raises(ValueError, match=r"configured (?:model|media) SHA is stale"):
         R4R1846CapacitySimulator(config)

@@ -1,7 +1,10 @@
-# Quinone branch cleanup and CoQ9 main-chain correction
+# Quinone branch cleanup, CoQ9 main-chain correction, and reviewed GPRs
 
-Initial cleanup: 2026-08-04  
+Initial cleanup: 2026-08-04
+
 CoQ9 follow-up: 2026-08-12
+
+Step-specific GPR follow-up: 2026-08-14
 
 ## Decision
 
@@ -38,9 +41,35 @@ The four-IPP lump in `R763` is balanced model bookkeeping, and the oxidized
 native Yarrowia reaction measurement. The transport steps and their
 compartments also remain model assignments.
 
-The patch changes no GPR, bound, compartment, biomass coefficient, demand,
-sink, or model object count. It therefore corrects chemical identity without
-claiming that the pathway is active.
+The CoQ9 chemistry patch itself changes no GPR, bound, compartment, biomass
+coefficient, demand, sink, or model object count. It therefore corrects
+chemical identity without claiming that the pathway is active.
+
+## Follow-up: step-specific GPR decomposition
+
+The formal pipeline now replaces the inherited seven-gene `AND` repeated on
+five downstream reactions with the following reviewed, step-specific rules:
+
+| Reaction | Formal GPR | Interpreted step | Evidence boundary |
+|---|---|---|---|
+| `R715` | `YALI1B20835g` | COQ3 first O-methylation | Cross-species biochemical/structural evidence plus compatible predicted fold; native Yarrowia biochemistry unverified. |
+| `R385` | `YALI1B20835g` | COQ3 terminal O-methylation | Same boundary; the native substrate redox state remains unresolved. |
+| `R18` | `YALI1C25352g` | COQ5 C-methylation | Cross-species biochemical/structural evidence plus compatible predicted fold; native Yarrowia biochemistry unverified. |
+| `R695` | `YALI1E18269g` | COQ7 hydroxylation | Cross-species biochemical/structural evidence plus compatible predicted fold; native Yarrowia biochemistry unverified. |
+| `R40` | `YALI1F34625g` | COQ4 C1 decarboxylation | Cross-species experiments support the step, but oxidative versus sequential decarboxylation/hydroxylation remains unresolved. |
+| `R19` | empty | unresolved COQ6-associated monooxygenation | No exact GPR is asserted because regioselectivity, product redox state, and ferredoxin/reductase coupling do not yet match the encoded reaction. |
+
+An empty `R19` GPR means that the catalyst identity is unknown; it does not
+mean that the reaction is spontaneous. The COQ6, COQ8, and COQ9 candidates
+remain in the model as gene objects. COQ6 is not assigned to the unresolved
+`R19`; COQ8 and COQ9 are no longer represented as direct atom-changing
+catalysts. Their possible accessory or synthome-coupling roles remain
+unmodeled. Fitness phenotypes were used as a consistency check, not as proof
+of a reaction assignment.
+
+This follow-up changes only the six GPRs and their evidence notes. It does not
+add a CoQ9 demand, open a bound, alter reaction chemistry, or activate the
+pathway.
 
 ## Why the removed reactions are not a valid Yarrowia pathway
 
@@ -67,7 +96,13 @@ duplicate rather than repair the model.
 | `YALI1E01159g` | `DIM1` | 18S-rRNA dimethyltransferase and ribosome-maturation factor | curated annotation | Remove from the quinone methylase reaction. |
 | `YALI1C26017g` | no established Yarrowia symbol (`COQ1` candidate) | Long-chain trans-prenyl diphosphate synthase assigned to the CoQ side-chain step | heterologous functional support for Yarrowia CoQ9 synthesis; native mitochondrial localization not directly verified | Keep on `R763`; retain the four-IPP lump as a model convention. |
 | `YALI1F08349g` | `COQ2` | Mitochondrial 4-hydroxybenzoate polyprenyltransferase | homology-supported curated annotation; no direct Yarrowia locus experiment found | Keep on `R407`. |
-| `YALI1B20835g` | `COQ3` | Mitochondrial ubiquinone-biosynthesis O-methyltransferase | homology-supported curated annotation; no direct Yarrowia locus experiment found | Keep as the catalytic COQ3 candidate; step-specific GPR decomposition is deferred. |
+| `YALI1B20835g` | `COQ3` candidate | CoQ O-methyltransferase | Cross-species biochemical/structural evidence and compatible predicted fold; native Yarrowia biochemistry unverified | Assign to `R715` and `R385`. |
+| `YALI1C25352g` | `COQ5` candidate | CoQ-ring C-methyltransferase | Cross-species biochemical/structural evidence and compatible predicted fold; native Yarrowia biochemistry unverified | Assign to `R18`. |
+| `YALI1E18269g` | `COQ7` candidate | Demethoxyubiquinone hydroxylase | Cross-species biochemical/structural evidence and compatible predicted fold; native Yarrowia biochemistry unverified | Assign to `R695`. |
+| `YALI1F34625g` | `COQ4` | CoQ-ring C1 decarboxylase and synthome-organising protein | Reviewed homology annotation plus cross-species experiments; exact product mechanism unresolved | Assign provisionally to `R40`. |
+| `YALI1A08781g` | no established Yarrowia symbol (`COQ6` candidate) | FAD-dependent CoQ monooxygenase candidate | Family/fold compatible, but the exact `R19` regioselectivity, redox state, and electron partners conflict with available mechanisms | Do not assign to `R19`; leave its GPR unresolved. |
+| `YALI1B20527g` | no established Yarrowia symbol (`COQ8` candidate) | ADCK-family ATPase/kinase-like accessory protein | Cross-species evidence supports pathway regulation and complex stability, not direct ring chemistry | Remove from repeated direct-catalyst `AND`; retain the gene object. |
+| `YALI1F34675g` | no established Yarrowia symbol (`COQ9` candidate) | Lipid-binding, substrate-presenting accessory protein | Cross-species evidence supports COQ7 cooperation, not direct atom transfer | Remove from repeated direct-catalyst `AND`; retain the gene object. |
 
 Cross-assembly mappings used here are
 `YALI1F08349g <-> YALI0F05610g <-> YALI2_F00880g` and
@@ -84,11 +119,19 @@ Cross-assembly mappings used here are
 - [Yarrowia mitochondrial complex-I work reporting endogenous Q9](https://doi.org/10.1016/S0005-2728(02)00307-9)
 - [Yarrowia CoQ1 functional study](https://journals.asm.org/doi/10.1128/mbio.00342-24)
 - [KEGG R08781: balanced oxidized terminal methylation convention](https://www.kegg.jp/entry/R08781)
+- [UbiG/COQ3 structure 4KDC](https://www.rcsb.org/structure/4KDC)
+- [Saccharomyces Coq5 structure 4OBW](https://www.rcsb.org/structure/4OBW)
+- [Human COQ7:COQ9 structure 7SSS](https://www.rcsb.org/structure/7SSS)
+- [Pelosi et al.: Coq4 oxidative decarboxylation](https://doi.org/10.1016/j.molcel.2024.01.003)
+- [Nicoll et al.: reconstructed eukaryotic CoQ synthome steps](https://doi.org/10.1038/s41929-023-01087-z)
 
 ## Explicitly not fixed here
 
-- The five downstream CoQ reactions still share a broad seven-gene synthome
-  `AND` GPR; catalytic and structural/accessory roles remain to be decomposed.
+- The exact `R19` catalyst remains unresolved; an empty GPR records this
+  uncertainty and does not assert a spontaneous reaction.
+- COQ8/COQ9 accessory dependence and other synthome-level coupling remain
+  unmodeled even though their unsupported direct-catalyst assignments were
+  removed.
 - The model still lacks a validated net CoQ pool dilution/demand term.
 - Consequently the corrected CoQ9 synthesis route remains structurally blocked
   (`FVA = [0, 0]`) rather than being activated by an arbitrary sink.
@@ -104,14 +147,15 @@ curation problem and must not be inferred solved by this branch cleanup.
 ## Validation
 
 - Final canonical model SHA-256:
-  `3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf`.
+  `bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee`.
 - A separately generated candidate established the same CoQ9 stoichiometry;
   the final artifact additionally carries the canonical B-group metadata and
   the independently audited `R385` reaction-level EC correction.
 - All 11 CoQ9 synthesis-route reactions pass element and charge balance.
-- Model counts remain 2,313 reactions, 1,877 metabolites, and 1,074 genes; the
-  only stoichiometric deltas relative to the prior canonical model are `R763`
-  and `R385`.
+- Model counts remain 2,313 reactions, 1,877 metabolites, and 1,074 genes. The
+  chemistry follow-up changes only `R763` and `R385` stoichiometry; the later
+  GPR follow-up changes only `R715`, `R385`, `R18`, `R695`, `R40`, and `R19`
+  GPRs and evidence notes.
 - Default growth changed only by floating-point noise:
   `1.3875914754870884 -> 1.387591475487086`.
 - CoQ demand reactions remain absent and the only demand is the pre-existing

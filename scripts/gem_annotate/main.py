@@ -28,7 +28,7 @@ from .idmapping import _enrich_via_idmapping
 from .io import load_chem_prop, load_chem_xref, load_mnxm_depr, load_reac_prop, load_reac_xref
 from .metabolites import annotate_metabolites, fix_proton_water_balance, normalize_all_annotations
 from .microspecies import apply_curated_microspecies, normalize_hydroxide_reactions
-from .patches import add_direct_enzyme_like_gprs, add_isozyme_gprs, add_r612_ura3_gpr, annotate_isozyme_genes, apply_all_patches, apply_curated_essentiality_patches, clean_ec_overload, correct_external_ndh2_gpr_and_remove_duplicate, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec, remove_misannotated_gprs, remove_spurious_quinone_branches, remove_spurious_transport_reactions, remove_stale_adp_atp_transporter_ec_codes, replace_coq6_route_with_coq9, split_trna_charging_from_biomass
+from .patches import add_direct_enzyme_like_gprs, add_isozyme_gprs, add_r612_ura3_gpr, annotate_isozyme_genes, apply_all_patches, apply_curated_essentiality_patches, apply_reviewed_quinone_step_gprs, clean_ec_overload, correct_external_ndh2_gpr_and_remove_duplicate, extend_acyl_pool_c161, fill_neutral_formulas, fix_activex_names, fix_charge_stage1, fix_charge_stage2, fix_ec_code_format, move_tcdb_out_of_ec, remove_misannotated_gprs, remove_spurious_quinone_branches, remove_spurious_transport_reactions, remove_stale_adp_atp_transporter_ec_codes, replace_coq6_route_with_coq9, split_trna_charging_from_biomass
 from .provisional_capacity import apply_provisional_isozyme_capacities
 from .reactions import annotate_reactions, backfill_reaction_xrefs
 from .sbml import write_deterministic_sbml_model
@@ -433,12 +433,16 @@ def main(
 
     # Remove two dead, mis-annotated quinone alternatives while preserving the
     # mitochondrial R407/COQ2 route. This is a topology/identity cleanup, not
-    # an essentiality-recall patch; CoQ9 chain length and synthome GPR
-    # decomposition remain explicitly deferred.
+    # an essentiality-recall patch.
     n_quinone_removed = remove_spurious_quinone_branches(model)
     logger.info(
         "  Spurious quinone branch cleanup: %d reaction(s) removed",
         n_quinone_removed,
+    )
+    n_quinone_gprs = apply_reviewed_quinone_step_gprs(model)
+    logger.info(
+        "  Reviewed step-specific quinone GPR corrections: %d reaction(s) changed",
+        n_quinone_gprs,
     )
 
     # Remove spurious carrier-free CoA-thioester transport (R1172: HMG-CoA crossing

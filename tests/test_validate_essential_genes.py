@@ -345,7 +345,7 @@ def test_schema_v2_post_patch_gate_rejects_mass_imbalance() -> None:
 
 def test_current_input_sha256_values_are_stable() -> None:
     assert sha256_file(MODEL_PATH) == (
-        "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
+        "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
     )
     assert sha256_file(DEFAULT_EXPERIMENTAL) == (
         "1e887f5ad4a95827a49b6c86894edaca410bdba3d264ff0d25193dedef3a659b"

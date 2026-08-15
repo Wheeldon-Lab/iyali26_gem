@@ -448,7 +448,7 @@ def test_durable_audit_writer_records_model_and_input_provenance(tmp_path):
     payload = json.loads(paths[0].read_text(encoding="utf-8"))
     assert payload["case_id"] == "EGC-1fd6c310af7f"
     assert payload["model_sha256"] == (
-        "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
+        "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
     )
     assert payload["reaction_chemistry_table_sha256"]
     assert payload["microspecies_table_sha256"]
@@ -468,7 +468,7 @@ def test_guarded_audit_attachment_records_summary_without_promoting_balance(tmp_
             {
                 "case_id": "EGC-1fd6c310af7f",
                 "model_sha256": (
-                    "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
+                    "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
                 ),
                 "chemistry_review": {"status": "imbalanced"},
             }
@@ -500,7 +500,7 @@ def test_guarded_audit_attachment_rejects_stale_table_hash(tmp_path):
             {
                 "case_id": "EGC-1fd6c310af7f",
                 "model_sha256": (
-                    "3b0369f25e9d3727642507e35684f3cf036bdc9fcedf290a921121e956da71bf"
+                    "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
                 ),
                 "chemistry_review": {},
             }

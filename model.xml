@@ -61727,6 +61727,8 @@
           <html xmlns="http://www.w3.org/1999/xhtml">
             <p>PROTEIN_CLASS: 2.1.1.201</p>
             <p>curated_coq9_chemistry: Legacy C30/CoQ6 identities replaced with the balanced C45/CoQ9 main chain; GPRs, bounds, compartments and demand are unchanged.</p>
+            <p>curated_gpr_correction: YALI1C25352g (COQ5 candidate; active UniProt Q6CBJ6), CoQ-ring C-methyltransferase. Cross-species step evidence: S. cerevisiae SAM-bound Coq5 structure 4OBW and reconstructed ancestral COQ5 activity.</p>
+            <p>gpr_evidence_status: cross_species_experimental_plus_alphafold_compatible; native_yarrowia_biochemistry_unverified</p>
           </html>
         </notes>
         <annotation>
@@ -61756,15 +61758,7 @@
           <speciesReference species="M_m62__91__C_mi__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
         <fbc:geneProductAssociation>
-          <fbc:and>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34625g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20527g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1A08781g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34675g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1C25352g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20835g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1E18269g"/>
-          </fbc:and>
+          <fbc:geneProductRef fbc:geneProduct="G_YALI1C25352g"/>
         </fbc:geneProductAssociation>
       </reaction>
       <reaction metaid="meta_R_R19" sboTerm="SBO:0000176" id="R_R19" name="2-methoxy-6-(all-trans-nonaprenyl)phenol monooxygenase" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
@@ -61772,6 +61766,9 @@
           <html xmlns="http://www.w3.org/1999/xhtml">
             <p>PROTEIN_CLASS: 1.14.13.-</p>
             <p>curated_coq9_chemistry: Legacy C30/CoQ6 identities replaced with the balanced C45/CoQ9 main chain; GPRs, bounds, compartments and demand are unchanged.</p>
+            <p>curated_gpr_correction: Removed the unsupported inherited seven-gene synthome AND. YALI1A08781g (COQ6 candidate; active UniProt F2Z6J4) remains deferred for this exact reaction; an empty GPR denotes unknown catalyst identity, not a spontaneous reaction.</p>
+            <p>gpr_evidence_status: deferred_reaction_identity_unresolved</p>
+            <p>gpr_evidence_limit: COQ6 family/AlphaFold compatibility is supported, but R19 regioselectivity, product redox state and ferredoxin/reductase electron transfer remain unresolved.</p>
           </html>
         </notes>
         <annotation>
@@ -61800,17 +61797,6 @@
           <speciesReference species="M_m26__91__C_mi__93__" stoichiometry="1" constant="true"/>
           <speciesReference species="M_m59__91__C_mi__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
-        <fbc:geneProductAssociation>
-          <fbc:and>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34625g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20527g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1A08781g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34675g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1C25352g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20835g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1E18269g"/>
-          </fbc:and>
-        </fbc:geneProductAssociation>
       </reaction>
       <reaction metaid="meta_R_R20" sboTerm="SBO:0000176" id="R_R20" name="2-isopropylmalate hydratase" reversible="true" fast="false" fbc:lowerFluxBound="cobra_default_lb" fbc:upperFluxBound="cobra_default_ub">
         <notes>
@@ -62946,6 +62932,8 @@
         <notes>
           <html xmlns="http://www.w3.org/1999/xhtml">
             <p>curated_coq9_chemistry: Legacy C30/CoQ6 identities replaced with the balanced C45/CoQ9 main chain; GPRs, bounds, compartments and demand are unchanged.</p>
+            <p>curated_gpr_correction: YALI1F34625g (COQ4; UniProt Q6C074), CoQ-ring C1 decarboxylase/synthome-organising protein. Cross-species experiments support C1 decarboxylation, while oxidative versus sequential decarboxylation/hydroxylation remains unresolved.</p>
+            <p>gpr_evidence_status: cross_species_experimental_plus_alphafold_compatible; native_yarrowia_biochemistry_unverified</p>
           </html>
         </notes>
         <listOfReactants>
@@ -62956,6 +62944,9 @@
           <speciesReference species="M_m44__91__C_mi__93__" stoichiometry="1" constant="true"/>
           <speciesReference species="M_m63__91__C_mi__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
+        <fbc:geneProductAssociation>
+          <fbc:geneProductRef fbc:geneProduct="G_YALI1F34625g"/>
+        </fbc:geneProductAssociation>
       </reaction>
       <reaction metaid="meta_R_R41" sboTerm="SBO:0000176" id="R_R41" name="3-hydroxy-L-kynurenine hydrolase" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
         <notes>
@@ -80644,6 +80635,8 @@
             <p>PROTEIN_CLASS: 2.1.1.114</p>
             <p>curated_coq9_chemistry: Legacy C30/CoQ6 identities replaced with the balanced C45/CoQ9 main chain; GPRs, bounds, compartments and demand are unchanged.</p>
             <p>terminal_redox_convention: Balanced oxidized convention: SAM + 3-demethylubiquinone-9 -&gt; SAH + ubiquinone-9. Native Yarrowia terminal redox form is unresolved; KEGG R08781 is the closest neutral convention.</p>
+            <p>curated_gpr_correction: YALI1B20835g (COQ3 candidate; active UniProt Q6CEG2), CoQ O-methyltransferase. Cross-species evidence supports the second CoQ O-methylation; the native Yarrowia substrate redox state remains unresolved.</p>
+            <p>gpr_evidence_status: cross_species_experimental_plus_alphafold_compatible; native_yarrowia_biochemistry_unverified</p>
           </html>
         </notes>
         <annotation>
@@ -80667,15 +80660,7 @@
           <speciesReference species="M_m62__91__C_mi__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
         <fbc:geneProductAssociation>
-          <fbc:and>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34625g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20527g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1A08781g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34675g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1C25352g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20835g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1E18269g"/>
-          </fbc:and>
+          <fbc:geneProductRef fbc:geneProduct="G_YALI1B20835g"/>
         </fbc:geneProductAssociation>
       </reaction>
       <reaction metaid="meta_R_R386" sboTerm="SBO:0000176" id="R_R386" name="hexokinase (D-fructose:ATP)" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">
@@ -95460,6 +95445,8 @@
           <html xmlns="http://www.w3.org/1999/xhtml">
             <p>PROTEIN_CLASS: 1.14.13.-</p>
             <p>curated_coq9_chemistry: Legacy C30/CoQ6 identities replaced with the balanced C45/CoQ9 main chain; GPRs, bounds, compartments and demand are unchanged.</p>
+            <p>curated_gpr_correction: YALI1E18269g (COQ7 candidate; active UniProt Q6C5T9), demethoxyubiquinone hydroxylase. Cross-species step evidence: human COQ7:COQ9 structure 7SSS and reconstructed COQ7 activity.</p>
+            <p>gpr_evidence_status: cross_species_experimental_plus_alphafold_compatible; native_yarrowia_biochemistry_unverified</p>
           </html>
         </notes>
         <annotation>
@@ -95491,15 +95478,7 @@
           <speciesReference species="M_m611__91__C_mi__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
         <fbc:geneProductAssociation>
-          <fbc:and>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34625g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20527g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1A08781g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34675g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1C25352g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20835g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1E18269g"/>
-          </fbc:and>
+          <fbc:geneProductRef fbc:geneProduct="G_YALI1E18269g"/>
         </fbc:geneProductAssociation>
       </reaction>
       <reaction metaid="meta_R_R696" sboTerm="SBO:0000185" id="R_R696" name="reduced glutathione via ABC system" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_0_bound">
@@ -96285,6 +96264,8 @@
           <html xmlns="http://www.w3.org/1999/xhtml">
             <p>PROTEIN_CLASS: 2.1.1.114</p>
             <p>curated_coq9_chemistry: Legacy C30/CoQ6 identities replaced with the balanced C45/CoQ9 main chain; GPRs, bounds, compartments and demand are unchanged.</p>
+            <p>curated_gpr_correction: YALI1B20835g (COQ3 candidate; active UniProt Q6CEG2), CoQ O-methyltransferase. Cross-species step evidence: E. coli UbiG structure 4KDC and reconstructed ancestral tetrapod COQ3.</p>
+            <p>gpr_evidence_status: cross_species_experimental_plus_alphafold_compatible; native_yarrowia_biochemistry_unverified</p>
           </html>
         </notes>
         <annotation>
@@ -96307,15 +96288,7 @@
           <speciesReference species="M_m111__91__C_mi__93__" stoichiometry="1" constant="true"/>
         </listOfProducts>
         <fbc:geneProductAssociation>
-          <fbc:and>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34625g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20527g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1A08781g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1F34675g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1C25352g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1B20835g"/>
-            <fbc:geneProductRef fbc:geneProduct="G_YALI1E18269g"/>
-          </fbc:and>
+          <fbc:geneProductRef fbc:geneProduct="G_YALI1B20835g"/>
         </fbc:geneProductAssociation>
       </reaction>
       <reaction metaid="meta_R_R716" sboTerm="SBO:0000176" id="R_R716" name="S-adenosyl-methionine delta-24-sterol-c-methyltransferase" reversible="false" fast="false" fbc:lowerFluxBound="cobra_0_bound" fbc:upperFluxBound="cobra_default_ub">

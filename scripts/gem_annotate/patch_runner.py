@@ -21,6 +21,7 @@ from .patches import (
     add_direct_enzyme_like_gprs,
     add_isozyme_gprs,
     add_r612_ura3_gpr,
+    apply_reviewed_quinone_step_gprs,
     annotate_isozyme_genes,
     clean_ec_overload,
     correct_external_ndh2_gpr_and_remove_duplicate,
@@ -46,6 +47,7 @@ def _patches(*, allow_network: bool) -> dict[str, PatchFunction]:
         "external-ndh2-correction": correct_external_ndh2_gpr_and_remove_duplicate,
         "direct-enzyme-like-gprs": add_direct_enzyme_like_gprs,
         "quinone-branch-cleanup": remove_spurious_quinone_branches,
+        "quinone-step-gprs": apply_reviewed_quinone_step_gprs,
         "isozyme-gene-annotations": lambda model: annotate_isozyme_genes(
             model, network=allow_network
         ),

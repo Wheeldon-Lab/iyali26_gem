@@ -8,6 +8,7 @@ from scripts.gem_annotate.patch_runner import _patches
 from scripts.gem_annotate.patches import (
     add_direct_enzyme_like_gprs,
     add_r612_ura3_gpr,
+    apply_reviewed_quinone_step_gprs,
     correct_external_ndh2_gpr_and_remove_duplicate,
     remove_spurious_quinone_branches,
     replace_coq6_route_with_coq9,
@@ -372,12 +373,121 @@ def test_formal_coq9_patch_fails_before_mutation_on_changed_r763() -> None:
     } == stoichiometry_before
 
 
+_REVIEWED_QUINONE_STEP_GPRS = {
+    "R715": "YALI1B20835g",
+    "R385": "YALI1B20835g",
+    "R18": "YALI1C25352g",
+    "R695": "YALI1E18269g",
+    "R40": "YALI1F34625g",
+    "R19": "",
+}
+_LEGACY_QUINONE_SYNTHOME_GPR = (
+    "YALI1F34625g and YALI1B20527g and YALI1A08781g and "
+    "YALI1F34675g and YALI1C25352g and YALI1B20835g and YALI1E18269g"
+)
+
+
+def _restore_legacy_quinone_step_gprs(model) -> None:
+    for reaction_id in {"R715", "R385", "R18", "R695", "R19"}:
+        model.reactions.get_by_id(reaction_id).gene_reaction_rule = (
+            _LEGACY_QUINONE_SYNTHOME_GPR
+        )
+    model.reactions.R40.gene_reaction_rule = ""
+
+
+def test_reviewed_quinone_step_gprs_are_atomic_idempotent_and_gpr_only() -> None:
+    model = read_sbml_model(str(REPO_ROOT / "model.xml"))
+    _restore_legacy_quinone_step_gprs(model)
+    reactions = {
+        reaction_id: model.reactions.get_by_id(reaction_id)
+        for reaction_id in _REVIEWED_QUINONE_STEP_GPRS
+    }
+    counts_before = (len(model.reactions), len(model.metabolites), len(model.genes))
+    structure_before = {
+        reaction_id: (
+            tuple(reaction.bounds),
+            {
+                metabolite.id: float(coefficient)
+                for metabolite, coefficient in reaction.metabolites.items()
+            },
+        )
+        for reaction_id, reaction in reactions.items()
+    }
+    biomass_before = {
+        metabolite.id: float(coefficient)
+        for metabolite, coefficient in model.reactions.biomass_C.metabolites.items()
+    }
+    growth_before = model.slim_optimize()
+
+    assert apply_reviewed_quinone_step_gprs(model) == 6
+    assert apply_reviewed_quinone_step_gprs(model) == 0
+    assert {
+        reaction_id: reaction.gene_reaction_rule
+        for reaction_id, reaction in reactions.items()
+    } == _REVIEWED_QUINONE_STEP_GPRS
+    assert (len(model.reactions), len(model.metabolites), len(model.genes)) == counts_before
+    assert {
+        reaction_id: (
+            tuple(reaction.bounds),
+            {
+                metabolite.id: float(coefficient)
+                for metabolite, coefficient in reaction.metabolites.items()
+            },
+        )
+        for reaction_id, reaction in reactions.items()
+    } == structure_before
+    assert {
+        metabolite.id: float(coefficient)
+        for metabolite, coefficient in model.reactions.biomass_C.metabolites.items()
+    } == biomass_before
+    assert model.slim_optimize() == pytest.approx(growth_before, abs=1e-9)
+    assert {
+        "YALI1A08781g",
+        "YALI1B20527g",
+        "YALI1F34675g",
+    } <= {gene.id for gene in model.genes}
+    assert not model.genes.get_by_id("YALI1A08781g").reactions
+    assert not model.genes.get_by_id("YALI1B20527g").reactions
+    assert not model.genes.get_by_id("YALI1F34675g").reactions
+    assert "empty GPR denotes unknown" in reactions["R19"].notes[
+        "curated_gpr_correction"
+    ]
+
+
+def test_reviewed_quinone_step_gprs_fail_before_partial_mutation() -> None:
+    model = read_sbml_model(str(REPO_ROOT / "model.xml"))
+    _restore_legacy_quinone_step_gprs(model)
+    model.reactions.R385.gene_reaction_rule = "unexpected_gene"
+    before = {
+        reaction_id: model.reactions.get_by_id(reaction_id).gene_reaction_rule
+        for reaction_id in _REVIEWED_QUINONE_STEP_GPRS
+    }
+
+    with pytest.raises(ValueError, match="partially migrated or unexpected"):
+        apply_reviewed_quinone_step_gprs(model)
+
+    assert {
+        reaction_id: model.reactions.get_by_id(reaction_id).gene_reaction_rule
+        for reaction_id in _REVIEWED_QUINONE_STEP_GPRS
+    } == before
+
+
+def test_canonical_model_contains_reviewed_quinone_step_gprs() -> None:
+    model = read_sbml_model(str(REPO_ROOT / "model.xml"))
+
+    assert {
+        reaction_id: model.reactions.get_by_id(reaction_id).gene_reaction_rule
+        for reaction_id in _REVIEWED_QUINONE_STEP_GPRS
+    } == _REVIEWED_QUINONE_STEP_GPRS
+
+
 def test_individual_reviewed_corrections_are_exposed_by_patch_runner() -> None:
     available = _patches(allow_network=False)
     assert available["r612-ura3-gpr"] is add_r612_ura3_gpr
     assert available["external-ndh2-correction"] is correct_external_ndh2_gpr_and_remove_duplicate
     assert available["direct-enzyme-like-gprs"] is add_direct_enzyme_like_gprs
     assert available["quinone-branch-cleanup"] is remove_spurious_quinone_branches
+    assert available["quinone-step-gprs"] is apply_reviewed_quinone_step_gprs
 
 
 def test_complex_i_evidence_table_is_explicitly_deferred() -> None:
