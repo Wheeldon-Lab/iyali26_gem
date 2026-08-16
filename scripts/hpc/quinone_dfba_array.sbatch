@@ -18,4 +18,5 @@ fi
 cd "$IYALI26_REPO_ROOT"
 "$IYALI26_DFBA_PYTHON" -m scripts.gem_annotate.quinone_dfba_essentiality \
   --research-root "$IYALI26_RESEARCH_ROOT" --output-dir "$OUT" --run-id "$RUN_ID" \
-  --solver "${IYALI26_DFBA_SOLVER:-glpk}" --chunk-index "$SLURM_ARRAY_TASK_ID" --chunk-count 64
+  --solver "${IYALI26_DFBA_SOLVER:-glpk}" --uracil-mode "${IYALI26_DFBA_URACIL_MODE:-finite_batch}" \
+  --dt "${IYALI26_DFBA_DT:-0.25}" --chunk-index "$SLURM_ARRAY_TASK_ID" --chunk-count 64
