@@ -1,10 +1,12 @@
 import math
 
+import pandas as pd
 import pytest
 from cobra import Metabolite, Model, Reaction
 from cobra.manipulation.delete import knock_out_model_genes
 
 from scripts.gem_annotate import quinone_dfba_essentiality as dfba
+from scripts.gem_annotate.summarize_quinone_dfba import FIVE_COQ_CONTROLS, summarize_calls
 from scripts.gem_annotate.quinone_dfba_essentiality import _add_runtime_q9, _optimize_minimal_pool
 
 
@@ -89,3 +91,28 @@ def test_gurobi_feasibility_tolerance_is_bounded_and_explicit():
         parser.parse_args(["--research-root", "research", "--feasibility-tol", "1e-10"])
     with pytest.raises(ValueError, match="requires --solver gurobi"):
         dfba._configure_solver(_toy_model(), "glpk", 1e-9)
+
+
+def test_dfba_calls_summary_recomputes_grid_controls_and_monotonicity():
+    rows = []
+    for alpha in (1e-6, 1e-4, 1e-3):
+        for pool in (0.0, 0.5, 1.0, 2.0):
+            doublings = math.log2(1 + pool)
+            for control in FIVE_COQ_CONTROLS:
+                ratio = doublings / 10
+                rows.append({
+                    "gene_id": control["gene_id"], "alpha_mmol_gDW": alpha,
+                    "pool_multiplier": pool, "dynamic_doublings": doublings,
+                    "dynamic_growth_ratio": ratio,
+                    "q9_source_total_mmol_L": alpha * 0.01 * pool,
+                    "experimental_essential": False,
+                    **{f"essential_at_{cutoff * 100:g}pct": ratio < cutoff for cutoff in (0.01, 0.05, 0.1, 0.15)},
+                })
+
+    tables, summary = summarize_calls(pd.DataFrame(rows), initial_biomass=0.01)
+
+    assert len(tables["grid_summary"]) == 12
+    assert len(tables["five_gene_pool_summary"]) == 60
+    assert summary["pool_monotonicity_pass"]
+    assert summary["q9_source_calls_bound_pass"]
+    assert summary["five_control_max_abs_theory_error_doublings"] == 0
