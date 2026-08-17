@@ -59,6 +59,8 @@ INITIAL_POOLS_MMOL_L = {
 }
 DEFAULT_ALPHAS = (1e-6, 1e-4, 1e-3)
 DEFAULT_POOL_MULTIPLIERS = (0.0, 0.5, 1.0, 2.0)
+GUROBI_FEASIBILITY_TOL_MIN = 1e-9
+GUROBI_FEASIBILITY_TOL_MAX = 1e-2
 
 
 def _add_runtime_q9(model, alpha: float) -> tuple[Reaction, Reaction]:
@@ -122,6 +124,24 @@ def _software_versions(solver: str) -> dict[str, str]:
 
         versions["gurobipy"] = ".".join(map(str, gurobipy.gurobi.version()))
     return versions
+
+
+def _gurobi_feasibility_tolerance(value: str) -> float:
+    tolerance = float(value)
+    if not math.isfinite(tolerance) or not GUROBI_FEASIBILITY_TOL_MIN <= tolerance <= GUROBI_FEASIBILITY_TOL_MAX:
+        raise argparse.ArgumentTypeError(
+            f"Gurobi feasibility tolerance must be in [{GUROBI_FEASIBILITY_TOL_MIN:g}, {GUROBI_FEASIBILITY_TOL_MAX:g}]"
+        )
+    return tolerance
+
+
+def _configure_solver(model, solver: str, feasibility_tolerance: float | None) -> float:
+    model.solver = solver
+    if feasibility_tolerance is not None:
+        if solver.lower() != "gurobi":
+            raise ValueError("--feasibility-tol requires --solver gurobi")
+        model.solver.configuration.tolerances.feasibility = feasibility_tolerance
+    return float(model.solver.configuration.tolerances.feasibility)
 
 
 def simulate_gene(
@@ -244,7 +264,9 @@ def _run_chunk(args: argparse.Namespace) -> Path:
     context = load_effective_simulation_context(
         model_path=paths.output_model, media_path=media_path, strain_profile_path=profile_path
     )
-    context.model.solver = args.solver
+    solver_feasibility_tolerance = _configure_solver(
+        context.model, args.solver, args.feasibility_tol
+    )
     base_r1354_bound = float(context.model.medium["R1354"])
     genes = _gene_ids(context.model, args.genes, context.excluded_runtime_genes, args.chunk_index, args.chunk_count)
     out = Path(args.output_dir or paths.results / WORKFLOW / args.run_id).resolve()
@@ -274,6 +296,7 @@ def _run_chunk(args: argparse.Namespace) -> Path:
         "workflow": WORKFLOW, "schema_version": SCHEMA_VERSION, "run_id": args.run_id,
         "chunk_index": args.chunk_index, "chunk_count": args.chunk_count, "genes": genes,
         "solver": args.solver, "runtime_versions": _software_versions(args.solver),
+        "solver_feasibility_tolerance": solver_feasibility_tolerance,
         "script_sha256": sha256_file(Path(__file__)), "hours": args.hours, "dt_h": args.dt,
         "initial_biomass_gDW_L": args.initial_biomass, "alphas_mmol_gDW": args.alphas,
         "pool_multipliers": args.pool_multipliers,
@@ -320,6 +343,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir")
     parser.add_argument("--run-id", default=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     parser.add_argument("--solver", default="glpk")
+    parser.add_argument(
+        "--feasibility-tol", type=_gurobi_feasibility_tolerance,
+        help="explicit Gurobi primal feasibility tolerance; recorded in the manifest",
+    )
     parser.add_argument("--genes", help="comma-separated pilot genes; defaults to every model gene")
     parser.add_argument("--chunk-index", type=int, default=0)
     parser.add_argument("--chunk-count", type=int, default=1)

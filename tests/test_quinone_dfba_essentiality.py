@@ -1,5 +1,6 @@
 import math
 
+import pytest
 from cobra import Metabolite, Model, Reaction
 from cobra.manipulation.delete import knock_out_model_genes
 
@@ -75,3 +76,16 @@ def test_nonoptimal_step_is_recorded_once_without_reading_invalid_fluxes(monkeyp
     assert math.isnan(trace[-1]["q9_source_flux_mmol_gDW_h"])
     assert result["termination_status"] == "infeasible"
     assert result["termination_time_h"] == 0.5
+
+
+def test_gurobi_feasibility_tolerance_is_bounded_and_explicit():
+    parser = dfba._parser()
+    args = parser.parse_args([
+        "--research-root", "research", "--solver", "gurobi", "--feasibility-tol", "1e-9",
+    ])
+
+    assert args.feasibility_tol == 1e-9
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--research-root", "research", "--feasibility-tol", "1e-10"])
+    with pytest.raises(ValueError, match="requires --solver gurobi"):
+        dfba._configure_solver(_toy_model(), "glpk", 1e-9)
