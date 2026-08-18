@@ -33,7 +33,7 @@ from .validate_essential_genes import DEFAULT_CUTOFFS, load_experimental, reacti
 
 
 WORKFLOW = "quinone_dfba_essentiality"
-SCHEMA_VERSION = "1.3"
+SCHEMA_VERSION = "1.4"
 Q9_METABOLITE_ID = "m468[C_mi]"
 BIOMASS_ID = "biomass_C"
 POOL_SOURCE_ID = "DFBA_Q9_POOL_SOURCE"
@@ -79,6 +79,95 @@ R39_R19_RUNTIME_MAPPING = {
     "formal_oxidation_limit": "O2 is a balanced runtime bookkeeping convention, not a verified biological oxidant or enzyme.",
 }
 R39_R19_RUNTIME_MAPPING_SHA256 = sha256_payload(R39_R19_RUNTIME_MAPPING)
+RUNTIME_GPR_TARGET_REACTIONS = (
+    "R39", "R715", "R40", "DFBA_R19_HYDROXYLATION", "R18", "R695", "R385",
+)
+RUNTIME_GPR_BASELINE_RULES = {
+    "R39": "",
+    "R715": "YALI1B20835g",
+    "R40": "YALI1F34625g",
+    "DFBA_R19_HYDROXYLATION": "",
+    "R18": "YALI1C25352g",
+    "R695": "YALI1E18269g",
+    "R385": "YALI1B20835g",
+}
+RUNTIME_GPR_SCENARIOS = {
+    "baseline_topology": {
+        "mapping_id": "baseline_topology_v1",
+        "gpr_updates": {},
+        "added_candidate_genes": [],
+        "expected_added_gene_ko_closed_reactions": [],
+        "hypothesis_label": "topology baseline with no added candidate GPR",
+        "risk_labels": [],
+    },
+    "coq6_r39": {
+        "mapping_id": "coq6_r39_v1",
+        "gpr_updates": {"R39": "YALI1A08781g"},
+        "added_candidate_genes": ["YALI1A08781g"],
+        "expected_added_gene_ko_closed_reactions": ["R39"],
+        "hypothesis_label": "constrained runtime direct-catalyst sensitivity mapping",
+        "risk_labels": ["database_comparative_only", "native_yarrowia_unverified"],
+    },
+    "coq6_r19_hydroxylation": {
+        "mapping_id": "coq6_r19_hydroxylation_v1",
+        "gpr_updates": {"DFBA_R19_HYDROXYLATION": "YALI1A08781g"},
+        "added_candidate_genes": ["YALI1A08781g"],
+        "expected_added_gene_ko_closed_reactions": ["DFBA_R19_HYDROXYLATION"],
+        "hypothesis_label": "runtime R19 hydroxylation direct-catalyst counterfactual",
+        "risk_labels": ["chemistry_redox_risk", "r19_product_redox_chemistry_unresolved"],
+    },
+    "coq6_both_hydroxylations": {
+        "mapping_id": "coq6_both_hydroxylations_v1",
+        "gpr_updates": {
+            "R39": "YALI1A08781g",
+            "DFBA_R19_HYDROXYLATION": "YALI1A08781g",
+        },
+        "added_candidate_genes": ["YALI1A08781g"],
+        "expected_added_gene_ko_closed_reactions": ["R39", "DFBA_R19_HYDROXYLATION"],
+        "hypothesis_label": "comparative/database two-hydroxylation hypothesis only",
+        "risk_labels": ["comparative_database_only", "chemistry_redox_risk"],
+    },
+    "coq8_routewide_absolute": {
+        "mapping_id": "coq8_routewide_absolute_v1",
+        "gpr_updates": {
+            "R39": "YALI1B20527g",
+            "R715": "YALI1B20527g and YALI1B20835g",
+            "R40": "YALI1B20527g and YALI1F34625g",
+            "DFBA_R19_HYDROXYLATION": "YALI1B20527g",
+            "R18": "YALI1B20527g and YALI1C25352g",
+            "R695": "YALI1B20527g and YALI1E18269g",
+            "R385": "YALI1B20527g and YALI1B20835g",
+        },
+        "added_candidate_genes": ["YALI1B20527g"],
+        "expected_added_gene_ko_closed_reactions": list(RUNTIME_GPR_TARGET_REACTIONS),
+        "hypothesis_label": "routewide-absolute synthome-member counterfactual; not reaction evidence",
+        "risk_labels": ["routewide_absolute_counterfactual", "not_reaction_evidence"],
+    },
+    "coq9_r695_absolute": {
+        "mapping_id": "coq9_r695_absolute_v1",
+        "gpr_updates": {"R695": "YALI1F34675g and YALI1E18269g"},
+        "added_candidate_genes": ["YALI1F34675g"],
+        "expected_added_gene_ko_closed_reactions": ["R695"],
+        "hypothesis_label": "absolute R695 accessory-dependence counterfactual",
+        "risk_labels": ["cross_species_conflicted"],
+    },
+    "coq9_routewide_absolute": {
+        "mapping_id": "coq9_routewide_absolute_v1",
+        "gpr_updates": {
+            "R39": "YALI1F34675g",
+            "R715": "YALI1F34675g and YALI1B20835g",
+            "R40": "YALI1F34675g and YALI1F34625g",
+            "DFBA_R19_HYDROXYLATION": "YALI1F34675g",
+            "R18": "YALI1F34675g and YALI1C25352g",
+            "R695": "YALI1F34675g and YALI1E18269g",
+            "R385": "YALI1F34675g and YALI1B20835g",
+        },
+        "added_candidate_genes": ["YALI1F34675g"],
+        "expected_added_gene_ko_closed_reactions": list(RUNTIME_GPR_TARGET_REACTIONS),
+        "hypothesis_label": "routewide-absolute synthome-member counterfactual; not reaction evidence",
+        "risk_labels": ["routewide_absolute_counterfactual", "not_reaction_evidence"],
+    },
+}
 
 
 def _add_runtime_q9(model, alpha: float) -> tuple[Reaction, Reaction]:
@@ -207,6 +296,70 @@ def _r39_r19_canonical_target_fingerprint(model) -> str:
     )
 
 
+def _runtime_gpr_mapping_payload(scenario: str) -> dict[str, Any]:
+    if scenario not in RUNTIME_GPR_SCENARIOS:
+        raise ValueError(f"Unknown runtime GPR scenario: {scenario}")
+    return {
+        "scenario_id": scenario,
+        "scope": "runtime_only",
+        "calibration_status": "sensitivity_only_not_calibrated",
+        "required_topology_id": R39_R19_RUNTIME_TOPOLOGY_ID,
+        "required_topology_mapping_sha256": R39_R19_RUNTIME_MAPPING_SHA256,
+        "protected_unmapped_reactions": ["R19", "DFBA_R19_FORMAL_OXIDATION"],
+        "binary_gpr_interpretation": (
+            "Tests the imposed complete-block assumption, not the mapped protein's function."
+        ),
+        "expected_baseline_gprs": RUNTIME_GPR_BASELINE_RULES,
+        **RUNTIME_GPR_SCENARIOS[scenario],
+    }
+
+
+def _apply_runtime_gpr_scenario(model, scenario: str) -> dict[str, Any]:
+    """Apply one preregistered GPR hypothesis after the runtime topology transform."""
+    mapping = _runtime_gpr_mapping_payload(scenario)
+    required = {*RUNTIME_GPR_TARGET_REACTIONS, "DFBA_R19_FORMAL_OXIDATION", "R19"}
+    if not required <= {reaction.id for reaction in model.reactions}:
+        raise ValueError("Runtime GPR scenarios require the R39/R19 runtime topology")
+    observed = {
+        reaction_id: model.reactions.get_by_id(reaction_id).gene_reaction_rule
+        for reaction_id in RUNTIME_GPR_TARGET_REACTIONS
+    }
+    if observed != RUNTIME_GPR_BASELINE_RULES:
+        raise ValueError(f"Runtime GPR scenario baseline mismatch: {observed}")
+    if (
+        model.reactions.R19.bounds != (0.0, 0.0)
+        or model.reactions.R19.gene_reaction_rule
+        or model.reactions.get_by_id("DFBA_R19_FORMAL_OXIDATION").gene_reaction_rule
+    ):
+        raise ValueError("Runtime GPR scenarios require closed GPR-less R19 and GPR-less formal oxidation")
+    for gene_id in mapping["added_candidate_genes"]:
+        if not model.genes.has_id(gene_id):
+            raise ValueError(f"Runtime candidate gene is absent from the base model: {gene_id}")
+        gene = model.genes.get_by_id(gene_id)
+        if gene.reactions:
+            raise ValueError(f"Runtime candidate gene is not orphaned in the base model: {gene_id}")
+
+    target_fingerprint_before = target_fingerprint(
+        reaction_case_context(model.reactions.get_by_id(reaction_id))
+        for reaction_id in (*RUNTIME_GPR_TARGET_REACTIONS, "DFBA_R19_FORMAL_OXIDATION", "R19")
+    )
+    for reaction_id, rule in mapping["gpr_updates"].items():
+        model.reactions.get_by_id(reaction_id).gene_reaction_rule = rule
+    expected = {**RUNTIME_GPR_BASELINE_RULES, **mapping["gpr_updates"]}
+    applied = {
+        reaction_id: model.reactions.get_by_id(reaction_id).gene_reaction_rule
+        for reaction_id in RUNTIME_GPR_TARGET_REACTIONS
+    }
+    if applied != expected:
+        raise RuntimeError(f"Runtime GPR scenario did not apply exactly: {applied}")
+    return {
+        "enabled": True,
+        **mapping,
+        "mapping_sha256": sha256_payload(mapping),
+        "runtime_target_fingerprint_before_mapping": target_fingerprint_before,
+    }
+
+
 def _finite_medium(base_medium: dict[str, float], pools: dict[str, float], biomass: float, dt: float) -> dict[str, float]:
     medium = dict(base_medium)
     for reaction_id, amount in pools.items():
@@ -278,6 +431,7 @@ def simulate_gene(
     initial_biomass: float,
     uracil_mode: str = "finite_batch",
     r39_r19_runtime_topology: bool = False,
+    runtime_gpr_scenario: str | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run a disposable Euler batch simulation for WT or one single-gene KO."""
     if hours <= 0 or dt <= 0 or initial_biomass <= 0:
@@ -286,9 +440,13 @@ def simulate_gene(
         raise ValueError(f"uracil_mode must be one of {URACIL_MODES}")
     if not math.isclose(hours / dt, round(hours / dt), rel_tol=0.0, abs_tol=1e-9):
         raise ValueError("hours must be an exact multiple of dt")
+    if runtime_gpr_scenario is not None and not r39_r19_runtime_topology:
+        raise ValueError("--runtime-gpr-scenario requires --r39-r19-runtime-topology")
     with base_model as model:
         if r39_r19_runtime_topology:
             _apply_r39_r19_runtime_topology(model)
+        if runtime_gpr_scenario is not None:
+            _apply_runtime_gpr_scenario(model, runtime_gpr_scenario)
         if gene_id is not None:
             knock_out_model_genes(model, [gene_id])
         source, _ = _add_runtime_q9(model, alpha)
@@ -384,6 +542,8 @@ def _gene_ids(model, requested: str | None, excluded: tuple[str, ...], chunk_ind
 
 
 def _run_chunk(args: argparse.Namespace) -> Path:
+    if args.runtime_gpr_scenario is not None and not args.r39_r19_runtime_topology:
+        raise ValueError("--runtime-gpr-scenario requires --r39-r19-runtime-topology")
     paths = load_project_paths(args.research_root, required=True)
     media_path = paths.media / "sd_leu.csv"
     profile_path = paths.strain_profiles / "po1f_sd_leu.json"
@@ -404,25 +564,33 @@ def _run_chunk(args: argparse.Namespace) -> Path:
     trajectories: list[dict[str, Any]] = []
     topology_audit_rows: list[dict[str, Any]] = []
     runtime_topology: dict[str, Any] | None = None
+    runtime_gpr_scenario: dict[str, Any] = {"enabled": False}
     if args.r39_r19_runtime_topology:
         with context.model as model:
             canonical_target = _r39_r19_canonical_target_fingerprint(model)
             runtime_topology = _apply_r39_r19_runtime_topology(model)
             runtime_topology["canonical_target_fingerprint"] = canonical_target
+            if args.runtime_gpr_scenario is not None:
+                runtime_gpr_scenario = _apply_runtime_gpr_scenario(model, args.runtime_gpr_scenario)
+    runtime_gpr_mapping_sha = runtime_gpr_scenario.get("mapping_sha256", "")
     for alpha in args.alphas:
         for multiplier in args.pool_multipliers:
-            wt, wt_trace = simulate_gene(context.model, gene_id=None, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode, r39_r19_runtime_topology=args.r39_r19_runtime_topology)
+            wt, wt_trace = simulate_gene(context.model, gene_id=None, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode, r39_r19_runtime_topology=args.r39_r19_runtime_topology, runtime_gpr_scenario=args.runtime_gpr_scenario)
             trajectories.extend([{**item, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier} for item in wt_trace])
             if args.r39_r19_runtime_topology:
                 topology_audit_rows.append({
                     "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier,
+                    "runtime_gpr_scenario": args.runtime_gpr_scenario or "",
+                    "runtime_gpr_mapping_sha256": runtime_gpr_mapping_sha,
                     **{key: value for key, value in wt_trace[0].items() if key.startswith("pathway_flux_")},
                 })
             for gene_id in genes:
-                result, trace = simulate_gene(context.model, gene_id=gene_id, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode, r39_r19_runtime_topology=args.r39_r19_runtime_topology)
+                result, trace = simulate_gene(context.model, gene_id=gene_id, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode, r39_r19_runtime_topology=args.r39_r19_runtime_topology, runtime_gpr_scenario=args.runtime_gpr_scenario)
                 ratio = result["dynamic_doublings"] / wt["dynamic_doublings"] if wt["dynamic_doublings"] > 0 else math.nan
                 rows.append({
                     **result, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier,
+                    "runtime_gpr_scenario": args.runtime_gpr_scenario or "",
+                    "runtime_gpr_mapping_sha256": runtime_gpr_mapping_sha,
                     "wt_dynamic_doublings": wt["dynamic_doublings"], "dynamic_growth_ratio": ratio,
                     "wt_termination_status": wt["termination_status"],
                     "wt_termination_time_h": wt["termination_time_h"],
@@ -450,6 +618,7 @@ def _run_chunk(args: argparse.Namespace) -> Path:
         "nonoptimal_policy": "terminal_record_and_stop",
         "calibration_status": "sensitivity_only_not_calibrated",
         "runtime_topology": runtime_topology or {"enabled": False},
+        "runtime_gpr_scenario": runtime_gpr_scenario,
         "simulation_context": context.provenance(),
         "input_sha256": {"model": context.canonical_model_sha256, "medium": sha256_file(media_path), "profile": sha256_file(profile_path), "experimental": sha256_file(experimental_path)},
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -475,7 +644,7 @@ def _merge(args: argparse.Namespace) -> Path:
         raise ValueError(f"Incomplete chunks: missing {sorted(expected - observed)}")
     calls = pd.concat([pd.read_csv(path, sep="\t") for path in sorted(out.glob("chunk_*_calls.tsv"))], ignore_index=True)
     calls.to_csv(out / "essentiality_dynamic_calls.tsv", sep="\t", index=False)
-    summary = {"workflow": WORKFLOW, "chunks": len(manifests), "chunk_fingerprints": sorted(fingerprints), "calls": len(calls), "calibration_status": "sensitivity_only_not_calibrated"}
+    summary = {"workflow": WORKFLOW, "chunks": len(manifests), "chunk_fingerprints": sorted(fingerprints), "calls": len(calls), "calibration_status": "sensitivity_only_not_calibrated", "runtime_gpr_scenario": payloads[0].get("runtime_gpr_scenario", {"enabled": False})}
     (out / "merge_manifest.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return out
 
@@ -502,6 +671,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--r39-r19-runtime-topology", action="store_true",
         help="apply the reviewed R39 mitochondrial/R19 split convention only to disposable runtime copies",
+    )
+    parser.add_argument(
+        "--runtime-gpr-scenario", choices=tuple(RUNTIME_GPR_SCENARIOS),
+        help="apply one preregistered runtime-only candidate GPR hypothesis after the R39/R19 topology",
     )
     parser.add_argument("--merge", action="store_true")
     return parser

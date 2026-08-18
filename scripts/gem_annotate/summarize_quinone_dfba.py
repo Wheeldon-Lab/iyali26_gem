@@ -11,6 +11,15 @@ from typing import Any
 
 import pandas as pd
 
+from .essentiality_simulation_context import sha256_payload
+from .quinone_dfba_essentiality import (
+    DEFAULT_ALPHAS,
+    DEFAULT_POOL_MULTIPLIERS,
+    R39_R19_RUNTIME_MAPPING_SHA256,
+    RUNTIME_GPR_SCENARIOS,
+    SCHEMA_VERSION,
+    _runtime_gpr_mapping_payload,
+)
 from .validate_essential_genes import DEFAULT_CUTOFFS
 
 
@@ -47,6 +56,11 @@ FIVE_COQ_CONTROLS = (
         "function": "demethoxyubiquinone hydroxylase",
         "evidence_status": "model/GPR assignment only",
     },
+)
+NINE_COQ_CANDIDATES = (
+    "YALI1C26017g", "YALI1F08349g", "YALI1B20835g", "YALI1F34625g",
+    "YALI1C25352g", "YALI1A08781g", "YALI1E18269g", "YALI1B20527g",
+    "YALI1F34675g",
 )
 
 
@@ -307,12 +321,312 @@ def write_summary(input_dir: Path, output_dir: Path) -> Path:
     return output_dir
 
 
+def write_hypothesis_matrix(
+    arm_dirs: list[Path], evidence_matrix_path: Path, output_dir: Path,
+) -> Path:
+    """Validate and join the seven preregistered runtime-GPR sensitivity arms."""
+    expected_scenarios = tuple(RUNTIME_GPR_SCENARIOS)
+    if len(arm_dirs) != len(expected_scenarios):
+        raise ValueError(f"Expected {len(expected_scenarios)} arm directories")
+
+    evidence = pd.read_csv(evidence_matrix_path, sep="\t")
+    evidence_columns = [
+        "gene_id", "cas9_fitness", "cas9_call", "cas12a_fitness", "cas12a_call",
+    ]
+    missing_evidence = set(evidence_columns) - set(evidence.columns)
+    if missing_evidence:
+        raise ValueError(f"Evidence matrix is missing columns: {sorted(missing_evidence)}")
+    evidence = evidence[evidence_columns].copy()
+    if evidence["gene_id"].duplicated().any() or set(evidence["gene_id"]) != set(NINE_COQ_CANDIDATES):
+        raise ValueError("Evidence matrix must uniquely cover the nine CoQ candidates")
+    for column in ("cas9_fitness", "cas12a_fitness"):
+        evidence[column] = pd.to_numeric(evidence[column], errors="raise")
+        if not evidence[column].map(math.isfinite).all():
+            raise ValueError(f"Evidence matrix {column} must be finite")
+    for column in ("cas9_call", "cas12a_call"):
+        if not set(evidence[column]) <= {"essential", "nonessential"}:
+            raise ValueError(f"Evidence matrix {column} has unknown calls")
+    evidence = evidence.rename(columns={
+        "cas9_fitness": "cas9_fs", "cas12a_fitness": "cas12a_fs",
+    })
+
+    arm_frames: dict[str, pd.DataFrame] = {}
+    arm_inputs: dict[str, Any] = {}
+    common_context: str | None = None
+    runtime_target_fingerprint: str | None = None
+    wt_frames = []
+    for arm_dir in map(Path, arm_dirs):
+        calls_path = arm_dir / "essentiality_dynamic_calls.tsv"
+        manifest_path = arm_dir / "chunk_000_manifest.json"
+        merge_path = arm_dir / "merge_manifest.json"
+        calls = pd.read_csv(calls_path, sep="\t")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        merge = json.loads(merge_path.read_text(encoding="utf-8"))
+        mapping = manifest.get("runtime_gpr_scenario", {})
+        scenario = mapping.get("scenario_id")
+        if scenario not in RUNTIME_GPR_SCENARIOS or scenario in arm_frames:
+            raise ValueError(f"Unknown or duplicate runtime GPR scenario: {scenario}")
+        expected_mapping = _runtime_gpr_mapping_payload(scenario)
+        expected_mapping_sha = sha256_payload(expected_mapping)
+        if not mapping.get("enabled") or any(mapping.get(key) != value for key, value in expected_mapping.items()):
+            raise ValueError(f"Runtime GPR mapping payload mismatch for {scenario}")
+        if mapping.get("mapping_sha256") != expected_mapping_sha:
+            raise ValueError(f"Runtime GPR mapping SHA mismatch for {scenario}")
+        observed_target_fingerprint = mapping.get("runtime_target_fingerprint_before_mapping")
+        if not isinstance(observed_target_fingerprint, str) or not observed_target_fingerprint:
+            raise ValueError(f"Runtime target fingerprint is missing for {scenario}")
+        if runtime_target_fingerprint is not None and observed_target_fingerprint != runtime_target_fingerprint:
+            raise ValueError("Runtime target fingerprint differs across GPR scenarios")
+        runtime_target_fingerprint = observed_target_fingerprint
+        topology = manifest.get("runtime_topology", {})
+        if not topology.get("enabled") or topology.get("mapping_sha256") != R39_R19_RUNTIME_MAPPING_SHA256:
+            raise ValueError(f"Runtime topology mismatch for {scenario}")
+        if manifest.get("fingerprint") != sha256_payload({
+            key: value for key, value in manifest.items() if key != "fingerprint"
+        }):
+            raise ValueError(f"Manifest fingerprint mismatch for {scenario}")
+        expected_manifest = {
+            "schema_version": SCHEMA_VERSION,
+            "chunk_index": 0,
+            "chunk_count": 1,
+            "genes": list(NINE_COQ_CANDIDATES),
+            "solver": "gurobi",
+            "solver_feasibility_tolerance": 1e-9,
+            "hours": 24.0,
+            "dt_h": 0.0625,
+            "initial_biomass_gDW_L": 0.01,
+            "alphas_mmol_gDW": list(DEFAULT_ALPHAS),
+            "pool_multipliers": list(DEFAULT_POOL_MULTIPLIERS),
+            "uracil_mode": "po1f_nonlimiting",
+            "optimizer": "pfba",
+            "nonoptimal_policy": "terminal_record_and_stop",
+            "calibration_status": "sensitivity_only_not_calibrated",
+        }
+        if any(manifest.get(key) != value for key, value in expected_manifest.items()):
+            raise ValueError(f"Frozen run context mismatch for {scenario}")
+        if manifest.get("runtime_versions", {}).get("gurobipy") != "10.0.3":
+            raise ValueError(f"Gurobi runtime mismatch for {scenario}")
+        if (
+            merge.get("chunks") != 1
+            or merge.get("calls") != 108
+            or merge.get("chunk_fingerprints") != [manifest["fingerprint"]]
+            or merge.get("runtime_gpr_scenario") != mapping
+        ):
+            raise ValueError(f"Merge manifest mismatch for {scenario}")
+
+        key = ["gene_id", "alpha_mmol_gDW", "pool_multiplier"]
+        if len(calls) != 108 or calls.duplicated(key).any():
+            raise ValueError(f"Expected 108 unique calls for {scenario}")
+        if (
+            set(calls["gene_id"]) != set(NINE_COQ_CANDIDATES)
+            or set(calls["alpha_mmol_gDW"]) != set(DEFAULT_ALPHAS)
+            or set(calls["pool_multiplier"]) != set(DEFAULT_POOL_MULTIPLIERS)
+        ):
+            raise ValueError(f"Gene/alpha/pool grid mismatch for {scenario}")
+        if set(calls["runtime_gpr_scenario"]) != {scenario} or set(calls["runtime_gpr_mapping_sha256"]) != {expected_mapping_sha}:
+            raise ValueError(f"Calls mapping identity mismatch for {scenario}")
+        for column in ("dynamic_doublings", "dynamic_growth_ratio", "q9_source_total_mmol_L"):
+            if not calls[column].map(math.isfinite).all() or (calls[column] < 0).any():
+                raise ValueError(f"Invalid nonnegative endpoint {column} for {scenario}")
+        ratio = calls["dynamic_doublings"] / calls["wt_dynamic_doublings"]
+        if not calls["wt_dynamic_doublings"].map(math.isfinite).all() or (calls["wt_dynamic_doublings"] <= 0).any():
+            raise ValueError(f"Invalid WT endpoint for {scenario}")
+        if (calls["dynamic_growth_ratio"].sub(ratio).abs() > 1e-12).any():
+            raise ValueError(f"Stored ratio mismatch for {scenario}")
+        _, calls_qc = summarize_calls(calls, float(manifest["initial_biomass_gDW_L"]))
+        if not all(calls_qc[key] for key in (
+            "shape_ok", "pool_monotonicity_pass", "q9_source_calls_bound_pass",
+        )):
+            raise ValueError(f"Calls-level QC failed for {scenario}")
+        if (
+            calls_qc["five_control_max_abs_theory_error_doublings"] > 1e-6
+            or calls_qc["five_control_max_alpha_doublings_range"] > 1e-6
+        ):
+            raise ValueError(f"Five-gene theoretical control failed for {scenario}")
+
+        wt_columns = [
+            "alpha_mmol_gDW", "pool_multiplier", "wt_dynamic_doublings",
+            "wt_termination_status", "wt_termination_time_h",
+        ]
+        if calls.groupby(key[1:])[wt_columns[2:]].nunique(dropna=False).gt(1).any().any():
+            raise ValueError(f"WT endpoints are inconsistent within {scenario}")
+        wt = calls[wt_columns].drop_duplicates().copy()
+        wt["scenario_id"] = scenario
+        wt_frames.append(wt)
+
+        context = json.dumps({
+            key: manifest[key] for key in (
+                "schema_version", "solver", "runtime_versions", "solver_feasibility_tolerance",
+                "script_sha256", "hours", "dt_h", "initial_biomass_gDW_L",
+                "alphas_mmol_gDW", "pool_multipliers", "uracil_mode", "optimizer",
+                "nonoptimal_policy", "calibration_status", "input_sha256",
+                "simulation_context", "runtime_topology",
+            )
+        }, sort_keys=True)
+        if common_context is not None and context != common_context:
+            raise ValueError("Runtime context differs across GPR scenarios")
+        common_context = context
+
+        frame = calls.copy()
+        frame.insert(0, "scenario_id", scenario)
+        frame.insert(1, "mapping_id", mapping["mapping_id"])
+        frame.insert(2, "mapping_sha256", expected_mapping_sha)
+        frame.insert(3, "hypothesis_label", mapping["hypothesis_label"])
+        frame.insert(4, "risk_labels", "|".join(mapping["risk_labels"]) or "none")
+        frame.insert(5, "binary_gpr_interpretation", mapping["binary_gpr_interpretation"])
+        frame.insert(6, "scope", mapping["scope"])
+        frame.insert(7, "calibration_status", mapping["calibration_status"])
+        frame.insert(8, "run_id", manifest["run_id"])
+        frame.insert(9, "model_sha256", manifest["input_sha256"]["model"])
+        frame.insert(10, "simulation_context_sha256", manifest["simulation_context"]["simulation_context_fingerprint"])
+        frame.insert(11, "runtime_topology_mapping_sha256", topology["mapping_sha256"])
+        frame.insert(14, "dt_h", manifest["dt_h"])
+        arm_frames[scenario] = frame
+        arm_inputs[scenario] = {
+            "run_id": manifest["run_id"],
+            "mapping_id": mapping["mapping_id"],
+            "mapping_sha256": expected_mapping_sha,
+            "runtime_target_fingerprint_before_mapping": observed_target_fingerprint,
+            "manifest_fingerprint": manifest["fingerprint"],
+            "manifest_sha256": _sha256(manifest_path),
+            "calls_sha256": _sha256(calls_path),
+        }
+
+    if set(arm_frames) != set(expected_scenarios):
+        raise ValueError("The seven preregistered scenarios are not all present")
+    wt = pd.concat(wt_frames, ignore_index=True)
+    wt_grouped = wt.groupby(["alpha_mmol_gDW", "pool_multiplier"])
+    if (
+        wt_grouped["wt_dynamic_doublings"].agg(lambda values: values.max() - values.min()).gt(1e-9).any()
+        or wt_grouped[["wt_termination_status", "wt_termination_time_h"]].nunique(dropna=False).gt(1).any().any()
+    ):
+        raise ValueError("WT endpoints differ across GPR scenarios")
+
+    baseline = arm_frames["baseline_topology"].set_index(
+        ["gene_id", "alpha_mmol_gDW", "pool_multiplier"]
+    ).sort_index()
+    for scenario, frame in arm_frames.items():
+        if scenario == "baseline_topology":
+            continue
+        candidate = RUNTIME_GPR_SCENARIOS[scenario]["added_candidate_genes"][0]
+        compared = frame.set_index([
+            "gene_id", "alpha_mmol_gDW", "pool_multiplier",
+        ]).sort_index()
+        unchanged = compared.index.get_level_values("gene_id") != candidate
+        if (
+            compared.loc[~unchanged, "dynamic_doublings"]
+            .sub(baseline.loc[~unchanged, "dynamic_doublings"])
+            .gt(1e-9)
+            .any()
+        ):
+            raise ValueError(f"Target growth increased after adding constraints in {scenario}")
+        for column in ("dynamic_doublings", "dynamic_growth_ratio"):
+            if (compared.loc[unchanged, column].sub(baseline.loc[unchanged, column]).abs() > 1e-9).any():
+                raise ValueError(f"Non-target {column} changed in {scenario}")
+        for column in (
+            "termination_status", "termination_time_h",
+            *(_cutoff_column(cutoff) for cutoff in DEFAULT_CUTOFFS),
+        ):
+            observed = compared.loc[unchanged, column]
+            reference = baseline.loc[unchanged, column]
+            same = (
+                observed.map(_bool).equals(reference.map(_bool))
+                if column.startswith("essential_")
+                else observed.equals(reference)
+            )
+            if not same:
+                raise ValueError(f"Non-target {column} changed in {scenario}")
+
+    nested = (
+        ("coq6_both_hydroxylations", "coq6_r39", "YALI1A08781g"),
+        ("coq6_both_hydroxylations", "coq6_r19_hydroxylation", "YALI1A08781g"),
+        ("coq9_routewide_absolute", "coq9_r695_absolute", "YALI1F34675g"),
+    )
+    for constrained, reference, gene_id in nested:
+        key = ["gene_id", "alpha_mmol_gDW", "pool_multiplier"]
+        constrained_frame = arm_frames[constrained].set_index(key).sort_index().loc[gene_id]
+        reference_frame = arm_frames[reference].set_index(key).sort_index().loc[gene_id]
+        if constrained_frame["dynamic_doublings"].sub(reference_frame["dynamic_doublings"]).gt(1e-9).any():
+            raise ValueError(f"Nested absolute constraint increased growth: {constrained} vs {reference}")
+
+    matrix = pd.concat([arm_frames[scenario] for scenario in expected_scenarios], ignore_index=True)
+    matrix = matrix.merge(evidence, on="gene_id", how="left", validate="many_to_one", indicator=True)
+    if set(matrix["_merge"]) != {"both"}:
+        raise ValueError("Experimental evidence did not cover every simulated gene")
+    matrix = matrix.drop(columns="_merge")
+    output_columns = [
+        "scenario_id", "mapping_id", "mapping_sha256", "hypothesis_label", "risk_labels",
+        "binary_gpr_interpretation", "scope", "calibration_status", "run_id", "model_sha256",
+        "simulation_context_sha256", "runtime_topology_mapping_sha256", "alpha_mmol_gDW",
+        "pool_multiplier", "dt_h", "gene_id", "dynamic_doublings", "wt_dynamic_doublings",
+        "dynamic_growth_ratio", *[_cutoff_column(cutoff) for cutoff in DEFAULT_CUTOFFS],
+        "cas9_fs", "cas9_call", "cas12a_fs", "cas12a_call",
+    ]
+    matrix = matrix[output_columns].rename(columns={
+        "dynamic_doublings": "ko_dynamic_doublings",
+        "dynamic_growth_ratio": "ko_wt_dynamic_doublings_ratio",
+    })
+    if len(matrix) != 756 or matrix.duplicated([
+        "mapping_id", "gene_id", "alpha_mmol_gDW", "pool_multiplier",
+    ]).any():
+        raise ValueError("Hypothesis matrix is not the expected unique 756-row grid")
+
+    output_dir.mkdir(parents=True, exist_ok=False)
+    matrix_path = output_dir / "hypothesis_matrix.tsv"
+    matrix.to_csv(matrix_path, sep="\t", index=False)
+    result_manifest = {
+        "scope": "runtime_only",
+        "calibration_status": "sensitivity_only_not_calibrated",
+        "rows": len(matrix),
+        "scenarios": list(expected_scenarios),
+        "genes": list(NINE_COQ_CANDIDATES),
+        "alphas_mmol_gDW": list(DEFAULT_ALPHAS),
+        "pool_multipliers": list(DEFAULT_POOL_MULTIPLIERS),
+        "dt_h": 0.0625,
+        "evidence_matrix_sha256": _sha256(evidence_matrix_path),
+        "arm_inputs": arm_inputs,
+        "output_sha256": _sha256(matrix_path),
+        "checks": {
+            "exact_seven_scenarios": True,
+            "mapping_payloads_and_sha": True,
+            "runtime_target_fingerprint_uniform": True,
+            "frozen_context_uniform": True,
+            "wt_endpoints_unchanged": True,
+            "non_target_results_unchanged": True,
+            "nested_absolute_constraints_nonincreasing": True,
+            "strict_cutoffs_recomputed": True,
+            "calls_level_pool_source_and_five_gene_controls": True,
+            "evidence_exact_nine_gene_coverage": True,
+        },
+        "limitations": [
+            "binary GPR arms test imposed complete-block assumptions, not protein function",
+            "no mapping or parameter is selected by experimental recall",
+            "no canonical model, GPR, bound, curated-data, or FN-dossier change is authorized",
+        ],
+    }
+    (output_dir / "hypothesis_matrix_manifest.json").write_text(
+        json.dumps(result_manifest, indent=2, sort_keys=True, default=_native) + "\n",
+        encoding="utf-8",
+    )
+    return output_dir
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input-dir", type=Path, required=True)
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("--input-dir", type=Path)
+    inputs.add_argument("--arm-dir", type=Path, action="append")
+    parser.add_argument("--gene-evidence-matrix", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args(argv)
-    print(write_summary(args.input_dir, args.output_dir))
+    if args.arm_dir:
+        if args.gene_evidence_matrix is None:
+            parser.error("--arm-dir requires --gene-evidence-matrix")
+        print(write_hypothesis_matrix(args.arm_dir, args.gene_evidence_matrix, args.output_dir))
+    else:
+        if args.gene_evidence_matrix is not None:
+            parser.error("--gene-evidence-matrix is only valid with --arm-dir")
+        print(write_summary(args.input_dir, args.output_dir))
     return 0
 
 

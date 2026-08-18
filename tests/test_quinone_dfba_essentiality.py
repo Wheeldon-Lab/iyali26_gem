@@ -1,3 +1,4 @@
+import json
 import math
 from pathlib import Path
 
@@ -8,7 +9,12 @@ from cobra.io import read_sbml_model
 from cobra.manipulation.delete import knock_out_model_genes
 
 from scripts.gem_annotate import quinone_dfba_essentiality as dfba
-from scripts.gem_annotate.summarize_quinone_dfba import FIVE_COQ_CONTROLS, summarize_calls
+from scripts.gem_annotate.summarize_quinone_dfba import (
+    FIVE_COQ_CONTROLS,
+    NINE_COQ_CANDIDATES,
+    summarize_calls,
+    write_hypothesis_matrix,
+)
 from scripts.gem_annotate.quinone_dfba_essentiality import _add_runtime_q9, _optimize_minimal_pool
 
 
@@ -132,6 +138,132 @@ def test_r39_r19_runtime_topology_is_balanced_and_leaves_canonical_model_unchang
     assert before == after
 
 
+def test_preregistered_runtime_gpr_scenarios_are_atomic_and_restore_the_model():
+    model = read_sbml_model(Path(__file__).parents[1] / "model.xml")
+    orphan_candidates = ("YALI1A08781g", "YALI1B20527g", "YALI1F34675g")
+
+    def signature():
+        return {
+            reaction.id: (
+                dfba._reaction_stoichiometry(reaction),
+                reaction.bounds,
+                reaction.gene_reaction_rule,
+            )
+            for reaction in model.reactions
+        }
+
+    routewide = {"R39", "R715", "R40", "DFBA_R19_HYDROXYLATION", "R18", "R695", "R385"}
+    expected = {
+        "baseline_topology": ({}, {gene_id: set() for gene_id in orphan_candidates}),
+        "coq6_r39": (
+            {"R39": "YALI1A08781g"}, {"YALI1A08781g": {"R39"}},
+        ),
+        "coq6_r19_hydroxylation": (
+            {"DFBA_R19_HYDROXYLATION": "YALI1A08781g"},
+            {"YALI1A08781g": {"DFBA_R19_HYDROXYLATION"}},
+        ),
+        "coq6_both_hydroxylations": (
+            {"R39": "YALI1A08781g", "DFBA_R19_HYDROXYLATION": "YALI1A08781g"},
+            {"YALI1A08781g": {"R39", "DFBA_R19_HYDROXYLATION"}},
+        ),
+        "coq8_routewide_absolute": (
+            {
+                "R39": "YALI1B20527g",
+                "R715": "YALI1B20527g and YALI1B20835g",
+                "R40": "YALI1B20527g and YALI1F34625g",
+                "DFBA_R19_HYDROXYLATION": "YALI1B20527g",
+                "R18": "YALI1B20527g and YALI1C25352g",
+                "R695": "YALI1B20527g and YALI1E18269g",
+                "R385": "YALI1B20527g and YALI1B20835g",
+            },
+            {"YALI1B20527g": routewide},
+        ),
+        "coq9_r695_absolute": (
+            {"R695": "YALI1F34675g and YALI1E18269g"},
+            {"YALI1F34675g": {"R695"}},
+        ),
+        "coq9_routewide_absolute": (
+            {
+                "R39": "YALI1F34675g",
+                "R715": "YALI1F34675g and YALI1B20835g",
+                "R40": "YALI1F34675g and YALI1F34625g",
+                "DFBA_R19_HYDROXYLATION": "YALI1F34675g",
+                "R18": "YALI1F34675g and YALI1C25352g",
+                "R695": "YALI1F34675g and YALI1E18269g",
+                "R385": "YALI1F34675g and YALI1B20835g",
+            },
+            {"YALI1F34675g": routewide},
+        ),
+    }
+    base_ids = (
+        tuple(reaction.id for reaction in model.reactions),
+        tuple(metabolite.id for metabolite in model.metabolites),
+        tuple(gene.id for gene in model.genes),
+    )
+    base_signature = signature()
+
+    for scenario in expected:
+        with pytest.raises(ValueError, match="require the R39/R19 runtime topology"):
+            dfba._apply_runtime_gpr_scenario(model, scenario)
+
+    for scenario, (updates, candidate_kos) in expected.items():
+        with model:
+            dfba._apply_r39_r19_runtime_topology(model)
+            topology_signature = signature()
+            wt_growth = model.slim_optimize()
+            audit = dfba._apply_runtime_gpr_scenario(model, scenario)
+            mapped_signature = signature()
+
+            assert audit["scenario_id"] == scenario
+            assert dfba.RUNTIME_GPR_SCENARIOS[scenario]["gpr_updates"] == updates
+            assert audit["mapping_sha256"] == dfba.sha256_payload(
+                dfba._runtime_gpr_mapping_payload(scenario)
+            )
+            assert {
+                reaction_id
+                for reaction_id in mapped_signature
+                if mapped_signature[reaction_id] != topology_signature[reaction_id]
+            } == set(updates), scenario
+            assert all(
+                mapped_signature[reaction_id][:2] == topology_signature[reaction_id][:2]
+                for reaction_id in model.reactions.list_attr("id")
+            ), scenario
+            assert model.slim_optimize() == pytest.approx(wt_growth, abs=1e-9)
+            assert model.reactions.R19.gene_reaction_rule == ""
+            assert model.reactions.R19.bounds == (0.0, 0.0)
+            assert model.reactions.get_by_id("DFBA_R19_FORMAL_OXIDATION").gene_reaction_rule == ""
+
+            for candidate_gene, expected_closed in candidate_kos.items():
+                assert {reaction.id for reaction in model.genes.get_by_id(candidate_gene).reactions} == set(updates)
+                mapped_bounds = {reaction.id: reaction.bounds for reaction in model.reactions}
+                with model:
+                    knock_out_model_genes(model, [candidate_gene])
+                    assert {
+                        reaction.id for reaction in model.reactions
+                        if reaction.bounds != mapped_bounds[reaction.id]
+                    } == expected_closed, scenario
+                    assert all(model.reactions.get_by_id(reaction_id).bounds == (0.0, 0.0) for reaction_id in expected_closed)
+                    assert "R19" not in expected_closed
+                    assert "DFBA_R19_FORMAL_OXIDATION" not in expected_closed
+                assert signature() == mapped_signature
+
+        assert signature() == base_signature, scenario
+        assert base_ids == (
+            tuple(reaction.id for reaction in model.reactions),
+            tuple(metabolite.id for metabolite in model.metabolites),
+            tuple(gene.id for gene in model.genes),
+        ), scenario
+        assert all(not model.genes.get_by_id(gene_id).reactions for gene_id in orphan_candidates)
+
+    with model:
+        dfba._apply_r39_r19_runtime_topology(model)
+        model.reactions.R715.gene_reaction_rule = "unexpected_gene"
+        unexpected_signature = signature()
+        with pytest.raises(ValueError, match="baseline mismatch"):
+            dfba._apply_runtime_gpr_scenario(model, "coq6_r39")
+        assert signature() == unexpected_signature
+
+
 def test_dfba_calls_summary_recomputes_grid_controls_and_monotonicity():
     rows = []
     for alpha in (1e-6, 1e-4, 1e-3):
@@ -155,3 +287,130 @@ def test_dfba_calls_summary_recomputes_grid_controls_and_monotonicity():
     assert summary["pool_monotonicity_pass"]
     assert summary["q9_source_calls_bound_pass"]
     assert summary["five_control_max_abs_theory_error_doublings"] == 0
+
+
+def test_hypothesis_matrix_validates_and_joins_the_seven_runtime_arms(tmp_path):
+    arm_dirs = []
+    for scenario, spec in dfba.RUNTIME_GPR_SCENARIOS.items():
+        arm_dir = tmp_path / scenario
+        arm_dir.mkdir()
+        arm_dirs.append(arm_dir)
+        mapping = dfba._runtime_gpr_mapping_payload(scenario)
+        mapping_sha = dfba.sha256_payload(mapping)
+        mapping_audit = {
+            "enabled": True, **mapping, "mapping_sha256": mapping_sha,
+            "runtime_target_fingerprint_before_mapping": "sha256:target",
+        }
+        rows = []
+        for alpha in dfba.DEFAULT_ALPHAS:
+            for pool in dfba.DEFAULT_POOL_MULTIPLIERS:
+                doublings = math.log2(1 + pool)
+                ratio = doublings / 10
+                for gene_id in NINE_COQ_CANDIDATES:
+                    rows.append({
+                        "gene_id": gene_id,
+                        "dynamic_doublings": doublings,
+                        "dynamic_growth_ratio": ratio,
+                        "q9_source_total_mmol_L": alpha * 0.01 * pool,
+                        "termination_status": "completed",
+                        "termination_time_h": 24.0,
+                        "alpha_mmol_gDW": alpha,
+                        "pool_multiplier": pool,
+                        "runtime_gpr_scenario": scenario,
+                        "runtime_gpr_mapping_sha256": mapping_sha,
+                        "wt_dynamic_doublings": 10.0,
+                        "wt_termination_status": "completed",
+                        "wt_termination_time_h": 24.0,
+                        "experimental_essential": False,
+                        **{
+                            f"essential_at_{cutoff * 100:g}pct": ratio < cutoff
+                            for cutoff in (0.01, 0.05, 0.1, 0.15)
+                        },
+                    })
+        pd.DataFrame(rows).to_csv(arm_dir / "essentiality_dynamic_calls.tsv", sep="\t", index=False)
+        manifest = {
+            "workflow": dfba.WORKFLOW,
+            "schema_version": dfba.SCHEMA_VERSION,
+            "run_id": f"run_{scenario}",
+            "chunk_index": 0,
+            "chunk_count": 1,
+            "genes": list(NINE_COQ_CANDIDATES),
+            "solver": "gurobi",
+            "runtime_versions": {"python": "3.11", "cobra": "0.30", "gurobipy": "10.0.3"},
+            "solver_feasibility_tolerance": 1e-9,
+            "script_sha256": "script",
+            "hours": 24.0,
+            "dt_h": 0.0625,
+            "initial_biomass_gDW_L": 0.01,
+            "alphas_mmol_gDW": list(dfba.DEFAULT_ALPHAS),
+            "pool_multipliers": list(dfba.DEFAULT_POOL_MULTIPLIERS),
+            "uracil_mode": "po1f_nonlimiting",
+            "optimizer": "pfba",
+            "nonoptimal_policy": "terminal_record_and_stop",
+            "calibration_status": "sensitivity_only_not_calibrated",
+            "runtime_topology": {
+                "enabled": True, "mapping_sha256": dfba.R39_R19_RUNTIME_MAPPING_SHA256,
+            },
+            "runtime_gpr_scenario": mapping_audit,
+            "simulation_context": {"simulation_context_fingerprint": "context"},
+            "input_sha256": {
+                "model": "model", "medium": "medium", "profile": "profile",
+                "experimental": "experimental",
+            },
+        }
+        manifest["fingerprint"] = dfba.sha256_payload(manifest)
+        (arm_dir / "chunk_000_manifest.json").write_text(
+            json.dumps(manifest), encoding="utf-8",
+        )
+        (arm_dir / "merge_manifest.json").write_text(json.dumps({
+            "chunks": 1,
+            "calls": 108,
+            "chunk_fingerprints": [manifest["fingerprint"]],
+            "runtime_gpr_scenario": mapping_audit,
+        }), encoding="utf-8")
+
+    evidence_path = tmp_path / "evidence.tsv"
+    pd.DataFrame([{
+        "gene_id": gene_id,
+        "cas9_fitness": -1.0,
+        "cas9_call": "essential",
+        "cas12a_fitness": -0.5,
+        "cas12a_call": "nonessential",
+    } for gene_id in NINE_COQ_CANDIDATES]).to_csv(evidence_path, sep="\t", index=False)
+
+    output_dir = write_hypothesis_matrix(arm_dirs, evidence_path, tmp_path / "summary")
+    matrix = pd.read_csv(output_dir / "hypothesis_matrix.tsv", sep="\t")
+    result_manifest = json.loads((output_dir / "hypothesis_matrix_manifest.json").read_text())
+    assert len(matrix) == 756
+    assert not matrix.duplicated(["mapping_id", "gene_id", "alpha_mmol_gDW", "pool_multiplier"]).any()
+    assert result_manifest["checks"] == {
+        "exact_seven_scenarios": True,
+        "mapping_payloads_and_sha": True,
+        "runtime_target_fingerprint_uniform": True,
+        "frozen_context_uniform": True,
+        "wt_endpoints_unchanged": True,
+        "non_target_results_unchanged": True,
+        "nested_absolute_constraints_nonincreasing": True,
+        "strict_cutoffs_recomputed": True,
+        "calls_level_pool_source_and_five_gene_controls": True,
+        "evidence_exact_nine_gene_coverage": True,
+    }
+
+    calls_path = arm_dirs[-1] / "essentiality_dynamic_calls.tsv"
+    valid_calls = calls_path.read_text()
+    bad_calls = pd.read_csv(calls_path, sep="\t")
+    bad_calls.loc[1, "q9_source_total_mmol_L"] = 999
+    bad_calls.to_csv(calls_path, sep="\t", index=False)
+    with pytest.raises(ValueError, match="Calls-level QC failed"):
+        write_hypothesis_matrix(arm_dirs, evidence_path, tmp_path / "bad_source_summary")
+    calls_path.write_text(valid_calls)
+
+    bad_manifest_path = arm_dirs[0] / "chunk_000_manifest.json"
+    bad_manifest = json.loads(bad_manifest_path.read_text())
+    bad_manifest["runtime_gpr_scenario"]["mapping_sha256"] = "bad"
+    bad_manifest["fingerprint"] = dfba.sha256_payload({
+        key: value for key, value in bad_manifest.items() if key != "fingerprint"
+    })
+    bad_manifest_path.write_text(json.dumps(bad_manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="mapping SHA mismatch"):
+        write_hypothesis_matrix(arm_dirs, evidence_path, tmp_path / "bad_summary")
