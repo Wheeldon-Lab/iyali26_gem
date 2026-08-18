@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "review_id": "quinone_gpr_synthome_2026-08-17",
+  "created_at_utc": "2026-08-18T03:45:53Z",
+  "repository_commit_at_intake": "4332663e716f060e3bfaa08d3be6d1ef835770e7",
+  "inputs": {
+    "canonical_model_sha256": "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee",
+    "medium_sha256": "ed176d26a373f98cc413ed2e32a71f5f060a06e343f90f7db25cd32eff268e85",
+    "strain_profile_id": "po1f_sd_leu_accrispr_v1",
+    "strain_profile_sha256": "35307853a477d0b8540919acc6cd18d922e1e010ce98fb355316172a15048383",
+    "strain_overlay_effect_sha256": "d15acbde9438f5d2391c4da23705a34a3585833062d616517d5af052088606c2",
+    "simulation_context_fingerprint": "c243b23e7344e3f1e2b4962be25f0f2a38980990c6fe88ee32d3aa4f7af90e30",
+    "positive_reference_sha256": "1e887f5ad4a95827a49b6c86894edaca410bdba3d264ff0d25193dedef3a659b",
+    "fitness_table_sha256": "97ef559651cd99ce63144ffe08ae64e983ecaec60d568f859da8926c14c7d9ff"
+  },
+  "research_design": {
+    "strands": [
+      "COQ6 R39/R19 chemistry and topology",
+      "COQ8/COQ9 reaction-specific synthome dependence",
+      "CoQ9 whole-cell pool and molecular turnover"
+    ],
+    "independent_source_audit": true,
+    "primary_sources_prespecified": 20,
+    "primary_sources_independently_opened": 20,
+    "material_claims": 19,
+    "material_claims_audited": 19,
+    "audit_verdicts": {
+      "supported": 8,
+      "partially_supported": 4,
+      "contradicted": 5,
+      "unverified": 2
+    },
+    "direct_yarrowia_reaction_level_experiments_located": 0,
+    "audit_limit": "Kogan 1985 was available only as a bibliographic record/abstract, not full text."
+  },
+  "runtime_decision": {
+    "status": "not_run_by_prespecified_stop_condition",
+    "approved_mapping_count": 0,
+    "candidate_nine_gene_counterfactual_run": false,
+    "reason": "No reviewed direct-catalyst or accessory mapping passed the exact chemistry, topology and absolute-dependency gates.",
+    "existing_h_q9_1_status": "runtime_only;sensitivity_only_not_calibrated;unchanged",
+    "new_alpha_pool_dt_search": false
+  },
+  "formal_workflow_decision": {
+    "egc_created": false,
+    "awaiting_human_record_created": false,
+    "model_xml_changed": false,
+    "formal_gpr_changed": false,
+    "bounds_changed": false,
+    "curated_data_changed": false,
+    "fn_dossier_changed": false,
+    "human_acceptance_required_for_future_patch": true
+  },
+  "files": {
+    "conflict_matrix.tsv": "09c29a7eec2835bf0de5e037956130cfa46f14f8cada5bdd0eba8786af5af9c9",
+    "evidence_ledger.tsv": "55e210af7d58e04cd1d5ab6b78cb8473fda72c5b318db44d65d0775e9857e60d",
+    "fitness_threshold_matrix.tsv": "4861a92949fb6f94d73ca591c333587bc499042ae720a990e406df2caefcbd04",
+    "gene_evidence_matrix.tsv": "10e4b68498849c679240a2930908ab5ab5274827c58420917d98b26f212aab59",
+    "input_snapshot.md": "5620be572ce901598bb3d161ac5cd07d27933df4e25ae9c4699cd68ccbc5b05f",
+    "review_report.md": "8e005598c78898ea220678881632dad7c00f4e8c00af1d09a227be27b69c6628",
+    "source_audit.tsv": "76674680af8073a1abbb9bf1b6e217663296b1d6c3d7efa4d03c6a1cf8083c7e",
+    "source_inventory.tsv": "ed280bc5a22583e830863161733bb416be009ab508886431df90e2d6826a0d34"
+  }
+}
