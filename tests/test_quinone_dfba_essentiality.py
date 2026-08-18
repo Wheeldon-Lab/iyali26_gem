@@ -1,8 +1,10 @@
 import math
+from pathlib import Path
 
 import pandas as pd
 import pytest
 from cobra import Metabolite, Model, Reaction
+from cobra.io import read_sbml_model
 from cobra.manipulation.delete import knock_out_model_genes
 
 from scripts.gem_annotate import quinone_dfba_essentiality as dfba
@@ -91,6 +93,43 @@ def test_gurobi_feasibility_tolerance_is_bounded_and_explicit():
         parser.parse_args(["--research-root", "research", "--feasibility-tol", "1e-10"])
     with pytest.raises(ValueError, match="requires --solver gurobi"):
         dfba._configure_solver(_toy_model(), "glpk", 1e-9)
+
+
+def test_r39_r19_runtime_topology_is_balanced_and_leaves_canonical_model_unchanged():
+    model = read_sbml_model(Path(__file__).parents[1] / "model.xml")
+    reaction_ids = ("R39", "R969", "R808", "R19")
+    before = {
+        reaction_id: (
+            dfba._reaction_stoichiometry(model.reactions.get_by_id(reaction_id)),
+            model.reactions.get_by_id(reaction_id).bounds,
+            model.reactions.get_by_id(reaction_id).gene_reaction_rule,
+        )
+        for reaction_id in reaction_ids
+    }
+    counts = (len(model.reactions), len(model.metabolites), len(model.genes))
+
+    with model:
+        audit = dfba._apply_r39_r19_runtime_topology(model)
+        assert audit["mapping_sha256"] == dfba.R39_R19_RUNTIME_MAPPING_SHA256
+        assert audit["mass_balance"] == {
+            "R39": {}, "DFBA_R19_HYDROXYLATION": {}, "DFBA_R19_FORMAL_OXIDATION": {},
+        }
+        assert model.reactions.R969.bounds == (0.0, 0.0)
+        assert model.reactions.R808.bounds == (0.0, 0.0)
+        assert model.reactions.R19.bounds == (0.0, 0.0)
+        assert model.reactions.get_by_id("DFBA_R19_HYDROXYLATION").gene_reaction_rule == ""
+        assert model.reactions.get_by_id("DFBA_R19_FORMAL_OXIDATION").gene_reaction_rule == ""
+
+    after = {
+        reaction_id: (
+            dfba._reaction_stoichiometry(model.reactions.get_by_id(reaction_id)),
+            model.reactions.get_by_id(reaction_id).bounds,
+            model.reactions.get_by_id(reaction_id).gene_reaction_rule,
+        )
+        for reaction_id in reaction_ids
+    }
+    assert counts == (len(model.reactions), len(model.metabolites), len(model.genes))
+    assert before == after
 
 
 def test_dfba_calls_summary_recomputes_grid_controls_and_monotonicity():

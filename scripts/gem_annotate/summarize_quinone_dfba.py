@@ -256,7 +256,7 @@ def _manifest_audit(input_dir: Path, calls_rows: int) -> dict[str, Any]:
     if not manifests:
         raise FileNotFoundError("No chunk manifests found")
     payloads = [json.loads(path.read_text(encoding="utf-8")) for path in manifests]
-    fields = ("schema_version", "solver", "runtime_versions", "optimizer", "nonoptimal_policy", "dt_h", "uracil_mode", "calibration_status", "input_sha256", "script_sha256", "simulation_context")
+    fields = ("schema_version", "solver", "runtime_versions", "optimizer", "nonoptimal_policy", "dt_h", "uracil_mode", "calibration_status", "input_sha256", "script_sha256", "simulation_context", "runtime_topology")
     uniform = {field: len({json.dumps(payload.get(field), sort_keys=True) for payload in payloads}) == 1 for field in fields}
     merge = json.loads((input_dir / "merge_manifest.json").read_text(encoding="utf-8"))
     return {
@@ -275,6 +275,7 @@ def _manifest_audit(input_dir: Path, calls_rows: int) -> dict[str, Any]:
         "input_sha256": payloads[0]["input_sha256"],
         "script_sha256": payloads[0]["script_sha256"],
         "solver_feasibility_tolerance": payloads[0].get("solver_feasibility_tolerance", "not_recorded_in_schema_1.2_artifact"),
+        "runtime_topology": payloads[0].get("runtime_topology", {"enabled": False}),
     }
 
 

@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from cobra import Reaction
+from cobra import Metabolite, Reaction
 from cobra.exceptions import OptimizationError
 from cobra.flux_analysis import pfba
 from cobra.manipulation.delete import knock_out_model_genes
@@ -28,11 +28,12 @@ from .essentiality_simulation_context import (
     sha256_file,
     sha256_payload,
 )
-from .validate_essential_genes import DEFAULT_CUTOFFS, load_experimental
+from .essentiality_evidence import target_fingerprint
+from .validate_essential_genes import DEFAULT_CUTOFFS, load_experimental, reaction_case_context
 
 
 WORKFLOW = "quinone_dfba_essentiality"
-SCHEMA_VERSION = "1.2"
+SCHEMA_VERSION = "1.3"
 Q9_METABOLITE_ID = "m468[C_mi]"
 BIOMASS_ID = "biomass_C"
 POOL_SOURCE_ID = "DFBA_Q9_POOL_SOURCE"
@@ -61,6 +62,23 @@ DEFAULT_ALPHAS = (1e-6, 1e-4, 1e-3)
 DEFAULT_POOL_MULTIPLIERS = (0.0, 0.5, 1.0, 2.0)
 GUROBI_FEASIBILITY_TOL_MIN = 1e-9
 GUROBI_FEASIBILITY_TOL_MAX = 1e-2
+R39_R19_RUNTIME_TOPOLOGY_ID = "r39_mito_r19_split_v1"
+R39_R19_RUNTIME_REACTION_IDS = (
+    "R763", "R407", "R969", "R39", "R808", "R715", "R40", "R19",
+    "DFBA_R19_HYDROXYLATION", "DFBA_R19_FORMAL_OXIDATION", "R18", "R695", "R385",
+)
+R39_R19_RUNTIME_MAPPING = {
+    "id": R39_R19_RUNTIME_TOPOLOGY_ID,
+    "scope": "runtime_only",
+    "calibration_status": "sensitivity_only_not_calibrated",
+    "r39": "m641[C_mi] + 0.5 m64[C_mi] -> m28[C_mi] + m939[C_mi]",
+    "closed_transport_reactions": ["R969", "R808"],
+    "closed_legacy_reaction": "R19",
+    "r19_hydroxylation": "m63[C_mi] + 0.5 m64[C_mi] -> DFBA_DDMQH2[C_mi]",
+    "r19_formal_oxidation": "DFBA_DDMQH2[C_mi] + 0.5 m64[C_mi] -> m26[C_mi] + m59[C_mi]",
+    "formal_oxidation_limit": "O2 is a balanced runtime bookkeeping convention, not a verified biological oxidant or enzyme.",
+}
+R39_R19_RUNTIME_MAPPING_SHA256 = sha256_payload(R39_R19_RUNTIME_MAPPING)
 
 
 def _add_runtime_q9(model, alpha: float) -> tuple[Reaction, Reaction]:
@@ -82,6 +100,111 @@ def _add_runtime_q9(model, alpha: float) -> tuple[Reaction, Reaction]:
     )
     model.add_cons_vars(constraint)
     return source, demand
+
+
+def _reaction_stoichiometry(reaction: Reaction) -> dict[str, float]:
+    return {metabolite.id: float(coefficient) for metabolite, coefficient in reaction.metabolites.items()}
+
+
+def _expect_runtime_reaction(
+    model, reaction_id: str, stoichiometry: dict[str, float], bounds: tuple[float, float]
+) -> None:
+    reaction = model.reactions.get_by_id(reaction_id)
+    if reaction.gene_reaction_rule or reaction.bounds != bounds or _reaction_stoichiometry(reaction) != stoichiometry:
+        raise ValueError(f"R39/R19 runtime topology requires the current canonical {reaction_id} definition")
+
+
+def _replace_stoichiometry(reaction: Reaction, stoichiometry: dict[Metabolite, float]) -> None:
+    reaction.add_metabolites({metabolite: -coefficient for metabolite, coefficient in reaction.metabolites.items()})
+    reaction.add_metabolites(stoichiometry)
+
+
+def _apply_r39_r19_runtime_topology(model) -> dict[str, Any]:
+    """Apply the reviewed R39/R19 topology convention to one disposable model copy."""
+    if any(reaction_id in model.reactions for reaction_id in R39_R19_RUNTIME_REACTION_IDS[8:10]):
+        raise ValueError("R39/R19 runtime topology is already present")
+    _expect_runtime_reaction(
+        model, "R39",
+        {"m108[C_cy]": -1.0, "m109[C_cy]": -0.5, "m10[C_cy]": 1.0, "m110[C_cy]": 1.0},
+        (0.0, 1000.0),
+    )
+    _expect_runtime_reaction(model, "R969", {"m108[C_cy]": -1.0, "m641[C_mi]": 1.0}, (-1000.0, 1000.0))
+    _expect_runtime_reaction(model, "R808", {"m110[C_cy]": -1.0, "m939[C_mi]": 1.0}, (-1000.0, 1000.0))
+    _expect_runtime_reaction(
+        model, "R19",
+        {"m63[C_mi]": -1.0, "m64[C_mi]": -1.0, "m26[C_mi]": 1.0, "m59[C_mi]": 1.0},
+        (0.0, 1000.0),
+    )
+    required_metabolites = {
+        "m641[C_mi]": ("C52H78O3", 0, "C_mi"),
+        "m939[C_mi]": ("C52H77O4", -1, "C_mi"),
+        "m63[C_mi]": ("C52H80O2", 0, "C_mi"),
+        "m59[C_mi]": ("C52H78O3", 0, "C_mi"),
+    }
+    for metabolite_id, expected in required_metabolites.items():
+        metabolite = model.metabolites.get_by_id(metabolite_id)
+        if (metabolite.formula, metabolite.charge, metabolite.compartment) != expected:
+            raise ValueError(f"R39/R19 runtime topology requires the current canonical {metabolite_id} definition")
+
+    r39 = model.reactions.get_by_id("R39")
+    _replace_stoichiometry(r39, {
+        model.metabolites.get_by_id("m641[C_mi]"): -1.0,
+        model.metabolites.get_by_id("m64[C_mi]"): -0.5,
+        model.metabolites.get_by_id("m28[C_mi]"): 1.0,
+        model.metabolites.get_by_id("m939[C_mi]"): 1.0,
+    })
+    model.reactions.get_by_id("R969").bounds = (0.0, 0.0)
+    model.reactions.get_by_id("R808").bounds = (0.0, 0.0)
+    model.reactions.get_by_id("R19").bounds = (0.0, 0.0)
+
+    ddmqh2 = Metabolite(
+        "DFBA_DDMQH2[C_mi]", name="2-methoxy-6-nonaprenylbenzene-1,4-diol (runtime-only)",
+        formula="C52H80O3", charge=0, compartment="C_mi",
+    )
+    hydroxylation = Reaction("DFBA_R19_HYDROXYLATION", lower_bound=0.0, upper_bound=1000.0)
+    hydroxylation.add_metabolites({
+        model.metabolites.get_by_id("m63[C_mi]"): -1.0,
+        model.metabolites.get_by_id("m64[C_mi]"): -0.5,
+        ddmqh2: 1.0,
+    })
+    oxidation = Reaction("DFBA_R19_FORMAL_OXIDATION", lower_bound=0.0, upper_bound=1000.0)
+    oxidation.add_metabolites({
+        ddmqh2: -1.0,
+        model.metabolites.get_by_id("m64[C_mi]"): -0.5,
+        model.metabolites.get_by_id("m26[C_mi]"): 1.0,
+        model.metabolites.get_by_id("m59[C_mi]"): 1.0,
+    })
+    model.add_reactions([hydroxylation, oxidation])
+    balances = {
+        reaction_id: model.reactions.get_by_id(reaction_id).check_mass_balance()
+        for reaction_id in ("R39", "DFBA_R19_HYDROXYLATION", "DFBA_R19_FORMAL_OXIDATION")
+    }
+    if any(balances.values()):
+        raise ValueError(f"R39/R19 runtime topology is not balanced: {balances}")
+    return {
+        "enabled": True,
+        **R39_R19_RUNTIME_MAPPING,
+        "mapping_sha256": R39_R19_RUNTIME_MAPPING_SHA256,
+        "mass_balance": balances,
+    }
+
+
+def _runtime_topology_fluxes(solution, enabled: bool) -> dict[str, float]:
+    if not enabled:
+        return {}
+    if solution.status != "optimal":
+        return {f"pathway_flux_{reaction_id}_mmol_gDW_h": math.nan for reaction_id in R39_R19_RUNTIME_REACTION_IDS}
+    return {
+        f"pathway_flux_{reaction_id}_mmol_gDW_h": float(solution.fluxes[reaction_id])
+        for reaction_id in R39_R19_RUNTIME_REACTION_IDS
+    }
+
+
+def _r39_r19_canonical_target_fingerprint(model) -> str:
+    return target_fingerprint(
+        reaction_case_context(model.reactions.get_by_id(reaction_id))
+        for reaction_id in ("R39", "R969", "R808", "R19")
+    )
 
 
 def _finite_medium(base_medium: dict[str, float], pools: dict[str, float], biomass: float, dt: float) -> dict[str, float]:
@@ -154,6 +277,7 @@ def simulate_gene(
     dt: float,
     initial_biomass: float,
     uracil_mode: str = "finite_batch",
+    r39_r19_runtime_topology: bool = False,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run a disposable Euler batch simulation for WT or one single-gene KO."""
     if hours <= 0 or dt <= 0 or initial_biomass <= 0:
@@ -163,6 +287,8 @@ def simulate_gene(
     if not math.isclose(hours / dt, round(hours / dt), rel_tol=0.0, abs_tol=1e-9):
         raise ValueError("hours must be an exact multiple of dt")
     with base_model as model:
+        if r39_r19_runtime_topology:
+            _apply_r39_r19_runtime_topology(model)
         if gene_id is not None:
             knock_out_model_genes(model, [gene_id])
         source, _ = _add_runtime_q9(model, alpha)
@@ -196,6 +322,7 @@ def simulate_gene(
                         "uracil_mmol_L": pools.get("R1354", math.nan),
                         "glucose_mmol_L": pools["R1070"],
                         "status": solution.status,
+                        **_runtime_topology_fluxes(solution, r39_r19_runtime_topology),
                     }
                 )
                 termination_status = solution.status
@@ -223,6 +350,7 @@ def simulate_gene(
                     "uracil_mmol_L": pools.get("R1354", math.nan),
                     "glucose_mmol_L": pools["R1070"],
                     "status": solution.status,
+                    **_runtime_topology_fluxes(solution, r39_r19_runtime_topology),
                 }
             )
             biomass *= 1.0 + growth * dt
@@ -274,12 +402,24 @@ def _run_chunk(args: argparse.Namespace) -> Path:
     experimental = load_experimental(experimental_path, positive_only=True)
     rows: list[dict[str, Any]] = []
     trajectories: list[dict[str, Any]] = []
+    topology_audit_rows: list[dict[str, Any]] = []
+    runtime_topology: dict[str, Any] | None = None
+    if args.r39_r19_runtime_topology:
+        with context.model as model:
+            canonical_target = _r39_r19_canonical_target_fingerprint(model)
+            runtime_topology = _apply_r39_r19_runtime_topology(model)
+            runtime_topology["canonical_target_fingerprint"] = canonical_target
     for alpha in args.alphas:
         for multiplier in args.pool_multipliers:
-            wt, wt_trace = simulate_gene(context.model, gene_id=None, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode)
+            wt, wt_trace = simulate_gene(context.model, gene_id=None, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode, r39_r19_runtime_topology=args.r39_r19_runtime_topology)
             trajectories.extend([{**item, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier} for item in wt_trace])
+            if args.r39_r19_runtime_topology:
+                topology_audit_rows.append({
+                    "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier,
+                    **{key: value for key, value in wt_trace[0].items() if key.startswith("pathway_flux_")},
+                })
             for gene_id in genes:
-                result, trace = simulate_gene(context.model, gene_id=gene_id, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode)
+                result, trace = simulate_gene(context.model, gene_id=gene_id, alpha=alpha, pool_multiplier=multiplier, hours=args.hours, dt=args.dt, initial_biomass=args.initial_biomass, uracil_mode=args.uracil_mode, r39_r19_runtime_topology=args.r39_r19_runtime_topology)
                 ratio = result["dynamic_doublings"] / wt["dynamic_doublings"] if wt["dynamic_doublings"] > 0 else math.nan
                 rows.append({
                     **result, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier,
@@ -292,6 +432,8 @@ def _run_chunk(args: argparse.Namespace) -> Path:
                 trajectories.extend([{**item, "alpha_mmol_gDW": alpha, "pool_multiplier": multiplier} for item in trace])
     pd.DataFrame(rows).to_csv(out / f"chunk_{args.chunk_index:03d}_calls.tsv", sep="\t", index=False)
     pd.DataFrame(trajectories).to_csv(out / f"chunk_{args.chunk_index:03d}_trajectory.tsv", sep="\t", index=False)
+    if topology_audit_rows:
+        pd.DataFrame(topology_audit_rows).to_csv(out / f"chunk_{args.chunk_index:03d}_runtime_topology_audit.tsv", sep="\t", index=False)
     manifest = {
         "workflow": WORKFLOW, "schema_version": SCHEMA_VERSION, "run_id": args.run_id,
         "chunk_index": args.chunk_index, "chunk_count": args.chunk_count, "genes": genes,
@@ -307,6 +449,7 @@ def _run_chunk(args: argparse.Namespace) -> Path:
         "optimizer": "pfba",
         "nonoptimal_policy": "terminal_record_and_stop",
         "calibration_status": "sensitivity_only_not_calibrated",
+        "runtime_topology": runtime_topology or {"enabled": False},
         "simulation_context": context.provenance(),
         "input_sha256": {"model": context.canonical_model_sha256, "medium": sha256_file(media_path), "profile": sha256_file(profile_path), "experimental": sha256_file(experimental_path)},
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -356,6 +499,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--alphas", type=float, nargs="+", default=list(DEFAULT_ALPHAS))
     parser.add_argument("--pool-multipliers", type=float, nargs="+", default=list(DEFAULT_POOL_MULTIPLIERS))
     parser.add_argument("--uracil-mode", choices=URACIL_MODES, default="finite_batch")
+    parser.add_argument(
+        "--r39-r19-runtime-topology", action="store_true",
+        help="apply the reviewed R39 mitochondrial/R19 split convention only to disposable runtime copies",
+    )
     parser.add_argument("--merge", action="store_true")
     return parser
 
