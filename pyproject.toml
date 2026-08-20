@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "iyali26"
 version = "0.1.0"
@@ -8,10 +12,35 @@ dependencies = [
     "cobra>=0.30.0",
     "gurobipy>=13.0.1",
     "memote>=0.17.0",
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.3",
     "pre-commit>=4.5.1",
+    "scipy>=1.17,<2",
 ]
+
+[project.optional-dependencies]
+fmpe = [
+    "lampe>=0.9,<0.10",
+    "torch>=2.13,<2.14",
+]
+
+[project.scripts]
+iyali26-flow = "iyali26_flow.cli:main"
 
 [dependency-groups]
 dev = [
+    "pytest>=8.0",
     "ruff>=0.15.7",
+]
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["iyali26_flow*", "scripts.gem_annotate*"]
+namespaces = true
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
+testpaths = ["tests"]
+markers = [
+    "integration: exercises the current iYali26 model and configured solver",
 ]
