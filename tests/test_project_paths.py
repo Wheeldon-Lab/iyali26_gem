@@ -22,6 +22,12 @@ def test_explicit_research_root_maps_legacy_paths(tmp_path: Path) -> None:
     assert paths.resolve_legacy_path("data/metabolite_microspecies.csv") == (
         root / "state/curation/data/metabolite_microspecies.csv"
     ).resolve()
+    assert paths.resolve_legacy_path("data/ncbi/clib89_feature_table.txt") == (
+        root / "reference/ncbi/clib89_feature_table.txt"
+    ).resolve()
+    assert paths.resolve_legacy_path("data/kegg/yli_genes.tsv") == (
+        root / "reference/kegg/yli_genes.tsv"
+    ).resolve()
     assert paths.resolve_legacy_path("model.xml") == (
         paths.repo_root / "model.xml"
     ).resolve()

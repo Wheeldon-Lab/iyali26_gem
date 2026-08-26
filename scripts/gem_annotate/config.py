@@ -82,6 +82,10 @@ class ProjectPaths:
             return (self.metanetx.joinpath(*parts[2:])).resolve()
         if parts[:2] == ("data", "cache"):
             return (self.cache.joinpath(*parts[2:])).resolve()
+        if parts[:2] == ("data", "ncbi"):
+            return (self.research_root / "reference" / "ncbi").joinpath(*parts[2:]).resolve()
+        if parts[:2] == ("data", "kegg"):
+            return (self.research_root / "reference" / "kegg").joinpath(*parts[2:]).resolve()
         if parts[:2] == ("data", "yali1_yali0_map"):
             return (self.locus_map.joinpath(*parts[2:])).resolve()
         if parts == ("data", "iyali26.xml"):

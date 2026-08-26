@@ -38,7 +38,7 @@ import logging
 import math
 import re
 
-from .config import ESSENTIALITY_DIR
+from .config import ESSENTIALITY_DIR, load_project_paths
 
 logger = logging.getLogger(__name__)
 
@@ -437,10 +437,9 @@ def clean_ec_overload(model, audit_csv: str | None = None) -> int:
     import os
 
     if audit_csv is None:
-        # patches.py is at scripts/gem_annotate/patches.py -> repo root is ../../
-        root = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))))
-        audit_csv = os.path.join(root, _EC_OVERLOAD_AUDIT_CSV)
+        audit_csv = str(
+            load_project_paths().resolve_legacy_path(_EC_OVERLOAD_AUDIT_CSV)
+        )
 
     if not os.path.exists(audit_csv):
         logger.warning(f"  EC-overload audit CSV not found: {audit_csv} — skipping")
@@ -572,9 +571,9 @@ def add_isozyme_gprs(model, additions_csv: str | None = None) -> int:
     import os
 
     if additions_csv is None:
-        root = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))))
-        additions_csv = os.path.join(root, _GPR_ADDITIONS_CSV)
+        additions_csv = str(
+            load_project_paths().resolve_legacy_path(_GPR_ADDITIONS_CSV)
+        )
 
     if not os.path.exists(additions_csv):
         logger.warning(f"  GPR additions CSV not found: {additions_csv} — skipping")
@@ -2830,17 +2829,18 @@ def annotate_isozyme_genes(model, additions_csv: str | None = None,
     import csv
     import os
 
-    root = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.abspath(__file__))))
+    project_paths = load_project_paths()
     if additions_csv is None:
-        additions_csv = os.path.join(root, _GPR_ADDITIONS_CSV)
+        additions_csv = str(
+            project_paths.resolve_legacy_path(_GPR_ADDITIONS_CSV)
+        )
     if not os.path.exists(additions_csv):
         logger.warning(f"  gene annotate: {additions_csv} not found — skipping")
         return 0
 
     # YALI1 (no underscore) -> GeneID from NCBI feature table
     y2g = {}
-    ft = os.path.join(root, _FEATURE_TABLE)
+    ft = str(project_paths.resolve_legacy_path(_FEATURE_TABLE))
     if os.path.exists(ft):
         with open(ft) as f:
             next(f)
@@ -2854,7 +2854,7 @@ def annotate_isozyme_genes(model, additions_csv: str | None = None,
 
     # GeneIDs present in KEGG yli
     kegg_ids = set()
-    kg = os.path.join(root, _KEGG_GENES)
+    kg = str(project_paths.resolve_legacy_path(_KEGG_GENES))
     if os.path.exists(kg):
         with open(kg) as f:
             for line in f:
@@ -2922,9 +2922,9 @@ def fill_neutral_formulas(model, fill_csv: str | None = None) -> int:
     import re as _re
 
     if fill_csv is None:
-        root = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))))
-        fill_csv = os.path.join(root, _NEUTRAL_FILL_CSV)
+        fill_csv = str(
+            load_project_paths().resolve_legacy_path(_NEUTRAL_FILL_CSV)
+        )
     if not os.path.exists(fill_csv):
         logger.warning(f"  neutral fill: {fill_csv} not found — skipping")
         return 0

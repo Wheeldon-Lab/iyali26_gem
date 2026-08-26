@@ -41,7 +41,7 @@ args = parser.parse_args()
 if args.research_root is not None:
     os.environ["IYALI26_RESEARCH_ROOT"] = str(args.research_root.resolve())
 
-from .config import load_project_paths
+from .config import load_project_paths  # noqa: E402
 
 project_paths = load_project_paths(args.research_root, required=True)
 project_paths.require(
@@ -50,6 +50,11 @@ project_paths.require(
     project_paths.essentiality,
     project_paths.media,
     project_paths.curation_data,
+    project_paths.curation_data / "ec_overload_audit.csv",
+    project_paths.curation_data / "gpr_isozyme_additions.csv",
+    project_paths.curation_data / "missing_formula_fill.csv",
+    project_paths.research_root / "reference" / "ncbi" / "clib89_feature_table.txt",
+    project_paths.research_root / "reference" / "kegg" / "yli_genes.tsv",
 )
 
 if args.provisional_capacity_profile is not None:
@@ -71,7 +76,7 @@ if (
         "model.xml; provide a separate --output-model"
     )
 
-from .main import main
+from .main import main  # noqa: E402
 
 main(
     provisional_capacity_path=args.provisional_capacity_profile,

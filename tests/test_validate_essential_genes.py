@@ -25,7 +25,7 @@ from scripts.gem_annotate.patches import apply_curated_essentiality_patches
 
 
 MODEL_PATH = REPO_ROOT / "model.xml"
-SOURCE_XLSX = REPO_ROOT / "data" / "essentiality" / "42003_2023_4996_MOESM10_ESM.xlsx"
+SOURCE_XLSX = DEFAULT_EXPERIMENTAL.with_name("42003_2023_4996_MOESM10_ESM.xlsx")
 
 
 def test_normalize_gene_id() -> None:
@@ -404,9 +404,9 @@ def test_cpa_ura2_partition_is_idempotent_and_growth_safe(tmp_path) -> None:
     assert wt_growth == pytest.approx(1.4492618988553403, rel=1e-9)
 
     expected_ratios = {
-        "YALI1C33005g": 0.14718038750795417,
-        "YALI1D09420g": 0.14718038750795406,
-        "YALI1E11768g": 0.08360502405782207,
+        "YALI1C33005g": 0.14210846955691958,
+        "YALI1D09420g": 0.14210846955691955,
+        "YALI1E11768g": 0.08072394846415512,
     }
     for gene_id, expected_ratio in expected_ratios.items():
         with model:
