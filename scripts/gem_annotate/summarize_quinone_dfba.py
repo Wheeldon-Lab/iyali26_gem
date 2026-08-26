@@ -248,6 +248,7 @@ def summarize_calls(calls: pd.DataFrame, initial_biomass: float) -> tuple[dict[s
         "limitations": [
             "runtime-only H-Q9-1 sensitivity screen; no model.xml, GPR, or curated-data change",
             "alpha and pool multiplier are hypothetical sensitivity parameters, not fitted biological constants",
+            "the finite CoQ9 source is a complete-block control, not a general partial-loss rescue model",
             "po1f_nonlimiting uracil mode only",
             "calls-level summary does not by itself establish stepwise trajectory source-flux feasibility",
             "positive-only consensus membership cannot be used to call experimental non-essentiality",
@@ -270,7 +271,12 @@ def _manifest_audit(input_dir: Path, calls_rows: int) -> dict[str, Any]:
     if not manifests:
         raise FileNotFoundError("No chunk manifests found")
     payloads = [json.loads(path.read_text(encoding="utf-8")) for path in manifests]
-    fields = ("schema_version", "solver", "runtime_versions", "optimizer", "nonoptimal_policy", "dt_h", "uracil_mode", "calibration_status", "input_sha256", "script_sha256", "simulation_context", "runtime_topology")
+    fields = (
+        "schema_version", "solver", "runtime_versions", "optimizer", "nonoptimal_policy",
+        "dt_h", "uracil_mode", "calibration_status", "input_sha256", "script_sha256",
+        "coq9_dilution_tool_sha256", "alpha_sampling", "coq9_dilution",
+        "q9_reserve_definition", "q9_reserve_policy", "simulation_context", "runtime_topology",
+    )
     uniform = {field: len({json.dumps(payload.get(field), sort_keys=True) for payload in payloads}) == 1 for field in fields}
     merge = json.loads((input_dir / "merge_manifest.json").read_text(encoding="utf-8"))
     return {
@@ -460,7 +466,9 @@ def write_hypothesis_matrix(
                 "script_sha256", "hours", "dt_h", "initial_biomass_gDW_L",
                 "alphas_mmol_gDW", "pool_multipliers", "uracil_mode", "optimizer",
                 "nonoptimal_policy", "calibration_status", "input_sha256",
-                "simulation_context", "runtime_topology",
+                "coq9_dilution_tool_sha256", "alpha_sampling", "coq9_dilution",
+                "q9_reserve_definition", "q9_reserve_policy", "simulation_context",
+                "runtime_topology",
             )
         }, sort_keys=True)
         if common_context is not None and context != common_context:
@@ -490,6 +498,11 @@ def write_hypothesis_matrix(
             "manifest_fingerprint": manifest["fingerprint"],
             "manifest_sha256": _sha256(manifest_path),
             "calls_sha256": _sha256(calls_path),
+            "coq9_dilution_tool_sha256": manifest["coq9_dilution_tool_sha256"],
+            "alpha_sampling": manifest["alpha_sampling"],
+            "coq9_dilution": manifest["coq9_dilution"],
+            "q9_reserve_definition": manifest["q9_reserve_definition"],
+            "q9_reserve_policy": manifest["q9_reserve_policy"],
         }
 
     if set(arm_frames) != set(expected_scenarios):

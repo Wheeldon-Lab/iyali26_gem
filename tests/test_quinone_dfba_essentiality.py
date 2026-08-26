@@ -1,6 +1,7 @@
 import json
 import math
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -15,7 +16,12 @@ from scripts.gem_annotate.summarize_quinone_dfba import (
     summarize_calls,
     write_hypothesis_matrix,
 )
-from scripts.gem_annotate.quinone_dfba_essentiality import _add_runtime_q9, _optimize_minimal_pool
+from scripts.gem_annotate.coq9_dilution import (
+    add_runtime_coq9_pool_source,
+    apply_runtime_coq9_dilution,
+    runtime_coq9_dilution_record,
+)
+from scripts.gem_annotate.quinone_dfba_essentiality import _optimize_minimal_pool
 
 
 def _toy_model():
@@ -46,14 +52,105 @@ def _toy_model_with_maintenance():
 
 def test_runtime_q9_reserve_is_used_only_after_q9_synthesis_knockout():
     model = _toy_model()
-    source, _ = _add_runtime_q9(model, 0.1)
-    source.upper_bound = 1.0
-    _, solution = _optimize_minimal_pool(model, source)
-    assert solution.fluxes[source.id] == 0
     with model:
+        source = add_runtime_coq9_pool_source(model)
+        apply_runtime_coq9_dilution(model, 0.1)
+        source.upper_bound = 1.0
+        _, solution = _optimize_minimal_pool(model, source)
+        assert solution.fluxes[source.id] == 0
         knock_out_model_genes(model, ["qgene"])
         _, solution = _optimize_minimal_pool(model, source)
         assert solution.fluxes[source.id] > 0
+
+
+def test_seeded_alpha_samples_are_fixed_before_gene_simulations():
+    parser = dfba._parser()
+    args = parser.parse_args([
+        "--research-root", "research", "--alpha-seed", "20260826", "--alpha-replicates", "3",
+    ])
+    samples = dfba._alpha_samples(args)
+
+    assert [item["replicate_id"] for item in samples] == [0, 1, 2]
+    assert samples == dfba._alpha_samples(args)
+    assert all(1e-6 <= item["alpha_mmol_gDW"] <= 1e-3 for item in samples)
+
+    incompatible = parser.parse_args([
+        "--research-root", "research", "--alpha-seed", "20260826", "--alphas", "1e-4",
+    ])
+    with pytest.raises(ValueError, match="cannot be combined"):
+        dfba._alpha_samples(incompatible)
+
+
+def test_pool_multiplier_rejects_negative_or_nonfinite_values():
+    for value in (-1, math.nan):
+        with pytest.raises(ValueError, match="pool multipliers"):
+            dfba.simulate_gene(
+                _toy_model(), gene_id=None, alpha=0, pool_multiplier=value,
+                hours=0.5, dt=0.5, initial_biomass=1,
+            )
+    with pytest.raises(ValueError, match="empty gene IDs"):
+        dfba._gene_ids(_toy_model(), "", (), 0, 1)
+    with pytest.raises(ValueError, match="must be unique"):
+        dfba._gene_ids(_toy_model(), "qgene,qgene", (), 0, 1)
+
+
+def test_merge_uses_only_manifest_bound_calls_and_checks_their_hashes(tmp_path):
+    output_dir = tmp_path / "run"
+    output_dir.mkdir()
+    for index, gene_id in enumerate(("g1", "g2")):
+        calls_path = output_dir / f"chunk_{index:03d}_calls.tsv"
+        trajectory_path = output_dir / f"chunk_{index:03d}_trajectory.tsv"
+        pd.DataFrame([{"gene_id": gene_id}]).to_csv(calls_path, sep="\t", index=False)
+        pd.DataFrame([{"gene_id": gene_id, "time_h": 0.0}]).to_csv(
+            trajectory_path, sep="\t", index=False,
+        )
+        manifest = {
+            "workflow": dfba.WORKFLOW,
+            "schema_version": dfba.SCHEMA_VERSION,
+            "run_id": "merge-test",
+            "chunk_index": index,
+            "chunk_count": 2,
+            "genes": [gene_id],
+            "alpha_sampling": [{"alpha_mmol_gDW": 1e-4}],
+            "coq9_dilution": [runtime_coq9_dilution_record(1e-4, pool_source_enabled=True)],
+            "coq9_dilution_tool_sha256": "tool",
+            "q9_reserve_policy": dfba.Q9_RESERVE_POLICY,
+            "runtime_topology": {"enabled": False},
+            "output_files": {
+                "calls": {"filename": calls_path.name, "sha256": dfba.sha256_file(calls_path)},
+                "trajectory": {"filename": trajectory_path.name, "sha256": dfba.sha256_file(trajectory_path)},
+            },
+            "created_at_utc": f"2026-08-26T00:00:0{index}Z",
+        }
+        manifest["fingerprint"] = dfba.sha256_payload(manifest)
+        (output_dir / f"chunk_{index:03d}_manifest.json").write_text(
+            json.dumps(manifest), encoding="utf-8",
+        )
+
+    pd.DataFrame([{"gene_id": "stale"}]).to_csv(
+        output_dir / "chunk_999_calls.tsv", sep="\t", index=False,
+    )
+    dfba._merge(SimpleNamespace(output_dir=str(output_dir)))
+    assert set(pd.read_csv(output_dir / "essentiality_dynamic_calls.tsv", sep="\t")["gene_id"]) == {"g1", "g2"}
+
+    manifest_path = output_dir / "chunk_001_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    calls_sha = manifest["output_files"]["calls"]["sha256"]
+    manifest["output_files"]["calls"]["sha256"] = "bad"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="manifest fingerprint mismatch"):
+        dfba._merge(SimpleNamespace(output_dir=str(output_dir)))
+    manifest["output_files"]["calls"]["sha256"] = calls_sha
+    manifest["fingerprint"] = dfba.sha256_payload({
+        key: value for key, value in manifest.items() if key != "fingerprint"
+    })
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    pd.DataFrame([{"gene_id": "tampered"}]).to_csv(
+        output_dir / "chunk_001_calls.tsv", sep="\t", index=False,
+    )
+    with pytest.raises(ValueError, match="output hash mismatch"):
+        dfba._merge(SimpleNamespace(output_dir=str(output_dir)))
 
 
 def test_po1f_nonlimiting_uracil_keeps_base_bound_and_has_no_finite_pool(monkeypatch):
@@ -339,15 +436,31 @@ def test_hypothesis_matrix_validates_and_joins_the_seven_runtime_arms(tmp_path):
             "runtime_versions": {"python": "3.11", "cobra": "0.30", "gurobipy": "10.0.3"},
             "solver_feasibility_tolerance": 1e-9,
             "script_sha256": "script",
+            "coq9_dilution_tool_sha256": "coq9-tool",
             "hours": 24.0,
             "dt_h": 0.0625,
             "initial_biomass_gDW_L": 0.01,
             "alphas_mmol_gDW": list(dfba.DEFAULT_ALPHAS),
+            "alpha_sampling": [
+                {
+                    "sampler_id": "explicit_alpha_v1", "base_seed": None,
+                    "replicate_id": None, "distribution": "explicit",
+                    "low_mmol_gDW": None, "mode_mmol_gDW": None,
+                    "high_mmol_gDW": None, "alpha_mmol_gDW": alpha,
+                }
+                for alpha in dfba.DEFAULT_ALPHAS
+            ],
             "pool_multipliers": list(dfba.DEFAULT_POOL_MULTIPLIERS),
             "uracil_mode": "po1f_nonlimiting",
             "optimizer": "pfba",
             "nonoptimal_policy": "terminal_record_and_stop",
             "calibration_status": "sensitivity_only_not_calibrated",
+            "q9_reserve_definition": "alpha * initial_biomass * pool_multiplier mmol/L",
+            "q9_reserve_policy": dfba.Q9_RESERVE_POLICY,
+            "coq9_dilution": [
+                runtime_coq9_dilution_record(alpha, pool_source_enabled=True)
+                for alpha in dfba.DEFAULT_ALPHAS
+            ],
             "runtime_topology": {
                 "enabled": True, "mapping_sha256": dfba.R39_R19_RUNTIME_MAPPING_SHA256,
             },
@@ -404,6 +517,27 @@ def test_hypothesis_matrix_validates_and_joins_the_seven_runtime_arms(tmp_path):
     with pytest.raises(ValueError, match="Calls-level QC failed"):
         write_hypothesis_matrix(arm_dirs, evidence_path, tmp_path / "bad_source_summary")
     calls_path.write_text(valid_calls)
+
+    bad_context_manifest_path = arm_dirs[0] / "chunk_000_manifest.json"
+    bad_context_manifest = json.loads(bad_context_manifest_path.read_text())
+    bad_context_manifest["coq9_dilution_tool_sha256"] = "different-tool"
+    bad_context_manifest["fingerprint"] = dfba.sha256_payload({
+        key: value for key, value in bad_context_manifest.items() if key != "fingerprint"
+    })
+    bad_context_manifest_path.write_text(json.dumps(bad_context_manifest), encoding="utf-8")
+    bad_context_merge_path = arm_dirs[0] / "merge_manifest.json"
+    bad_context_merge = json.loads(bad_context_merge_path.read_text())
+    bad_context_merge["chunk_fingerprints"] = [bad_context_manifest["fingerprint"]]
+    bad_context_merge_path.write_text(json.dumps(bad_context_merge), encoding="utf-8")
+    with pytest.raises(ValueError, match="Runtime context differs"):
+        write_hypothesis_matrix(arm_dirs, evidence_path, tmp_path / "bad_context_summary")
+    bad_context_manifest["coq9_dilution_tool_sha256"] = "coq9-tool"
+    bad_context_manifest["fingerprint"] = dfba.sha256_payload({
+        key: value for key, value in bad_context_manifest.items() if key != "fingerprint"
+    })
+    bad_context_manifest_path.write_text(json.dumps(bad_context_manifest), encoding="utf-8")
+    bad_context_merge["chunk_fingerprints"] = [bad_context_manifest["fingerprint"]]
+    bad_context_merge_path.write_text(json.dumps(bad_context_merge), encoding="utf-8")
 
     bad_manifest_path = arm_dirs[0] / "chunk_000_manifest.json"
     bad_manifest = json.loads(bad_manifest_path.read_text())
