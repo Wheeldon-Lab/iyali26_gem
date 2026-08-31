@@ -11,6 +11,7 @@ set -euo pipefail
 : "${IYALI26_RESEARCH_ROOT:?set to the external research workspace}"
 : "${IYALI26_DFBA_PYTHON:?set to the tested Python executable on HPCC}"
 RUN_ID="${IYALI26_DFBA_RUN_ID:?set one shared run ID before submission}"
+: "${IYALI26_DFBA_ALPHA_SEED:?submit_quinone_dfba.sh must provide one shared alpha seed}"
 OUT="$IYALI26_RESEARCH_ROOT/artifacts/results/quinone_dfba_essentiality/$RUN_ID"
 CHUNK_COUNT="${IYALI26_DFBA_CHUNK_COUNT:-64}"
 if [[ ! "$CHUNK_COUNT" =~ ^[1-9][0-9]*$ ]]; then
@@ -29,17 +30,10 @@ TOL_ARGS=()
 if [ -n "${IYALI26_DFBA_FEASIBILITY_TOL:-}" ]; then
   TOL_ARGS=(--feasibility-tol "$IYALI26_DFBA_FEASIBILITY_TOL")
 fi
-ALPHA_ARGS=()
-if [ -n "${IYALI26_DFBA_ALPHA_REPLICATES:-}" ] && [ -z "${IYALI26_DFBA_ALPHA_SEED:-}" ]; then
-  echo "IYALI26_DFBA_ALPHA_REPLICATES requires IYALI26_DFBA_ALPHA_SEED" >&2
-  exit 2
-fi
-if [ -n "${IYALI26_DFBA_ALPHA_SEED:-}" ]; then
-  ALPHA_ARGS=(
-    --alpha-seed "$IYALI26_DFBA_ALPHA_SEED"
-    --alpha-replicates "${IYALI26_DFBA_ALPHA_REPLICATES:-1}"
-  )
-fi
+ALPHA_ARGS=(
+  --alpha-seed "$IYALI26_DFBA_ALPHA_SEED"
+  --alpha-replicates "${IYALI26_DFBA_ALPHA_REPLICATES:-1}"
+)
 GENE_ARGS=()
 if [[ ${IYALI26_DFBA_GENES+x} ]]; then
   if [[ -z "$IYALI26_DFBA_GENES" ]]; then

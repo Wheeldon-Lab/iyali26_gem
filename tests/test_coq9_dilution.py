@@ -1,4 +1,5 @@
 import math
+import random
 
 import pytest
 from cobra import Metabolite, Model, Reaction
@@ -33,9 +34,13 @@ def _toy_model() -> Model:
     return model
 
 
-def test_seeded_alpha_is_reproducible_and_bounded():
+def test_seeded_alpha_is_log_uniform_reproducible_and_bounded():
     first = sample_coq9_alpha(20260826, 4)
     assert first == sample_coq9_alpha(20260826, 4)
+    expected = 10.0 ** random.Random(
+        "coq9_log10_uniform_v2:20260826:4"
+    ).uniform(-6.0, -2.0)
+    assert first == expected
     assert ALPHA_LOW_MMOL_GDW <= first <= ALPHA_HIGH_MMOL_GDW
     assert math.isfinite(first)
     with pytest.raises(ValueError, match="replicate_id"):

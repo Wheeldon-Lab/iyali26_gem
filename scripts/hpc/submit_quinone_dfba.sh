@@ -1,14 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 : "${IYALI26_DFBA_RUN_ID:?export a shared run ID first}"
+if [[ -z "${IYALI26_DFBA_ALPHA_SEED:-}" ]]; then
+  IYALI26_DFBA_ALPHA_SEED="$(od -An -N8 -tu8 /dev/urandom | tr -d '[:space:]')"
+  export IYALI26_DFBA_ALPHA_SEED
+  echo "generated CoQ9 alpha seed: $IYALI26_DFBA_ALPHA_SEED"
+fi
 chunk_count="${IYALI26_DFBA_CHUNK_COUNT:-64}"
 parallelism="${IYALI26_DFBA_ARRAY_PARALLELISM:-16}"
 if [[ ! "$chunk_count" =~ ^[1-9][0-9]*$ ]] || [[ ! "$parallelism" =~ ^[1-9][0-9]*$ ]]; then
   echo "IYALI26_DFBA_CHUNK_COUNT and IYALI26_DFBA_ARRAY_PARALLELISM must be positive integers" >&2
-  exit 2
-fi
-if [[ -n "${IYALI26_DFBA_ALPHA_REPLICATES:-}" && -z "${IYALI26_DFBA_ALPHA_SEED:-}" ]]; then
-  echo "IYALI26_DFBA_ALPHA_REPLICATES requires IYALI26_DFBA_ALPHA_SEED" >&2
   exit 2
 fi
 if [[ ${IYALI26_DFBA_GENES+x} ]]; then

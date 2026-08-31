@@ -17,10 +17,9 @@ BIOMASS_REACTION_ID = "biomass_C"
 COQ9_DILUTION_ID = "COQ9_DILUTION"
 COQ9_DILUTION_CONSTRAINT_ID = "COQ9_DILUTION_GROWTH_COUPLING"
 COQ9_POOL_SOURCE_ID = "DFBA_Q9_POOL_SOURCE"
-ALPHA_SAMPLER_ID = "coq9_log10_triangular_v1"
+ALPHA_SAMPLER_ID = "coq9_log10_uniform_v2"
 ALPHA_LOW_MMOL_GDW = 1e-6
-ALPHA_MODE_MMOL_GDW = 1e-4
-ALPHA_HIGH_MMOL_GDW = 1e-3
+ALPHA_HIGH_MMOL_GDW = 1e-2
 CALIBRATION_STATUS = "sensitivity_only_not_calibrated"
 
 
@@ -40,11 +39,11 @@ def _alpha(value: float) -> float:
 
 
 def sample_coq9_alpha(base_seed: int, replicate_id: int) -> float:
-    """Draw one reproducible, log-space triangular CoQ9 coefficient."""
+    """Draw one reproducible log-uniform CoQ9 coefficient for one batch."""
     seed = _integer(base_seed, name="base_seed")
     replicate = _integer(replicate_id, name="replicate_id", minimum=0)
     rng = random.Random(f"{ALPHA_SAMPLER_ID}:{seed}:{replicate}")
-    log10_alpha = rng.triangular(-6.0, -3.0, -4.0)
+    log10_alpha = rng.uniform(-6.0, -2.0)
     return float(10.0**log10_alpha)
 
 
@@ -54,9 +53,8 @@ def alpha_sampling_record(base_seed: int, replicate_id: int) -> dict[str, object
         "sampler_id": ALPHA_SAMPLER_ID,
         "base_seed": _integer(base_seed, name="base_seed"),
         "replicate_id": _integer(replicate_id, name="replicate_id", minimum=0),
-        "distribution": "log10_triangular",
+        "distribution": "log10_uniform",
         "low_mmol_gDW": ALPHA_LOW_MMOL_GDW,
-        "mode_mmol_gDW": ALPHA_MODE_MMOL_GDW,
         "high_mmol_gDW": ALPHA_HIGH_MMOL_GDW,
         "alpha_mmol_gDW": sample_coq9_alpha(base_seed, replicate_id),
     }

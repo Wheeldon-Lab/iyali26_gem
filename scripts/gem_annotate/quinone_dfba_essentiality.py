@@ -41,7 +41,7 @@ from .validate_essential_genes import DEFAULT_CUTOFFS, load_experimental, reacti
 
 
 WORKFLOW = "quinone_dfba_essentiality"
-SCHEMA_VERSION = "1.6"
+SCHEMA_VERSION = "1.7"
 BIOMASS_ID = "biomass_C"
 URACIL_MODES = ("finite_batch", "po1f_nonlimiting")
 
@@ -416,9 +416,11 @@ def _alpha_samples(args: argparse.Namespace) -> list[dict[str, Any]]:
             alpha_sampling_record(args.alpha_seed, replicate_id)
             for replicate_id in range(args.alpha_replicates)
         ]
+    if args.alphas is None:
+        raise ValueError("--alpha-seed is required unless --alphas is explicitly supplied")
     if args.alpha_replicates != 1:
         raise ValueError("--alpha-replicates requires --alpha-seed")
-    alphas = DEFAULT_ALPHAS if args.alphas is None else tuple(args.alphas)
+    alphas = tuple(args.alphas)
     samples = []
     for alpha in alphas:
         value = float(alpha)
@@ -431,7 +433,6 @@ def _alpha_samples(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "replicate_id": None,
                 "distribution": "explicit",
                 "low_mmol_gDW": None,
-                "mode_mmol_gDW": None,
                 "high_mmol_gDW": None,
                 "alpha_mmol_gDW": value,
             }
@@ -799,12 +800,12 @@ def _parser() -> argparse.ArgumentParser:
         "--alphas",
         type=float,
         nargs="+",
-        help="explicit CoQ9 coefficients; defaults to the legacy 1e-6, 1e-4, 1e-3 grid",
+        help="explicit CoQ9 coefficients for a deliberate fixed-parameter control",
     )
     parser.add_argument(
         "--alpha-seed",
         type=int,
-        help="sample reproducible CoQ9 coefficients in log space; mutually exclusive with --alphas",
+        help="sample one reproducible log-uniform CoQ9 coefficient per batch; mutually exclusive with --alphas",
     )
     parser.add_argument(
         "--alpha-replicates",

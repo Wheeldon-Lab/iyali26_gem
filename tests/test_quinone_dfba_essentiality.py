@@ -72,13 +72,18 @@ def test_seeded_alpha_samples_are_fixed_before_gene_simulations():
 
     assert [item["replicate_id"] for item in samples] == [0, 1, 2]
     assert samples == dfba._alpha_samples(args)
-    assert all(1e-6 <= item["alpha_mmol_gDW"] <= 1e-3 for item in samples)
+    assert all(1e-6 <= item["alpha_mmol_gDW"] <= 1e-2 for item in samples)
+    assert {item["distribution"] for item in samples} == {"log10_uniform"}
 
     incompatible = parser.parse_args([
         "--research-root", "research", "--alpha-seed", "20260826", "--alphas", "1e-4",
     ])
     with pytest.raises(ValueError, match="cannot be combined"):
         dfba._alpha_samples(incompatible)
+
+    missing_seed = parser.parse_args(["--research-root", "research"])
+    with pytest.raises(ValueError, match="--alpha-seed is required"):
+        dfba._alpha_samples(missing_seed)
 
 
 def test_pool_multiplier_rejects_negative_or_nonfinite_values():
