@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from scripts.gem_annotate.isozyme_resolution import (
     build_isozyme_resolution_ledger,
     classify_isozyme_counterfactual,
 )
-
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _diagnostic(ko_ratio: float, closed_ratio: float) -> dict:
@@ -151,9 +148,13 @@ def test_resolution_ledger_keeps_chemistry_identity_and_evidence_separate(
     )
 
 
-def test_current_sha_isozyme_inventory_has_33_groups_and_10_causal() -> None:
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_current_sha_isozyme_inventory_has_33_groups_and_10_causal(
+    external_data_file,
+) -> None:
     table = pd.read_csv(
-        REPO_ROOT / "data" / "essentiality" / "isozyme_resolution_ledger.csv"
+        external_data_file("data/essentiality/isozyme_resolution_ledger.csv")
     )
     assert len(table) == 33
     assert set(table["model_sha256"]) == {

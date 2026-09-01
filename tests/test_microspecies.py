@@ -11,7 +11,6 @@ from cobra.io import read_sbml_model, write_sbml_model
 from scripts.gem_annotate import microspecies as microspecies_module
 from scripts.gem_annotate.metabolites import _apply_mnxm
 from scripts.gem_annotate.microspecies import (
-    DEFAULT_MICROSPECIES_TABLE,
     REFERENCE_PH,
     apply_curated_microspecies,
     audit_component_migration,
@@ -118,8 +117,13 @@ def _acid_base_table(tmp_path: Path, hydroxide_ids: str = "") -> Path:
     )
 
 
-def test_default_table_is_valid_and_defers_connected_families() -> None:
-    rows = load_curated_microspecies()
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_default_table_is_valid_and_defers_connected_families(
+    external_data_file,
+) -> None:
+    table_path = external_data_file("data/metabolite_microspecies.csv")
+    rows = load_curated_microspecies(table_path)
     assert {row.status for row in rows} == {
         "active",
         "component_review",
@@ -460,40 +464,78 @@ def test_proton_water_gate_requires_simultaneous_mass_and_charge_balance(
     )
 
 
-def test_real_model_active_subset_is_safe_and_r540_deferred() -> None:
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_real_model_active_subset_is_safe_and_r540_deferred(
+    external_data_file,
+) -> None:
     model_path = REPO_ROOT / "model.xml"
+    table_path = external_data_file("data/metabolite_microspecies.csv")
     before_sha = hashlib.sha256(model_path.read_bytes()).hexdigest()
     model = read_sbml_model(str(model_path))
     r540_before = model.reactions.get_by_id("R540").reaction
 
-    report = apply_curated_microspecies(model)
+    report = apply_curated_microspecies(model, table_path)
     assert report["balanced_reaction_regressions"] == []
-    assert report["active_families"] == 8
-    balance_report = balance_protons_and_water(model, reaction_ids=["R540"])
+    balance_report = balance_protons_and_water(
+        model, reaction_ids=["R540"], table_path=table_path
+    )
     assert model.reactions.get_by_id("R540").reaction == r540_before
     assert balance_report["changed_reactions"] == 0
-    assert balance_report["rejected"][0]["reason"] == "proton_gate"
-    assert model.metabolites.get_by_id("m1099[C_ex]").formula == "K"
-    assert model.metabolites.get_by_id("m1108[C_ex]").charge == 1
-    assert model.metabolites.get_by_id("m1893[C_cy]").charge == 2
-    assert model.metabolites.get_by_id("m884[C_cy]").formula == "C3H4O7P"
-    assert model.metabolites.get_by_id("m884[C_cy]").charge == -3
+    assert balance_report["changes"] == []
     assert model.reactions.get_by_id("R643").check_mass_balance() == {}
-    assert model.metabolites.get_by_id("m38[C_cy]").formula == "H3N"
-    assert any(
-        row["family_id"] == "gtp" and row["would_change"] for row in report["deferred"]
+    deferred = {row["family_id"]: row for row in report["deferred"]}
+    assert {
+        "diphosphate",
+        "gtp",
+        "mannose_1_phosphate",
+        "gdp_mannose",
+    } <= deferred.keys()
+    assert all(
+        deferred[family_id]["would_change"]
+        for family_id in ("diphosphate", "gtp", "mannose_1_phosphate")
     )
     # Pipeline helpers operate in memory; model.xml is still generated only by main().
     assert hashlib.sha256(model_path.read_bytes()).hexdigest() == before_sha
 
 
-def test_source_r540_is_not_rewritten_by_generic_balance() -> None:
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_real_model_active_subset_snapshot(external_data_file) -> None:
+    model_path = REPO_ROOT / "model.xml"
+    table_path = external_data_file("data/metabolite_microspecies.csv")
+    assert hashlib.sha256(model_path.read_bytes()).hexdigest() == (
+        "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
+    )
+    assert hashlib.sha256(table_path.read_bytes()).hexdigest() == (
+        "9ecd281be4402e60d4f44bb1b73c1def4ee21ce0756aa6df905e7d7eb4abac72"
+    )
+    model = read_sbml_model(str(model_path))
+    report = apply_curated_microspecies(model, table_path)
+
+    assert report["active_families"] == 8
+    assert model.metabolites.get_by_id("m1099[C_ex]").formula == "K"
+    assert model.metabolites.get_by_id("m1108[C_ex]").charge == 1
+    assert model.metabolites.get_by_id("m1893[C_cy]").charge == 2
+    assert model.metabolites.get_by_id("m884[C_cy]").formula == "C3H4O7P"
+    assert model.metabolites.get_by_id("m884[C_cy]").charge == -3
+    assert model.metabolites.get_by_id("m38[C_cy]").formula == "H3N"
+
+
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_source_r540_is_not_rewritten_by_generic_balance(
+    external_data_file,
+) -> None:
+    table_path = external_data_file("data/metabolite_microspecies.csv")
     model = read_sbml_model(str(REPO_ROOT / "data" / "iyali26.xml"))
     reaction = model.reactions.get_by_id("R540")
     before = {metabolite.id: coefficient for metabolite, coefficient in reaction.metabolites.items()}
 
-    apply_curated_microspecies(model)
-    report = balance_protons_and_water(model, reaction_ids=["R540"])
+    apply_curated_microspecies(model, table_path)
+    report = balance_protons_and_water(
+        model, reaction_ids=["R540"], table_path=table_path
+    )
 
     after = {metabolite.id: coefficient for metabolite, coefficient in reaction.metabolites.items()}
     assert after == before
@@ -511,5 +553,6 @@ def test_table_rejects_noncanonical_reference_ph(tmp_path: Path) -> None:
         load_curated_microspecies(table)
 
 
-def test_default_table_path_exists() -> None:
-    assert DEFAULT_MICROSPECIES_TABLE.exists()
+@pytest.mark.external_data
+def test_default_table_path_exists(external_data_file) -> None:
+    assert external_data_file("data/metabolite_microspecies.csv").is_file()

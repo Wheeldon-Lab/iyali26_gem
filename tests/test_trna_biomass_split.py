@@ -5,7 +5,6 @@ from cobra.io import read_sbml_model, write_sbml_model
 
 from scripts.gem_annotate.patches import split_trna_charging_from_biomass
 from scripts.gem_annotate.validate_essential_genes import (
-    DEFAULT_MEDIA,
     apply_media,
     load_media,
 )
@@ -16,8 +15,7 @@ UNSPLIT_MODEL_PATH = REPO_ROOT / "data" / "iyali26.xml"
 CANONICAL_MODEL_PATH = REPO_ROOT / "model.xml"
 
 
-@pytest.mark.integration
-def test_group_b_splits_all_twenty_trna_requirements_and_carries_flux(
+def test_group_b_splits_all_twenty_trna_requirements(
     tmp_path: Path,
 ) -> None:
     model = read_sbml_model(str(UNSPLIT_MODEL_PATH))
@@ -49,7 +47,22 @@ def test_group_b_splits_all_twenty_trna_requirements_and_carries_flux(
             residue: 1.0,
         }
 
-    apply_media(model, load_media(DEFAULT_MEDIA))
+    # The exact split state survives SBML serialization and remains idempotent.
+    roundtrip_path = tmp_path / "group_b_split.xml"
+    write_sbml_model(model, str(roundtrip_path))
+    roundtrip = read_sbml_model(str(roundtrip_path))
+    roundtrip_counts = (len(roundtrip.reactions), len(roundtrip.metabolites))
+    assert split_trna_charging_from_biomass(roundtrip) == []
+    assert (len(roundtrip.reactions), len(roundtrip.metabolites)) == roundtrip_counts
+
+
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_group_b_split_carries_sd_leu_flux(external_data_file) -> None:
+    model = read_sbml_model(str(UNSPLIT_MODEL_PATH))
+    audit = split_trna_charging_from_biomass(model)
+    apply_media(model, load_media(external_data_file("data/media/sd_leu.csv")))
+
     solution = model.optimize()
     assert solution.status == "optimal"
     assert solution.objective_value == pytest.approx(1.3284010586120676, rel=1e-9)
@@ -64,14 +77,6 @@ def test_group_b_splits_all_twenty_trna_requirements_and_carries_flux(
             rel=1e-9,
         )
 
-    # The exact split state survives SBML serialization and remains idempotent.
-    roundtrip_path = tmp_path / "group_b_split.xml"
-    write_sbml_model(model, str(roundtrip_path))
-    roundtrip = read_sbml_model(str(roundtrip_path))
-    roundtrip_counts = (len(roundtrip.reactions), len(roundtrip.metabolites))
-    assert split_trna_charging_from_biomass(roundtrip) == []
-    assert (len(roundtrip.reactions), len(roundtrip.metabolites)) == roundtrip_counts
-
 
 def test_group_b_rejects_a_partial_split_state() -> None:
     model = read_sbml_model(str(UNSPLIT_MODEL_PATH))
@@ -82,7 +87,6 @@ def test_group_b_rejects_a_partial_split_state() -> None:
         split_trna_charging_from_biomass(model)
 
 
-@pytest.mark.integration
 def test_canonical_model_contains_the_promoted_b_group_translation_layer() -> None:
     model = read_sbml_model(str(CANONICAL_MODEL_PATH))
     biomass = model.reactions.get_by_id("biomass_C")
@@ -96,7 +100,18 @@ def test_canonical_model_contains_the_promoted_b_group_translation_layer() -> No
     assert len(split_reactions) == 20
     assert split_trna_charging_from_biomass(model) == []
 
-    apply_media(model, load_media(DEFAULT_MEDIA))
+
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_canonical_group_b_layer_carries_sd_leu_flux(external_data_file) -> None:
+    model = read_sbml_model(str(CANONICAL_MODEL_PATH))
+    split_reactions = [
+        reaction
+        for reaction in model.reactions
+        if reaction.id.startswith("TRNA_BIOMASS_")
+    ]
+    apply_media(model, load_media(external_data_file("data/media/sd_leu.csv")))
+
     solution = model.optimize()
     assert solution.status == "optimal"
     assert solution.objective_value == pytest.approx(1.4492618988553534, rel=1e-9)

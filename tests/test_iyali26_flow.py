@@ -38,10 +38,6 @@ from scripts.gem_annotate.essentiality_evidence import target_fingerprint
 from scripts.gem_annotate.validate_essential_genes import load_assay_fitness
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-REAL_CONFIG = REPO_ROOT / "experiments" / "flow_matching" / "r4_r1846_phase1.json"
-
-
 def _anchor_rows() -> list[dict[str, object]]:
     rows = []
     for r4 in (0.025, 0.075, 0.15):
@@ -254,7 +250,9 @@ def test_parameter_bounds_logit_roundtrip_and_immutability() -> None:
 
 def test_sobol_reproducibility_and_configuration_validation(tmp_path: Path) -> None:
     config_path = _write_config(tmp_path)
-    config = load_experiment_config(config_path, repo_root=tmp_path)
+    config = load_experiment_config(
+        config_path, repo_root=tmp_path, research_root=tmp_path
+    )
     first = sobol_parameter_points(config, count=4, seed=7)
     second = sobol_parameter_points(config, count=4, seed=7)
     different = sobol_parameter_points(config, count=4, seed=8)
@@ -267,19 +265,25 @@ def test_sobol_reproducibility_and_configuration_validation(tmp_path: Path) -> N
     raw["unknown"] = True
     config_path.write_text(json.dumps(raw), encoding="utf-8")
     with pytest.raises(ValueError, match="unknown"):
-        load_experiment_config(config_path, repo_root=tmp_path)
+        load_experiment_config(
+            config_path, repo_root=tmp_path, research_root=tmp_path
+        )
 
 
 def test_input_sha_mismatch_is_rejected(tmp_path: Path) -> None:
     config_path = _write_config(tmp_path)
-    config = load_experiment_config(config_path, repo_root=tmp_path)
+    config = load_experiment_config(
+        config_path, repo_root=tmp_path, research_root=tmp_path
+    )
     config.input_map["media"].path.write_text("changed", encoding="utf-8")
     with pytest.raises(ValueError, match="SHA is stale"):
         config.verify_inputs()
 
 
-def test_phase1_decision_gates() -> None:
-    config = load_experiment_config(REAL_CONFIG, repo_root=REPO_ROOT)
+def test_phase1_decision_gates(tmp_path: Path) -> None:
+    config = load_experiment_config(
+        _write_config(tmp_path), repo_root=tmp_path, research_root=tmp_path
+    )
     affine = AffineDiagnostics(((0.0, 0.0),), 0.001, 0.0001, (1.0, 1.0))
     posterior = {
         "coverage_by_sigma": {0.005: 0.9, 0.02: 0.9},
@@ -315,7 +319,9 @@ def test_checkpoint_resume_and_partial_timeout_manifest(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    config = load_experiment_config(_write_config(tmp_path), repo_root=tmp_path)
+    config = load_experiment_config(
+        _write_config(tmp_path), repo_root=tmp_path, research_root=tmp_path
+    )
     monkeypatch.setattr(
         experiment_module,
         "R4R1846CapacitySimulator",
@@ -383,7 +389,9 @@ def test_cli_phase1_analyze_and_conditional_train(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    config = load_experiment_config(_write_config(tmp_path), repo_root=tmp_path)
+    config = load_experiment_config(
+        _write_config(tmp_path), repo_root=tmp_path, research_root=tmp_path
+    )
     output = tmp_path / "cli_results"
 
     class FakeRunner:
@@ -419,15 +427,23 @@ def test_cli_phase1_analyze_and_conditional_train(
     monkeypatch.setattr(flow_cli, "load_experiment_config", lambda *args, **kwargs: config)
     monkeypatch.setattr(flow_cli, "ExperimentRunner", FakeRunner)
     monkeypatch.setattr(flow_cli, "_install_alarm", lambda _seconds: None)
-    assert flow_cli.main(["phase1", "--config", "x", "--output", str(output)]) == 124
-    assert flow_cli.main(["analyze", "--config", "x", "--output", str(output)]) == 0
+    common_args = [
+        "--config",
+        "x",
+        "--output",
+        str(output),
+        "--research-root",
+        str(tmp_path),
+    ]
+    assert flow_cli.main(["phase1", *common_args]) == 124
+    assert flow_cli.main(["analyze", *common_args]) == 0
 
     monkeypatch.setattr(
         flow_cli,
         "train_fmpe",
         lambda _config, _output: {"acceptance_pass": True},
     )
-    assert flow_cli.main(["train-fmpe", "--config", "x", "--output", str(output)]) == 0
+    assert flow_cli.main(["train-fmpe", *common_args]) == 0
 
 
 def _toy_model() -> Model:
@@ -608,7 +624,12 @@ def _toy_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         },
         solver="glpk",
     )
-    return load_experiment_config(config_path, repo_root=tmp_path), model_path
+    return (
+        load_experiment_config(
+            config_path, repo_root=tmp_path, research_root=tmp_path
+        ),
+        model_path,
+    )
 
 
 def test_toy_targeted_full_fidelity_and_no_input_mutation(
@@ -636,19 +657,31 @@ def test_toy_targeted_full_fidelity_and_no_input_mutation(
     assert sha256_file(model_path) == before
 
 
-@pytest.mark.integration
-def test_real_model_rejects_any_stale_configured_input() -> None:
-    config = load_experiment_config(REAL_CONFIG, repo_root=REPO_ROOT)
-    model_path = config.input_map["model"].path
-    before = sha256_file(model_path)
-    configured_sha = config.input_map["model"].sha256
+def test_simulator_rejects_stale_input_without_mutation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, model_path = _toy_config(tmp_path, monkeypatch)
+    config.input_map["media"].path.write_text("changed", encoding="utf-8")
+    before_inputs = {
+        name: spec.path.read_bytes() for name, spec in config.inputs
+    }
+    before_model = read_sbml_model(str(model_path))
+    before_reactions = tuple(reaction.id for reaction in before_model.reactions)
+    before_gprs = {
+        reaction.id: reaction.gene_reaction_rule
+        for reaction in before_model.reactions
+    }
 
-    assert configured_sha == (
-        "39f4cae11c3f270400c8a227c78b6af3ed412e85b1ade6cb604b0f85c3d8b1d9"
-    )
-    assert before == (
-        "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
-    )
-    with pytest.raises(ValueError, match=r"configured (?:model|media) SHA is stale"):
+    with pytest.raises(ValueError, match="configured media SHA is stale"):
         R4R1846CapacitySimulator(config)
-    assert sha256_file(model_path) == before
+
+    assert {
+        name: spec.path.read_bytes() for name, spec in config.inputs
+    } == before_inputs
+    after_model = read_sbml_model(str(model_path))
+    assert tuple(reaction.id for reaction in after_model.reactions) == before_reactions
+    assert {
+        reaction.id: reaction.gene_reaction_rule
+        for reaction in after_model.reactions
+    } == before_gprs

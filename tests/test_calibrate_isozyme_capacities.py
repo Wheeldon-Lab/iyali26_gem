@@ -13,16 +13,6 @@ from scripts.gem_annotate.provisional_capacity import load_provisional_capacity_
 from scripts.gem_annotate.validate_essential_genes import load_assay_fitness
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-GRID_PATH = (
-    REPO_ROOT
-    / "data"
-    / "essentiality"
-    / "scenarios"
-    / "provisional_capacity_joint_grid.csv"
-)
-
-
 def _toy_model() -> Model:
     model = Model("toy_joint_capacity")
     a = Metabolite("a_c", compartment="c")
@@ -88,6 +78,38 @@ def _toy_model() -> Model:
     )
     model.objective = biomass
     return model
+
+
+def _write_approved_grid(path: Path) -> Path:
+    fieldnames = [
+        "scenario_id",
+        "r4_capacity_fraction_of_wt_flux",
+        "r1846_capacity_fraction_of_wt_flux",
+        "exploratory_only",
+        "basis",
+        "rationale",
+    ]
+    rows = [
+        {
+            "scenario_id": f"R4_{r4_label}__R1846_{r1846_label}",
+            "r4_capacity_fraction_of_wt_flux": r4,
+            "r1846_capacity_fraction_of_wt_flux": r1846,
+            "exploratory_only": "true",
+            "basis": "toy_approved_grid",
+            "rationale": "test only",
+        }
+        for r4_label, r4 in (("0p025", 0.025), ("0p075", 0.075), ("0p150", 0.15))
+        for r1846_label, r1846 in (
+            ("0p010", 0.01),
+            ("0p025", 0.025),
+            ("0p050", 0.05),
+        )
+    ]
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+    return path
 
 
 def _reaction_fingerprint(model: Model, reaction_id: str) -> str:
@@ -232,7 +254,7 @@ def toy_inputs(tmp_path: Path) -> dict[str, Path]:
     return {
         "model_path": model_path,
         "profile_path": profile_path,
-        "grid_path": GRID_PATH,
+        "grid_path": _write_approved_grid(tmp_path / "approved-grid.csv"),
         "experimental_path": experimental_path,
         "assay_fitness_path": assay_path,
         "media_path": media_path,
@@ -240,10 +262,23 @@ def toy_inputs(tmp_path: Path) -> dict[str, Path]:
     }
 
 
-def test_approved_grid_is_exact_and_cli_defaults_to_gurobi() -> None:
-    grid = calibration.load_joint_capacity_grid(GRID_PATH)
+def test_approved_grid_is_exact_and_cli_defaults_to_gurobi(tmp_path: Path) -> None:
+    grid = calibration.load_joint_capacity_grid(
+        _write_approved_grid(tmp_path / "approved-grid.csv")
+    )
 
     assert len(grid) == 9
+    assert set(grid["scenario_id"]) == {
+        "R4_0p025__R1846_0p010",
+        "R4_0p025__R1846_0p025",
+        "R4_0p025__R1846_0p050",
+        "R4_0p075__R1846_0p010",
+        "R4_0p075__R1846_0p025",
+        "R4_0p075__R1846_0p050",
+        "R4_0p150__R1846_0p010",
+        "R4_0p150__R1846_0p025",
+        "R4_0p150__R1846_0p050",
+    }
     assert set(grid["r4_capacity_fraction_of_wt_flux"]) == {0.025, 0.075, 0.15}
     assert set(grid["r1846_capacity_fraction_of_wt_flux"]) == {0.01, 0.025, 0.05}
     args = calibration.build_parser().parse_args([])
@@ -395,7 +430,9 @@ def test_checkpoint_resume_gates_and_candidate_are_provenance_locked(
         calibration.CANDIDATE_PROFILE_NAME,
     ):
         assert (output_dir / filename).is_file()
-    for scenario_id in calibration.load_joint_capacity_grid(GRID_PATH)["scenario_id"]:
+    for scenario_id in calibration.load_joint_capacity_grid(toy_inputs["grid_path"])[
+        "scenario_id"
+    ]:
         scenario_dir = output_dir / "scenarios" / scenario_id
         assert (scenario_dir / calibration.SCENARIO_TABLE_NAME).is_file()
         summary_path = scenario_dir / calibration.SCENARIO_SUMMARY_NAME

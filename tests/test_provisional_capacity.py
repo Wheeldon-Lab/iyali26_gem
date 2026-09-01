@@ -340,25 +340,33 @@ def test_trna_biomass_overlay_cannot_overwrite_canonical_model() -> None:
         )
 
 
-def test_current_profile_is_rejected_after_reference_model_changes() -> None:
-    model = read_sbml_model(str(REPO_ROOT / "model.xml"))
-    reaction_count = len(model.reactions)
-    original_gprs = {
-        reaction_id: model.reactions.get_by_id(reaction_id).gene_reaction_rule
-        for reaction_id in ("R4", "R1846")
+def test_profile_is_rejected_after_reference_model_changes(tmp_path: Path) -> None:
+    model = _toy_model()
+    profile = tmp_path / "profile.csv"
+    _write_toy_profile(profile, model)
+    model.reactions.get_by_id("R_ISO").upper_bound = 900.0
+    before_profile = profile.read_bytes()
+    before_reactions = tuple(reaction.id for reaction in model.reactions)
+    before_gprs = {
+        reaction.id: reaction.gene_reaction_rule for reaction in model.reactions
+    }
+    before_bounds = {
+        reaction.id: reaction.bounds for reaction in model.reactions
     }
 
-    with pytest.raises(ValueError, match="calibrated against model SHA"):
+    with pytest.raises(ValueError, match="target fingerprint is stale"):
         apply_provisional_isozyme_capacities(
             model,
-            PROFILE_PATH,
-            reference_model_sha256=sha256_file(REPO_ROOT / "model.xml"),
+            profile,
+            reference_model_sha256="toy-sha",
         )
 
-    assert len(model.reactions) == reaction_count
-    assert "R4__PCAP_BACKUP" not in model.reactions
-    assert "R1846__PCAP_BACKUP" not in model.reactions
+    assert profile.read_bytes() == before_profile
+    assert tuple(reaction.id for reaction in model.reactions) == before_reactions
     assert {
-        reaction_id: model.reactions.get_by_id(reaction_id).gene_reaction_rule
-        for reaction_id in ("R4", "R1846")
-    } == original_gprs
+        reaction.id: reaction.gene_reaction_rule for reaction in model.reactions
+    } == before_gprs
+    assert {
+        reaction.id: reaction.bounds for reaction in model.reactions
+    } == before_bounds
+    assert "R_ISO__PCAP_BACKUP" not in model.reactions

@@ -42,5 +42,6 @@ namespaces = true
 pythonpath = [".", "src"]
 testpaths = ["tests"]
 markers = [
+    "external_data: requires files from the configured IYALI26_RESEARCH_ROOT workspace",
     "integration: exercises the current iYali26 model and configured solver",
 ]

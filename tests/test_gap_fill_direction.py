@@ -5,14 +5,34 @@ from cobra import Metabolite, Model, Reaction
 from cobra.io import read_sbml_model
 from memote.support import consistency
 
+from scripts.gem_annotate import gaps as gaps_module
 from scripts.gem_annotate.gap_fill_direction import (
-    DEFAULT_GAP_FILL_DIRECTION_TABLE,
     load_gap_fill_direction_curation,
 )
 from scripts.gem_annotate.gaps import add_gap_fill_reactions
+from scripts.gem_annotate.locus_resolver import LocusCrosswalk
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture
+def toy_gap_fill_resolver(monkeypatch, tmp_path: Path) -> LocusCrosswalk:
+    iyli21 = tmp_path / "iyli21_genes_vs_S2.csv"
+    iyli21.write_text(
+        "model_gene,yali1_s2,yali0,category,n_reactions\n",
+        encoding="utf-8",
+    )
+    metabolic = tmp_path / "s2_metabolic_genes.csv"
+    metabolic.write_text(
+        "yali1,yali0,geneid,metab_pathways,ec,verdict,in_model\n",
+        encoding="utf-8",
+    )
+    resolver = LocusCrosswalk.from_csvs(iyli21, metabolic)
+    monkeypatch.setattr(
+        gaps_module, "load_default_locus_crosswalk", lambda: resolver
+    )
+    return resolver
 
 
 def _toy_gap_fill_inputs(tmp_path: Path) -> tuple[Model, Path]:
@@ -46,7 +66,9 @@ def _write_direction_table(tmp_path: Path, *, reaction: str = "TEST_c") -> Path:
     return table
 
 
-def test_curated_direction_reverses_equation_and_sets_bounds(tmp_path: Path) -> None:
+def test_curated_direction_reverses_equation_and_sets_bounds(
+    tmp_path: Path, toy_gap_fill_resolver: LocusCrosswalk
+) -> None:
     model, candidates = _toy_gap_fill_inputs(tmp_path)
     curation = _write_direction_table(tmp_path)
 
@@ -66,7 +88,9 @@ def test_curated_direction_reverses_equation_and_sets_bounds(tmp_path: Path) -> 
     assert stats["uncurated_direction"] == []
 
 
-def test_uncurated_legacy_direction_is_reported(tmp_path: Path) -> None:
+def test_uncurated_legacy_direction_is_reported(
+    tmp_path: Path, toy_gap_fill_resolver: LocusCrosswalk
+) -> None:
     model, candidates = _toy_gap_fill_inputs(tmp_path)
 
     stats = add_gap_fill_reactions(
@@ -82,7 +106,9 @@ def test_uncurated_legacy_direction_is_reported(tmp_path: Path) -> None:
     assert stats["uncurated_direction"] == ["TEST_c"]
 
 
-def test_curated_existing_reaction_prevents_sphpl_reinsertion(tmp_path: Path) -> None:
+def test_curated_existing_reaction_prevents_sphpl_reinsertion(
+    tmp_path: Path, toy_gap_fill_resolver: LocusCrosswalk
+) -> None:
     model = Model("curated-existing-reaction-test")
     model.add_reactions([Reaction("R730")])
     candidates = tmp_path / "gap_fill_prioritized.csv"
@@ -101,6 +127,7 @@ def test_curated_existing_reaction_prevents_sphpl_reinsertion(tmp_path: Path) ->
 
 def test_curated_existing_reaction_fails_closed_when_target_is_absent(
     tmp_path: Path,
+    toy_gap_fill_resolver: LocusCrosswalk,
 ) -> None:
     candidates = tmp_path / "gap_fill_prioritized.csv"
     candidates.write_text(
@@ -118,7 +145,9 @@ def test_curated_existing_reaction_fails_closed_when_target_is_absent(
         )
 
 
-def test_stale_direction_row_is_rejected(tmp_path: Path) -> None:
+def test_stale_direction_row_is_rejected(
+    tmp_path: Path, toy_gap_fill_resolver: LocusCrosswalk
+) -> None:
     model, candidates = _toy_gap_fill_inputs(tmp_path)
     curation = _write_direction_table(tmp_path, reaction="OTHER_c")
 
@@ -131,8 +160,14 @@ def test_stale_direction_row_is_rejected(tmp_path: Path) -> None:
         )
 
 
-def test_real_direction_table_contains_verified_egc_roots() -> None:
-    rows = load_gap_fill_direction_curation(DEFAULT_GAP_FILL_DIRECTION_TABLE)
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_real_direction_table_contains_verified_egc_roots(
+    external_data_file,
+) -> None:
+    rows = load_gap_fill_direction_curation(
+        external_data_file("data/gap_fill_direction_curation.csv")
+    )
 
     assert {
         reaction_id: (row.stoichiometry_action, row.lower_bound, row.upper_bound)

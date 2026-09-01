@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from cobra import Metabolite, Model, Reaction
@@ -6,8 +7,6 @@ from cobra.io import read_sbml_model, write_sbml_model
 from cobra.manipulation.delete import knock_out_model_genes
 
 from scripts.gem_annotate.validate_essential_genes import (
-    DEFAULT_EXPERIMENTAL,
-    DEFAULT_MEDIA,
     IRON_EXCHANGE_ID,
     LEUCINE_EXCHANGE_ID,
     REPO_ROOT,
@@ -25,7 +24,9 @@ from scripts.gem_annotate.patches import apply_curated_essentiality_patches
 
 
 MODEL_PATH = REPO_ROOT / "model.xml"
-SOURCE_XLSX = DEFAULT_EXPERIMENTAL.with_name("42003_2023_4996_MOESM10_ESM.xlsx")
+EXPERIMENTAL_PATH = Path("data/essentiality/consensus_essential_genes.csv")
+MEDIA_PATH = Path("data/media/sd_leu.csv")
+PATCHES_PATH = Path("data/essentiality/curated_model_patches.csv")
 
 
 def test_normalize_gene_id() -> None:
@@ -56,13 +57,18 @@ def test_runtime_pseudo_gene_can_be_excluded_from_deletion_screen() -> None:
     assert predictions["gene_id"].tolist() == ["real_gene"]
 
 
-def test_positive_only_source_requires_explicit_flag() -> None:
+def test_positive_only_source_requires_explicit_flag(tmp_path) -> None:
+    positive_only = tmp_path / "positive_only.csv"
+    positive_only.write_text("gene_id\nYALI1_A00309g\n")
     with pytest.raises(ValueError, match="positive-only"):
-        load_experimental(SOURCE_XLSX, positive_only=False)
+        load_experimental(positive_only, positive_only=False)
 
 
-def test_reference_counts_and_model_intersection() -> None:
-    experimental = load_experimental(DEFAULT_EXPERIMENTAL, positive_only=True)
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_reference_counts_and_model_intersection(external_data_file) -> None:
+    experimental_path = external_data_file(EXPERIMENTAL_PATH)
+    experimental = load_experimental(experimental_path, positive_only=True)
     model = read_sbml_model(str(MODEL_PATH))
     experimental_ids = set(experimental["gene_id"])
     model_ids = {gene.id for gene in model.genes}
@@ -73,9 +79,11 @@ def test_reference_counts_and_model_intersection() -> None:
     assert len(experimental_ids - model_ids) == 1290
 
 
-def test_sd_leu_medium_and_wild_type_growth() -> None:
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_sd_leu_medium_and_wild_type_growth(external_data_file) -> None:
     model = read_sbml_model(str(MODEL_PATH))
-    media = load_media(DEFAULT_MEDIA)
+    media = load_media(external_data_file(MEDIA_PATH))
     active = apply_media(model, media)
     model.solver = "glpk"
     growth = model.slim_optimize()
@@ -129,9 +137,13 @@ def test_verified_bypass_excludes_globally_essential_dependency() -> None:
     assert verified == ["ALT"]
 
 
-def test_translation_candidates_are_audited_but_not_connected() -> None:
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_translation_candidates_are_audited_but_not_connected(
+    external_data_file,
+) -> None:
     model = read_sbml_model(str(MODEL_PATH))
-    apply_media(model, load_media(DEFAULT_MEDIA))
+    apply_media(model, load_media(external_data_file(MEDIA_PATH)))
     rows, summary = audit_translation_module(model)
 
     assert len(rows) == 20
@@ -343,20 +355,33 @@ def test_schema_v2_post_patch_gate_rejects_mass_imbalance() -> None:
         )
 
 
-def test_current_input_sha256_values_are_stable() -> None:
+def test_current_model_sha256_is_stable() -> None:
     assert sha256_file(MODEL_PATH) == (
         "bc2aac8fecd8f2f5f20de7bb3c988bf46b3a5831e525f556498ed51159bc1bee"
     )
-    assert sha256_file(DEFAULT_EXPERIMENTAL) == (
+
+
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_current_external_input_sha256_values_are_stable(
+    external_data_file,
+) -> None:
+    assert sha256_file(external_data_file(EXPERIMENTAL_PATH)) == (
         "1e887f5ad4a95827a49b6c86894edaca410bdba3d264ff0d25193dedef3a659b"
     )
-    assert sha256_file(DEFAULT_MEDIA) == (
+    assert sha256_file(external_data_file(MEDIA_PATH)) == (
         "ed176d26a373f98cc413ed2e32a71f5f060a06e343f90f7db25cd32eff268e85"
     )
 
 
-def test_cpa_ura2_partition_is_idempotent_and_growth_safe(tmp_path) -> None:
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_cpa_ura2_partition_is_idempotent_and_growth_safe(
+    tmp_path, external_data_file
+) -> None:
     model = read_sbml_model(str(MODEL_PATH))
+    patches_path = external_data_file(PATCHES_PATH)
+    media_path = external_data_file(MEDIA_PATH)
     before_counts = (len(model.reactions), len(model.metabolites), len(model.genes))
     audited_reactions = ("R159", "R190", "R607")
     before_unbalanced = {
@@ -364,8 +389,8 @@ def test_cpa_ura2_partition_is_idempotent_and_growth_safe(tmp_path) -> None:
         for reaction_id in audited_reactions
     }
 
-    first = apply_curated_essentiality_patches(model)
-    second = apply_curated_essentiality_patches(model)
+    first = apply_curated_essentiality_patches(model, str(patches_path))
+    second = apply_curated_essentiality_patches(model, str(patches_path))
 
     assert [row["patch_id"] for row in first] == ["EG-GPR-001"]
     assert [row["patch_id"] for row in second] == ["EG-GPR-001"]
@@ -398,7 +423,7 @@ def test_cpa_ura2_partition_is_idempotent_and_growth_safe(tmp_path) -> None:
         == "Arginine and proline metabolism"
     )
 
-    apply_media(model, load_media(DEFAULT_MEDIA))
+    apply_media(model, load_media(media_path))
     model.solver = "glpk"
     wt_growth = float(model.slim_optimize())
     assert wt_growth == pytest.approx(1.4492618988553403, rel=1e-9)

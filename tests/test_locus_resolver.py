@@ -4,13 +4,13 @@ from pathlib import Path
 import pytest
 from cobra import Metabolite, Model, Reaction
 
+from scripts.gem_annotate import gaps as gaps_module
 from scripts.gem_annotate import genes
 from scripts.gem_annotate.gaps import _load_gene_cache, add_gap_fill_reactions
 from scripts.gem_annotate.locus_resolver import (
     AmbiguousLocusMappingError,
     LocusCrosswalk,
     canonical_locus_key,
-    load_default_locus_crosswalk,
     locus_spelling_variants,
 )
 
@@ -30,6 +30,28 @@ def _write_crosswalks(
         encoding="utf-8",
     )
     return LocusCrosswalk.from_csvs(iyli21, metabolic)
+
+
+def _toy_safe_alias_crosswalk(tmp_path: Path) -> LocusCrosswalk:
+    return _write_crosswalks(
+        tmp_path,
+        "YALI1C32184g,YALI1_C32184g,YALI0C23364g,has_YALI0,1\n",
+        "",
+    )
+
+
+def _external_crosswalk(external_data_file) -> LocusCrosswalk:
+    return LocusCrosswalk.from_csvs(
+        external_data_file(
+            "data/yali1_yali0_map/iyli21_genes_vs_S2.csv"
+        ),
+        external_data_file(
+            "data/yali1_yali0_map/s2_metabolic_genes.csv"
+        ),
+        identity_exclusions_path=external_data_file(
+            "data/essentiality/curated_locus_identity_exclusions.csv"
+        ),
+    )
 
 
 def _model_with_gene(gene_id: str) -> Model:
@@ -53,8 +75,12 @@ def test_spelling_normalisation_preserves_assembly() -> None:
     }
 
 
-def test_explicit_crosswalk_resolves_real_alias_but_rejects_same_suffix_alias() -> None:
-    resolver = load_default_locus_crosswalk()
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_explicit_crosswalk_resolves_real_alias_but_rejects_same_suffix_alias(
+    external_data_file,
+) -> None:
+    resolver = _external_crosswalk(external_data_file)
     lookup = resolver.build_lookup(["YALI1C32184g"])
 
     assert lookup["yali1c32184g"] == "YALI1C32184g"
@@ -79,8 +105,12 @@ def test_crosswalk_refuses_entire_ambiguous_component(tmp_path: Path) -> None:
     assert "yali0a00009g" not in lookup
 
 
-def test_r289_cross_assembly_mappings_are_explicit_and_one_to_one() -> None:
-    resolver = load_default_locus_crosswalk()
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_r289_cross_assembly_mappings_are_explicit_and_one_to_one(
+    external_data_file,
+) -> None:
+    resolver = _external_crosswalk(external_data_file)
     r289_pairs = {
         "YALI0C23364g": "YALI1C32184g",
         "YALI0E05929g": "YALI1E07121g",
@@ -94,8 +124,12 @@ def test_r289_cross_assembly_mappings_are_explicit_and_one_to_one() -> None:
         assert resolver.counterpart(yali0) == canonical_locus_key(yali1)
 
 
-def test_evidence_backed_competing_orf_crosswalk_is_excluded() -> None:
-    resolver = load_default_locus_crosswalk()
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_evidence_backed_competing_orf_crosswalk_is_excluded(
+    external_data_file,
+) -> None:
+    resolver = _external_crosswalk(external_data_file)
     excluded_pair = (
         canonical_locus_key("YALI1_E18171g"),
         canonical_locus_key("YALI0E15125g"),
@@ -108,7 +142,9 @@ def test_evidence_backed_competing_orf_crosswalk_is_excluded() -> None:
     assert canonical_locus_key("YALI0E15125g") not in lookup
 
 
-def test_tier_a_uses_crosswalk_but_not_fabricated_same_suffix(monkeypatch) -> None:
+def test_tier_a_uses_crosswalk_but_not_fabricated_same_suffix(
+    monkeypatch, tmp_path: Path
+) -> None:
     entries = [
         {
             "primaryAccession": "GOOD",
@@ -127,7 +163,7 @@ def test_tier_a_uses_crosswalk_but_not_fabricated_same_suffix(monkeypatch) -> No
     monkeypatch.setattr(genes, "_fetch_proteome", lambda _proteome_id: entries)
 
     mapping = genes._tier_a(
-        ["YALI1C32184g"], resolver=load_default_locus_crosswalk()
+        ["YALI1C32184g"], resolver=_toy_safe_alias_crosswalk(tmp_path)
     )
 
     assert mapping == {"YALI1C32184g": {"uniprot": ["GOOD"]}}
@@ -161,7 +197,7 @@ def test_tier_b_queries_only_exact_safe_spellings(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(genes, "_request_with_retry", request)
 
     mapping = genes._tier_b(
-        ["YALI1C32184g"], resolver=load_default_locus_crosswalk()
+        ["YALI1C32184g"], resolver=_toy_safe_alias_crosswalk(tmp_path)
     )
 
     assert mapping == {"YALI1C32184g": {"uniprot": ["GOOD"]}}
@@ -199,7 +235,7 @@ def test_ncbi_tier_rejects_fabricated_same_suffix_alias(
     monkeypatch.setattr(genes, "_request_with_retry", request)
 
     mapping = genes._tier_ncbi(
-        ["YALI1C32184g"], resolver=load_default_locus_crosswalk()
+        ["YALI1C32184g"], resolver=_toy_safe_alias_crosswalk(tmp_path)
     )
 
     assert mapping == {}
@@ -212,7 +248,9 @@ def test_gap_gene_cache_rejects_legacy_false_alias(tmp_path: Path) -> None:
         json.dumps({"yali0c32184g": "YALI1C32184g"}), encoding="utf-8"
     )
 
-    lookup = _load_gene_cache(cache_path, model)
+    lookup = _load_gene_cache(
+        cache_path, model, resolver=_toy_safe_alias_crosswalk(tmp_path)
+    )
 
     assert lookup["yali0c23364g"] == "YALI1C32184g"
     assert "yali0c32184g" not in lookup
@@ -221,7 +259,7 @@ def test_gap_gene_cache_rejects_legacy_false_alias(tmp_path: Path) -> None:
 
 
 def test_gap_fill_skips_unresolved_cross_assembly_gene_without_creating_it(
-    tmp_path: Path,
+    monkeypatch, tmp_path: Path,
 ) -> None:
     model = _model_with_gene("YALI1C32184g")
     substrate = Metabolite("substrate", formula="C", compartment="C_cy")
@@ -240,6 +278,10 @@ def test_gap_fill_skips_unresolved_cross_assembly_gene_without_creating_it(
         encoding="utf-8",
     )
 
+    resolver = _toy_safe_alias_crosswalk(tmp_path)
+    monkeypatch.setattr(
+        gaps_module, "load_default_locus_crosswalk", lambda: resolver
+    )
     stats = add_gap_fill_reactions(model, table, cache_dir=tmp_path / "cache")
 
     assert stats["added"] == ["SAFE_c"]

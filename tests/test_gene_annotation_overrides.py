@@ -91,10 +91,15 @@ def test_override_rejects_duplicate_gene_rows(tmp_path):
         apply_curated_gene_annotation_overrides(model, table_path)
 
 
-def test_repository_override_corrects_base_model_identity():
+@pytest.mark.external_data
+@pytest.mark.integration
+def test_repository_override_corrects_base_model_identity(external_data_file):
     model = read_sbml_model(str(REPO_ROOT / "data" / "iyali26.xml"))
 
-    assert apply_curated_gene_annotation_overrides(model) == 1
+    table_path = external_data_file(
+        "data/essentiality/curated_gene_annotation_overrides.csv"
+    )
+    assert apply_curated_gene_annotation_overrides(model, table_path) == 1
     annotation = model.genes.get_by_id("YALI1E08382g").annotation
     assert annotation["uniprot"] == ["Q6C6R1"]
     assert annotation["kegg.genes"] == ["yli:2912425"]
