@@ -17,6 +17,9 @@ from scripts.gem_annotate.summarize_quinone_dfba import (
     write_hypothesis_matrix,
 )
 from scripts.gem_annotate.coq9_dilution import (
+    COQ9_DILUTION_CONSTRAINT_ID,
+    COQ9_DILUTION_ID,
+    COQ9_POOL_SOURCE_ID,
     add_runtime_coq9_pool_source,
     apply_runtime_coq9_dilution,
     runtime_coq9_dilution_record,
@@ -99,6 +102,66 @@ def test_pool_multiplier_rejects_negative_or_nonfinite_values():
         dfba._gene_ids(_toy_model(), "qgene,qgene", (), 0, 1)
 
 
+def test_trajectory_rows_are_explicit_euler_intervals_and_continuous(monkeypatch):
+    monkeypatch.setattr(dfba, "INITIAL_POOLS_MMOL_L", {"R1070": 10.0, "R1354": 5.0})
+    steps = iter([
+        (0.4, 0.2, -0.3, -0.1),
+        (0.2, 0.0, -0.4, -0.2),
+    ])
+
+    def optimize(_model, source):
+        growth, q9_source, glucose, uracil = next(steps)
+        return growth, SimpleNamespace(
+            status="optimal",
+            fluxes={source.id: q9_source, "R1070": glucose, "R1354": uracil},
+        )
+
+    monkeypatch.setattr(dfba, "_optimize_minimal_pool", optimize)
+    model = _toy_model()
+    result, trace = dfba.simulate_gene(
+        model, gene_id="qgene", alpha=0.1, pool_multiplier=1,
+        hours=1, dt=0.5, initial_biomass=1,
+    )
+
+    assert [row["step_index"] for row in trace] == [0, 1]
+    assert [row["interval_advanced"] for row in trace] == [True, True]
+    assert [(row["time_h"], row["time_end_h"]) for row in trace] == [(0.0, 0.5), (0.5, 1.0)]
+    assert trace[0]["biomass_end_gDW_L"] == pytest.approx(
+        trace[0]["biomass_gDW_L"] * (1 + trace[0]["growth_h-1"] * 0.5)
+    )
+    assert trace[0]["q9_pool_end_mmol_L"] == pytest.approx(
+        max(0, trace[0]["q9_pool_mmol_L"]
+            - trace[0]["q9_source_flux_mmol_gDW_h"] * trace[0]["biomass_gDW_L"] * 0.5)
+    )
+    assert trace[0]["glucose_end_mmol_L"] == pytest.approx(10.0 - 0.3 * 1.0 * 0.5)
+    assert trace[0]["uracil_end_mmol_L"] == pytest.approx(5.0 - 0.1 * 1.0 * 0.5)
+    for previous, current in zip(trace, trace[1:]):
+        assert previous["time_end_h"] == current["time_h"]
+        assert previous["biomass_end_gDW_L"] == current["biomass_gDW_L"]
+        assert previous["q9_pool_end_mmol_L"] == current["q9_pool_mmol_L"]
+        assert previous["glucose_end_mmol_L"] == current["glucose_mmol_L"]
+        assert previous["uracil_end_mmol_L"] == current["uracil_mmol_L"]
+    assert result["q9_pool_depleted_h"] == trace[0]["time_end_h"] == 0.5
+    assert result["final_biomass_gDW_L"] == trace[-1]["biomass_end_gDW_L"]
+    assert result["final_glucose_mmol_L"] == trace[-1]["glucose_end_mmol_L"]
+    assert result["final_uracil_mmol_L"] == trace[-1]["uracil_end_mmol_L"]
+    assert COQ9_POOL_SOURCE_ID not in model.reactions
+    assert COQ9_DILUTION_ID not in model.reactions
+    assert COQ9_DILUTION_CONSTRAINT_ID not in model.constraints
+
+
+def test_nonbinary_dt_keeps_exact_adjacent_times(monkeypatch):
+    monkeypatch.setattr(dfba, "INITIAL_POOLS_MMOL_L", {"R1070": 1e9, "R1354": 1e9})
+    _, trace = dfba.simulate_gene(
+        _toy_model(), gene_id=None, alpha=0, pool_multiplier=0,
+        hours=0.7, dt=0.1, initial_biomass=1,
+    )
+
+    assert len(trace) == 7
+    assert all(previous["time_end_h"] == current["time_h"] for previous, current in zip(trace, trace[1:]))
+    assert all(row["time_end_h"] == row["time_h"] + 0.1 for row in trace)
+
+
 def test_merge_uses_only_manifest_bound_calls_and_checks_their_hashes(tmp_path):
     output_dir = tmp_path / "run"
     output_dir.mkdir()
@@ -112,6 +175,7 @@ def test_merge_uses_only_manifest_bound_calls_and_checks_their_hashes(tmp_path):
         manifest = {
             "workflow": dfba.WORKFLOW,
             "schema_version": dfba.SCHEMA_VERSION,
+            "trajectory_semantics": dfba.TRAJECTORY_SEMANTICS,
             "run_id": "merge-test",
             "chunk_index": index,
             "chunk_count": 2,
@@ -137,9 +201,25 @@ def test_merge_uses_only_manifest_bound_calls_and_checks_their_hashes(tmp_path):
     )
     dfba._merge(SimpleNamespace(output_dir=str(output_dir)))
     assert set(pd.read_csv(output_dir / "essentiality_dynamic_calls.tsv", sep="\t")["gene_id"]) == {"g1", "g2"}
+    merge = json.loads((output_dir / "merge_manifest.json").read_text())
+    assert merge["schema_version"] == dfba.SCHEMA_VERSION == "1.8"
+    assert merge["trajectory_semantics"] == dfba.TRAJECTORY_SEMANTICS
 
     manifest_path = output_dir / "chunk_001_manifest.json"
     manifest = json.loads(manifest_path.read_text())
+    manifest["schema_version"] = "1.7"
+    manifest["fingerprint"] = dfba.sha256_payload({
+        key: value for key, value in manifest.items() if key != "fingerprint"
+    })
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="do not share one simulation context"):
+        dfba._merge(SimpleNamespace(output_dir=str(output_dir)))
+    manifest["schema_version"] = dfba.SCHEMA_VERSION
+    manifest["fingerprint"] = dfba.sha256_payload({
+        key: value for key, value in manifest.items() if key != "fingerprint"
+    })
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
     calls_sha = manifest["output_files"]["calls"]["sha256"]
     manifest["output_files"]["calls"]["sha256"] = "bad"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -174,6 +254,7 @@ def test_po1f_nonlimiting_uracil_keeps_base_bound_and_has_no_finite_pool(monkeyp
     assert math.isnan(nonlimiting["final_uracil_mmol_L"])
     assert all(row["uracil_mode"] == "po1f_nonlimiting" for row in trace)
     assert all(math.isnan(row["uracil_mmol_L"]) for row in trace)
+    assert all(math.isnan(row["uracil_end_mmol_L"]) for row in trace)
 
 
 def test_nonoptimal_step_is_recorded_once_without_reading_invalid_fluxes(monkeypatch):
@@ -186,8 +267,74 @@ def test_nonoptimal_step_is_recorded_once_without_reading_invalid_fluxes(monkeyp
     assert [row["status"] for row in trace] == ["optimal", "infeasible"]
     assert math.isnan(trace[-1]["growth_h-1"])
     assert math.isnan(trace[-1]["q9_source_flux_mmol_gDW_h"])
+    assert trace[-1]["time_end_h"] == trace[-1]["time_h"]
+    assert trace[-1]["interval_advanced"] is False
+    for start, end in (
+        ("biomass_gDW_L", "biomass_end_gDW_L"),
+        ("q9_pool_mmol_L", "q9_pool_end_mmol_L"),
+        ("glucose_mmol_L", "glucose_end_mmol_L"),
+        ("uracil_mmol_L", "uracil_end_mmol_L"),
+    ):
+        assert trace[-1][start] == trace[-1][end]
+    assert trace[0]["time_end_h"] == trace[1]["time_h"]
+    assert trace[0]["biomass_end_gDW_L"] == trace[1]["biomass_gDW_L"]
+    assert trace[0]["q9_pool_end_mmol_L"] == trace[1]["q9_pool_mmol_L"]
+    assert trace[0]["glucose_end_mmol_L"] == trace[1]["glucose_mmol_L"]
+    assert trace[0]["uracil_end_mmol_L"] == trace[1]["uracil_mmol_L"]
     assert result["termination_status"] == "infeasible"
     assert result["termination_time_h"] == 0.5
+
+
+def test_calls_level_results_and_cutoffs_match_the_prefixed_oracle(monkeypatch):
+    monkeypatch.setattr(dfba, "INITIAL_POOLS_MMOL_L", {"R1070": 1000.0, "R1354": 1000.0})
+    arguments = {
+        "alpha": 0.1,
+        "pool_multiplier": 1,
+        "hours": 1,
+        "dt": 0.5,
+        "initial_biomass": 1,
+        "uracil_mode": "finite_batch",
+    }
+    wt_model = _toy_model()
+    ko_model = _toy_model()
+    wt, _ = dfba.simulate_gene(wt_model, gene_id=None, **arguments)
+    ko, _ = dfba.simulate_gene(ko_model, gene_id="qgene", **arguments)
+
+    expected_wt = {
+        "final_biomass_gDW_L": 910.0909090909091,
+        "dynamic_doublings": 9.829866853266179,
+        "q9_pool_depleted_h": None,
+        "q9_source_total_mmol_L": 0.0,
+        "final_glucose_mmol_L": 0.0,
+        "final_uracil_mmol_L": 90.90909090909093,
+        "termination_status": "completed",
+        "termination_time_h": 1,
+    }
+    expected_ko = {
+        "final_biomass_gDW_L": 2.0,
+        "dynamic_doublings": 1.0,
+        "q9_pool_depleted_h": 0.5,
+        "q9_source_total_mmol_L": 0.1,
+        "final_glucose_mmol_L": 999.0,
+        "final_uracil_mmol_L": 999.0,
+        "termination_status": "completed",
+        "termination_time_h": 1,
+    }
+    for observed, expected in ((wt, expected_wt), (ko, expected_ko)):
+        for field, value in expected.items():
+            if isinstance(value, float):
+                assert observed[field] == pytest.approx(value)
+            else:
+                assert observed[field] == value
+    ratio = ko["dynamic_doublings"] / wt["dynamic_doublings"]
+    assert ratio == pytest.approx(0.10173077773354876)
+    assert [ratio < cutoff for cutoff in (0.01, 0.05, 0.1, 0.15)] == [
+        False, False, False, True,
+    ]
+    for model in (wt_model, ko_model):
+        assert COQ9_POOL_SOURCE_ID not in model.reactions
+        assert COQ9_DILUTION_ID not in model.reactions
+        assert COQ9_DILUTION_CONSTRAINT_ID not in model.constraints
 
 
 def test_gurobi_feasibility_tolerance_is_bounded_and_explicit():

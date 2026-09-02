@@ -41,9 +41,15 @@ from .validate_essential_genes import DEFAULT_CUTOFFS, load_experimental, reacti
 
 
 WORKFLOW = "quinone_dfba_essentiality"
-SCHEMA_VERSION = "1.7"
+SCHEMA_VERSION = "1.8"
 BIOMASS_ID = "biomass_C"
 URACIL_MODES = ("finite_batch", "po1f_nonlimiting")
+TRAJECTORY_SEMANTICS = {
+    "row_type": "integration_interval",
+    "state_columns": "explicit_start_and_end",
+    "flux_time_basis": "interval_rate_from_start_state",
+    "integration_method": "explicit_euler",
+}
 
 # Values are the concentration statements already recorded in the SD-Leu
 # medium comments.  They are finite batch inventories, not uptake kinetics.
@@ -493,23 +499,35 @@ def simulate_gene(
         termination_status = "completed"
         termination_time_h = hours
         trajectory: list[dict[str, Any]] = []
+        time = 0.0
         for step in range(int(round(hours / dt))):
-            time = step * dt
-            model.medium = _finite_medium(base_medium, pools, biomass, dt)
-            source.upper_bound = q9_pool / (biomass * dt) if q9_pool > 0 else 0.0
+            biomass_start = biomass
+            q9_pool_start = q9_pool
+            pools_start = dict(pools)
+            model.medium = _finite_medium(base_medium, pools_start, biomass_start, dt)
+            source.upper_bound = (
+                q9_pool_start / (biomass_start * dt) if q9_pool_start > 0 else 0.0
+            )
             growth, solution = _optimize_minimal_pool(model, source)
             if solution.status != "optimal":
                 trajectory.append(
                     {
                         "gene_id": gene_id or "WT",
                         "uracil_mode": uracil_mode,
+                        "step_index": step,
                         "time_h": time,
-                        "biomass_gDW_L": biomass,
+                        "time_end_h": time,
+                        "interval_advanced": False,
+                        "biomass_gDW_L": biomass_start,
+                        "biomass_end_gDW_L": biomass_start,
                         "growth_h-1": math.nan,
-                        "q9_pool_mmol_L": q9_pool,
+                        "q9_pool_mmol_L": q9_pool_start,
+                        "q9_pool_end_mmol_L": q9_pool_start,
                         "q9_source_flux_mmol_gDW_h": math.nan,
-                        "uracil_mmol_L": pools.get("R1354", math.nan),
-                        "glucose_mmol_L": pools["R1070"],
+                        "uracil_mmol_L": pools_start.get("R1354", math.nan),
+                        "uracil_end_mmol_L": pools_start.get("R1354", math.nan),
+                        "glucose_mmol_L": pools_start["R1070"],
+                        "glucose_end_mmol_L": pools_start["R1070"],
                         "status": solution.status,
                         **_runtime_topology_fluxes(solution, r39_r19_runtime_topology),
                     }
@@ -518,31 +536,46 @@ def simulate_gene(
                 termination_time_h = time
                 break
             source_flux = max(0.0, float(solution.fluxes[source.id]))
-            consumed_q9 = min(q9_pool, source_flux * biomass * dt)
-            q9_pool = max(0.0, q9_pool - consumed_q9)
-            if q9_pool <= q9_tolerance:
-                q9_pool = 0.0
-            if q9_pool == 0.0 and depleted_at is None:
-                depleted_at = time + dt
-            for reaction_id in pools:
+            consumed_q9 = min(q9_pool_start, source_flux * biomass_start * dt)
+            q9_pool_end = max(0.0, q9_pool_start - consumed_q9)
+            if q9_pool_end <= q9_tolerance:
+                q9_pool_end = 0.0
+            time_end = time + dt
+            if q9_pool_start > 0.0 and q9_pool_end == 0.0 and depleted_at is None:
+                depleted_at = time_end
+            pools_end = dict(pools_start)
+            for reaction_id in pools_start:
                 uptake = max(0.0, -float(solution.fluxes[reaction_id]))
-                pools[reaction_id] = max(0.0, pools[reaction_id] - uptake * biomass * dt)
+                pools_end[reaction_id] = max(
+                    0.0, pools_start[reaction_id] - uptake * biomass_start * dt
+                )
+            biomass_end = biomass_start * (1.0 + growth * dt)
             trajectory.append(
                 {
                     "gene_id": gene_id or "WT",
                     "uracil_mode": uracil_mode,
+                    "step_index": step,
                     "time_h": time,
-                    "biomass_gDW_L": biomass,
+                    "time_end_h": time_end,
+                    "interval_advanced": True,
+                    "biomass_gDW_L": biomass_start,
+                    "biomass_end_gDW_L": biomass_end,
                     "growth_h-1": growth,
-                    "q9_pool_mmol_L": q9_pool,
+                    "q9_pool_mmol_L": q9_pool_start,
+                    "q9_pool_end_mmol_L": q9_pool_end,
                     "q9_source_flux_mmol_gDW_h": source_flux,
-                    "uracil_mmol_L": pools.get("R1354", math.nan),
-                    "glucose_mmol_L": pools["R1070"],
+                    "uracil_mmol_L": pools_start.get("R1354", math.nan),
+                    "uracil_end_mmol_L": pools_end.get("R1354", math.nan),
+                    "glucose_mmol_L": pools_start["R1070"],
+                    "glucose_end_mmol_L": pools_end["R1070"],
                     "status": solution.status,
                     **_runtime_topology_fluxes(solution, r39_r19_runtime_topology),
                 }
             )
-            biomass *= 1.0 + growth * dt
+            biomass = biomass_end
+            q9_pool = q9_pool_end
+            pools = pools_end
+            time = time_end
         return (
             {
                 "gene_id": gene_id or "WT",
@@ -679,6 +712,7 @@ def _run_chunk(args: argparse.Namespace) -> Path:
         }
     manifest = {
         "workflow": WORKFLOW, "schema_version": SCHEMA_VERSION, "run_id": args.run_id,
+        "trajectory_semantics": TRAJECTORY_SEMANTICS,
         "chunk_index": args.chunk_index, "chunk_count": args.chunk_count, "genes": genes,
         "solver": args.solver, "runtime_versions": _software_versions(args.solver),
         "solver_feasibility_tolerance": solver_feasibility_tolerance,
@@ -766,6 +800,8 @@ def _merge(args: argparse.Namespace) -> Path:
     calls.to_csv(out / "essentiality_dynamic_calls.tsv", sep="\t", index=False)
     summary = {
         "workflow": WORKFLOW,
+        "schema_version": payloads[0]["schema_version"],
+        "trajectory_semantics": payloads[0].get("trajectory_semantics"),
         "chunks": len(manifests),
         "chunk_fingerprints": sorted(fingerprints),
         "calls": len(calls),
