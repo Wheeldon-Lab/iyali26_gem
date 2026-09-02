@@ -26,6 +26,7 @@ from cobra.manipulation.delete import knock_out_model_genes
 from .config import load_project_paths
 from .coq9_dilution import (
     CALIBRATION_STATUS,
+    COQ9_DILUTION_ID,
     add_runtime_coq9_pool_source,
     alpha_sampling_record,
     apply_runtime_coq9_dilution,
@@ -44,11 +45,70 @@ WORKFLOW = "quinone_dfba_essentiality"
 SCHEMA_VERSION = "1.8"
 BIOMASS_ID = "biomass_C"
 URACIL_MODES = ("finite_batch", "po1f_nonlimiting")
+INTERPRETATION_FLUX_REACTIONS = {
+    "R763": "coq9_biosynthesis",
+    "R407": "coq9_biosynthesis",
+    "R969": "coq9_biosynthesis_transport",
+    "R39": "coq9_biosynthesis",
+    "R808": "coq9_biosynthesis_transport",
+    "R715": "coq9_biosynthesis",
+    "R40": "coq9_biosynthesis",
+    "R19": "coq9_biosynthesis",
+    "R18": "coq9_biosynthesis",
+    "R695": "coq9_biosynthesis",
+    "R385": "coq9_biosynthesis_final",
+    "R262": "coq9_redox_nonrespiratory",
+    "R570": "respiratory_entry_external_nadh",
+    "R573": "respiratory_entry_nadh_closed",
+    "R740": "respiratory_entry_succinate",
+    "R1889": "respiratory_entry_complex_i_gprless",
+    "R1977": "respiratory_entry_fad",
+    "R2062": "respiratory_entry_complex_i",
+    "R305": "complex_iii",
+    "R304": "complex_iv",
+    "R2206": "complex_iv_mitochondrial",
+    "R171": "atp_synthesis",
+    "R1287": "oxygen_exchange",
+    "xMAINTENANCE": "atp_maintenance",
+}
 TRAJECTORY_SEMANTICS = {
     "row_type": "integration_interval",
     "state_columns": "explicit_start_and_end",
     "flux_time_basis": "interval_rate_from_start_state",
     "integration_method": "explicit_euler",
+    "core_interval_flux_columns": {
+        "biomass_flux_h-1": {"reaction_id": BIOMASS_ID, "positive_direction": "growth"},
+        "coq9_dilution_flux_mmol_gDW_h": {
+            "reaction_id": COQ9_DILUTION_ID,
+            "positive_direction": "CoQ9_consumption",
+        },
+        "glucose_uptake_flux_mmol_gDW_h": {
+            "reaction_id": "R1070",
+            "positive_direction": "uptake",
+        },
+        "uracil_uptake_flux_mmol_gDW_h": {
+            "reaction_id": "R1354",
+            "positive_direction": "uptake",
+        },
+        "oxygen_uptake_flux_mmol_gDW_h": {
+            "reaction_id": "R1287",
+            "positive_direction": "uptake",
+        },
+        "atp_maintenance_flux_mmol_gDW_h": {
+            "reaction_id": "xMAINTENANCE",
+            "positive_direction": "model_forward",
+        },
+        "objective_value": {"reaction_id": BIOMASS_ID, "positive_direction": "growth"},
+    },
+    "reaction_flux_columns": {
+        f"reaction_flux_{reaction_id}_mmol_gDW_h": {
+            "reaction_id": reaction_id,
+            "role": role,
+            "positive_direction": "model_forward",
+        }
+        for reaction_id, role in INTERPRETATION_FLUX_REACTIONS.items()
+    },
+    "q9_reserve_pool_balance_flux_column": "q9_source_flux_mmol_gDW_h",
 }
 
 # Values are the concentration statements already recorded in the SD-Leu
@@ -280,6 +340,21 @@ def _runtime_topology_fluxes(solution, enabled: bool) -> dict[str, float]:
     }
 
 
+def _interpretation_fluxes(solution) -> dict[str, float]:
+    if solution.status != "optimal":
+        return {
+            f"reaction_flux_{reaction_id}_mmol_gDW_h": math.nan
+            for reaction_id in INTERPRETATION_FLUX_REACTIONS
+        }
+    return {
+        f"reaction_flux_{reaction_id}_mmol_gDW_h": (
+            float(solution.fluxes[reaction_id])
+            if reaction_id in solution.fluxes.index else math.nan
+        )
+        for reaction_id in INTERPRETATION_FLUX_REACTIONS
+    }
+
+
 def _r39_r19_canonical_target_fingerprint(model) -> str:
     return target_fingerprint(
         reaction_case_context(model.reactions.get_by_id(reaction_id))
@@ -360,7 +435,7 @@ def _finite_medium(base_medium: dict[str, float], pools: dict[str, float], bioma
     return medium
 
 
-def _optimize_minimal_pool(model, source: Reaction) -> tuple[float, Any]:
+def _optimize_minimal_pool(model, source: Reaction) -> tuple[float, Any, str, float]:
     """Use reserve only after source-free growth is zero (complete-block control)."""
     model.objective = model.reactions.get_by_id(BIOMASS_ID)
     source_limit = source.upper_bound
@@ -371,17 +446,22 @@ def _optimize_minimal_pool(model, source: Reaction) -> tuple[float, Any]:
         primary = model.optimize()
     source.upper_bound = source_limit
     if primary.status != "optimal":
-        return 0.0, primary
-    growth = max(0.0, float(primary.fluxes[BIOMASS_ID]))
-    if growth > 1e-9:
-        return growth, primary
+        return 0.0, primary, primary.status, math.nan
+    source_free_growth = max(0.0, float(primary.fluxes[BIOMASS_ID]))
+    if source_free_growth > 1e-9:
+        return source_free_growth, primary, primary.status, source_free_growth
     try:
         primary = pfba(model)
     except OptimizationError:
         primary = model.optimize()
     if primary.status != "optimal":
-        return 0.0, primary
-    return max(0.0, float(primary.fluxes[BIOMASS_ID])), primary
+        return 0.0, primary, "optimal", source_free_growth
+    return (
+        max(0.0, float(primary.fluxes[BIOMASS_ID])),
+        primary,
+        "optimal",
+        source_free_growth,
+    )
 
 
 def _software_versions(solver: str) -> dict[str, str]:
@@ -486,7 +566,7 @@ def simulate_gene(
         if gene_id is not None:
             knock_out_model_genes(model, [gene_id])
         source = add_runtime_coq9_pool_source(model)
-        apply_runtime_coq9_dilution(model, alpha)
+        dilution = apply_runtime_coq9_dilution(model, alpha)
         base_medium = dict(model.medium)
         pools = dict(INITIAL_POOLS_MMOL_L)
         if uracil_mode == "po1f_nonlimiting":
@@ -508,7 +588,9 @@ def simulate_gene(
             source.upper_bound = (
                 q9_pool_start / (biomass_start * dt) if q9_pool_start > 0 else 0.0
             )
-            growth, solution = _optimize_minimal_pool(model, source)
+            growth, solution, source_free_status, source_free_growth = _optimize_minimal_pool(
+                model, source
+            )
             if solution.status != "optimal":
                 trajectory.append(
                     {
@@ -521,14 +603,24 @@ def simulate_gene(
                         "biomass_gDW_L": biomass_start,
                         "biomass_end_gDW_L": biomass_start,
                         "growth_h-1": math.nan,
+                        "biomass_flux_h-1": math.nan,
+                        "objective_value": math.nan,
+                        "source_free_solver_status": source_free_status,
+                        "source_free_growth_h-1": source_free_growth,
                         "q9_pool_mmol_L": q9_pool_start,
                         "q9_pool_end_mmol_L": q9_pool_start,
                         "q9_source_flux_mmol_gDW_h": math.nan,
+                        "coq9_dilution_flux_mmol_gDW_h": math.nan,
                         "uracil_mmol_L": pools_start.get("R1354", math.nan),
                         "uracil_end_mmol_L": pools_start.get("R1354", math.nan),
+                        "uracil_uptake_flux_mmol_gDW_h": math.nan,
                         "glucose_mmol_L": pools_start["R1070"],
                         "glucose_end_mmol_L": pools_start["R1070"],
+                        "glucose_uptake_flux_mmol_gDW_h": math.nan,
+                        "oxygen_uptake_flux_mmol_gDW_h": math.nan,
+                        "atp_maintenance_flux_mmol_gDW_h": math.nan,
                         "status": solution.status,
+                        **_interpretation_fluxes(solution),
                         **_runtime_topology_fluxes(solution, r39_r19_runtime_topology),
                     }
                 )
@@ -536,6 +628,17 @@ def simulate_gene(
                 termination_time_h = time
                 break
             source_flux = max(0.0, float(solution.fluxes[source.id]))
+            glucose_uptake_flux = max(0.0, -float(solution.fluxes["R1070"]))
+            uracil_uptake_flux = max(0.0, -float(solution.fluxes["R1354"]))
+            oxygen_uptake_flux = (
+                max(0.0, -float(solution.fluxes["R1287"]))
+                if "R1287" in solution.fluxes.index else math.nan
+            )
+            atp_maintenance_flux = (
+                float(solution.fluxes["xMAINTENANCE"])
+                if "xMAINTENANCE" in solution.fluxes.index else math.nan
+            )
+            dilution_flux = float(solution.fluxes[dilution.id])
             consumed_q9 = min(q9_pool_start, source_flux * biomass_start * dt)
             q9_pool_end = max(0.0, q9_pool_start - consumed_q9)
             if q9_pool_end <= q9_tolerance:
@@ -561,14 +664,24 @@ def simulate_gene(
                     "biomass_gDW_L": biomass_start,
                     "biomass_end_gDW_L": biomass_end,
                     "growth_h-1": growth,
+                    "biomass_flux_h-1": growth,
+                    "objective_value": growth,
+                    "source_free_solver_status": source_free_status,
+                    "source_free_growth_h-1": source_free_growth,
                     "q9_pool_mmol_L": q9_pool_start,
                     "q9_pool_end_mmol_L": q9_pool_end,
                     "q9_source_flux_mmol_gDW_h": source_flux,
+                    "coq9_dilution_flux_mmol_gDW_h": dilution_flux,
                     "uracil_mmol_L": pools_start.get("R1354", math.nan),
                     "uracil_end_mmol_L": pools_end.get("R1354", math.nan),
+                    "uracil_uptake_flux_mmol_gDW_h": uracil_uptake_flux,
                     "glucose_mmol_L": pools_start["R1070"],
                     "glucose_end_mmol_L": pools_end["R1070"],
+                    "glucose_uptake_flux_mmol_gDW_h": glucose_uptake_flux,
+                    "oxygen_uptake_flux_mmol_gDW_h": oxygen_uptake_flux,
+                    "atp_maintenance_flux_mmol_gDW_h": atp_maintenance_flux,
                     "status": solution.status,
+                    **_interpretation_fluxes(solution),
                     **_runtime_topology_fluxes(solution, r39_r19_runtime_topology),
                 }
             )
@@ -583,6 +696,8 @@ def simulate_gene(
                 "final_biomass_gDW_L": biomass,
                 "dynamic_doublings": math.log2(biomass / initial_biomass),
                 "initial_growth_h-1": trajectory[0]["growth_h-1"],
+                "initial_source_free_solver_status": trajectory[0]["source_free_solver_status"],
+                "initial_source_free_growth_h-1": trajectory[0]["source_free_growth_h-1"],
                 "q9_pool_depleted_h": depleted_at,
                 "q9_source_total_mmol_L": initial_q9_pool - q9_pool,
                 "final_glucose_mmol_L": pools["R1070"],

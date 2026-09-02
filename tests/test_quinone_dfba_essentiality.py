@@ -59,11 +59,15 @@ def test_runtime_q9_reserve_is_used_only_after_q9_synthesis_knockout():
         source = add_runtime_coq9_pool_source(model)
         apply_runtime_coq9_dilution(model, 0.1)
         source.upper_bound = 1.0
-        _, solution = _optimize_minimal_pool(model, source)
+        _, solution, source_free_status, source_free_growth = _optimize_minimal_pool(model, source)
         assert solution.fluxes[source.id] == 0
+        assert source_free_status == "optimal"
+        assert source_free_growth > 0
         knock_out_model_genes(model, ["qgene"])
-        _, solution = _optimize_minimal_pool(model, source)
+        _, solution, source_free_status, source_free_growth = _optimize_minimal_pool(model, source)
         assert solution.fluxes[source.id] > 0
+        assert source_free_status == "optimal"
+        assert source_free_growth == 0
 
 
 def test_seeded_alpha_samples_are_fixed_before_gene_simulations():
@@ -113,8 +117,16 @@ def test_trajectory_rows_are_explicit_euler_intervals_and_continuous(monkeypatch
         growth, q9_source, glucose, uracil = next(steps)
         return growth, SimpleNamespace(
             status="optimal",
-            fluxes={source.id: q9_source, "R1070": glucose, "R1354": uracil},
-        )
+            fluxes=pd.Series({
+                source.id: q9_source,
+                COQ9_DILUTION_ID: 0.1 * growth,
+                "R1070": glucose,
+                "R1354": uracil,
+                "R1287": -0.25,
+                "xMAINTENANCE": 7.8625,
+                "R763": 0.04,
+            }),
+        ), "optimal", 0.0
 
     monkeypatch.setattr(dfba, "_optimize_minimal_pool", optimize)
     model = _toy_model()
@@ -129,12 +141,28 @@ def test_trajectory_rows_are_explicit_euler_intervals_and_continuous(monkeypatch
     assert trace[0]["biomass_end_gDW_L"] == pytest.approx(
         trace[0]["biomass_gDW_L"] * (1 + trace[0]["growth_h-1"] * 0.5)
     )
+    assert trace[0]["biomass_flux_h-1"] == trace[0]["growth_h-1"]
+    assert trace[0]["objective_value"] == trace[0]["growth_h-1"]
+    assert trace[0]["source_free_solver_status"] == "optimal"
+    assert trace[0]["source_free_growth_h-1"] == 0.0
+    assert trace[0]["coq9_dilution_flux_mmol_gDW_h"] == pytest.approx(
+        0.1 * trace[0]["biomass_flux_h-1"]
+    )
     assert trace[0]["q9_pool_end_mmol_L"] == pytest.approx(
         max(0, trace[0]["q9_pool_mmol_L"]
             - trace[0]["q9_source_flux_mmol_gDW_h"] * trace[0]["biomass_gDW_L"] * 0.5)
     )
-    assert trace[0]["glucose_end_mmol_L"] == pytest.approx(10.0 - 0.3 * 1.0 * 0.5)
-    assert trace[0]["uracil_end_mmol_L"] == pytest.approx(5.0 - 0.1 * 1.0 * 0.5)
+    assert trace[0]["glucose_uptake_flux_mmol_gDW_h"] == 0.3
+    assert trace[0]["uracil_uptake_flux_mmol_gDW_h"] == 0.1
+    assert trace[0]["oxygen_uptake_flux_mmol_gDW_h"] == 0.25
+    assert trace[0]["atp_maintenance_flux_mmol_gDW_h"] == 7.8625
+    assert trace[0]["reaction_flux_R763_mmol_gDW_h"] == 0.04
+    assert trace[0]["glucose_end_mmol_L"] == pytest.approx(
+        10.0 - trace[0]["glucose_uptake_flux_mmol_gDW_h"] * 1.0 * 0.5
+    )
+    assert trace[0]["uracil_end_mmol_L"] == pytest.approx(
+        5.0 - trace[0]["uracil_uptake_flux_mmol_gDW_h"] * 1.0 * 0.5
+    )
     for previous, current in zip(trace, trace[1:]):
         assert previous["time_end_h"] == current["time_h"]
         assert previous["biomass_end_gDW_L"] == current["biomass_gDW_L"]
@@ -255,6 +283,7 @@ def test_po1f_nonlimiting_uracil_keeps_base_bound_and_has_no_finite_pool(monkeyp
     assert all(row["uracil_mode"] == "po1f_nonlimiting" for row in trace)
     assert all(math.isnan(row["uracil_mmol_L"]) for row in trace)
     assert all(math.isnan(row["uracil_end_mmol_L"]) for row in trace)
+    assert all(math.isfinite(row["uracil_uptake_flux_mmol_gDW_h"]) for row in trace)
 
 
 def test_nonoptimal_step_is_recorded_once_without_reading_invalid_fluxes(monkeypatch):
@@ -267,6 +296,15 @@ def test_nonoptimal_step_is_recorded_once_without_reading_invalid_fluxes(monkeyp
     assert [row["status"] for row in trace] == ["optimal", "infeasible"]
     assert math.isnan(trace[-1]["growth_h-1"])
     assert math.isnan(trace[-1]["q9_source_flux_mmol_gDW_h"])
+    assert all(math.isnan(trace[-1][column]) for column in (
+        "biomass_flux_h-1",
+        "objective_value",
+        "coq9_dilution_flux_mmol_gDW_h",
+        "glucose_uptake_flux_mmol_gDW_h",
+        "uracil_uptake_flux_mmol_gDW_h",
+        "oxygen_uptake_flux_mmol_gDW_h",
+        "atp_maintenance_flux_mmol_gDW_h",
+    ))
     assert trace[-1]["time_end_h"] == trace[-1]["time_h"]
     assert trace[-1]["interval_advanced"] is False
     for start, end in (

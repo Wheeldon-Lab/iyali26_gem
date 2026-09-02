@@ -11,7 +11,6 @@ set -euo pipefail
 : "${IYALI26_RESEARCH_ROOT:?set to the external research workspace}"
 : "${IYALI26_DFBA_PYTHON:?set to the tested Python executable on HPCC}"
 RUN_ID="${IYALI26_DFBA_RUN_ID:?set one shared run ID before submission}"
-: "${IYALI26_DFBA_ALPHA_SEED:?submit_quinone_dfba.sh must provide one shared alpha seed}"
 OUT="$IYALI26_RESEARCH_ROOT/artifacts/results/quinone_dfba_essentiality/$RUN_ID"
 CHUNK_COUNT="${IYALI26_DFBA_CHUNK_COUNT:-64}"
 if [[ ! "$CHUNK_COUNT" =~ ^[1-9][0-9]*$ ]]; then
@@ -30,10 +29,25 @@ TOL_ARGS=()
 if [ -n "${IYALI26_DFBA_FEASIBILITY_TOL:-}" ]; then
   TOL_ARGS=(--feasibility-tol "$IYALI26_DFBA_FEASIBILITY_TOL")
 fi
-ALPHA_ARGS=(
-  --alpha-seed "$IYALI26_DFBA_ALPHA_SEED"
-  --alpha-replicates "${IYALI26_DFBA_ALPHA_REPLICATES:-1}"
-)
+if [[ -n "${IYALI26_DFBA_ALPHAS:-}" ]]; then
+  if [[ -n "${IYALI26_DFBA_ALPHA_SEED:-}" ]]; then
+    echo "IYALI26_DFBA_ALPHAS and IYALI26_DFBA_ALPHA_SEED are mutually exclusive" >&2
+    exit 2
+  fi
+  IFS=',' read -r -a ALPHA_VALUES <<< "$IYALI26_DFBA_ALPHAS"
+  ALPHA_ARGS=(--alphas "${ALPHA_VALUES[@]}")
+else
+  : "${IYALI26_DFBA_ALPHA_SEED:?submit_quinone_dfba.sh must provide alphas or one shared alpha seed}"
+  ALPHA_ARGS=(
+    --alpha-seed "$IYALI26_DFBA_ALPHA_SEED"
+    --alpha-replicates "${IYALI26_DFBA_ALPHA_REPLICATES:-1}"
+  )
+fi
+POOL_ARGS=()
+if [[ -n "${IYALI26_DFBA_POOL_MULTIPLIERS:-}" ]]; then
+  IFS=',' read -r -a POOL_VALUES <<< "$IYALI26_DFBA_POOL_MULTIPLIERS"
+  POOL_ARGS=(--pool-multipliers "${POOL_VALUES[@]}")
+fi
 GENE_ARGS=()
 if [[ ${IYALI26_DFBA_GENES+x} ]]; then
   if [[ -z "$IYALI26_DFBA_GENES" ]]; then
@@ -56,5 +70,7 @@ fi
 "$IYALI26_DFBA_PYTHON" -m scripts.gem_annotate.quinone_dfba_essentiality \
   --research-root "$IYALI26_RESEARCH_ROOT" --output-dir "$OUT" --run-id "$RUN_ID" \
   --solver "${IYALI26_DFBA_SOLVER:-glpk}" --uracil-mode "${IYALI26_DFBA_URACIL_MODE:-finite_batch}" \
-  --dt "${IYALI26_DFBA_DT:-0.25}" "${TOL_ARGS[@]}" "${ALPHA_ARGS[@]}" "${GENE_ARGS[@]}" \
+  --hours "${IYALI26_DFBA_HOURS:-24}" --dt "${IYALI26_DFBA_DT:-0.25}" \
+  --initial-biomass "${IYALI26_DFBA_INITIAL_BIOMASS:-0.01}" \
+  "${TOL_ARGS[@]}" "${ALPHA_ARGS[@]}" "${POOL_ARGS[@]}" "${GENE_ARGS[@]}" \
   --chunk-index "$SLURM_ARRAY_TASK_ID" --chunk-count "$CHUNK_COUNT"
